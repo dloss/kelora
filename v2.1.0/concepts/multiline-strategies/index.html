@@ -1,0 +1,3248 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.1.0/concepts/multiline-strategies/">
+      
+      
+        <link rel="prev" href="../error-handling/">
+      
+      
+        <link rel="next" href="../performance-model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Multiline Strategies - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#multiline-strategies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Multiline Strategies
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../whats-new-2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's New in 2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to Rhai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/begin-end-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Begin and End Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/advanced-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing Custom Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Span Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Reusability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/composed-pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/incident-response-playbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incident Response Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/debug-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Production Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Web Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Service Health Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investigate Syslog Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose a Multiline Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sanitize Logs Before Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pseudonymize Identifiers for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare CSV Exports for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flatten Nested JSON for Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Streaming Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process Archives at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/merge-timestamp-sorted-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Timestamp-Sorted Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roll Up Logs with Span Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/integrate-external-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrate Kelora with External Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/stateful-processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic with state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events and Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-multiline-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Multiline Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-multiline-processing-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Multiline Processing Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategy-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-timestamp-headers-multiline-timestamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Timestamp Headers (--multiline timestamp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-indentation-continuations-multiline-indent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Indentation Continuations (--multiline indent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-regex-boundaries-multiline-regexmatchend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Regex Boundaries (--multiline regex:match=...[:end=...])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-blank-line-separated-records-multiline-blank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Blank-Line Separated Records (--multiline blank)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Treat Everything as One Event (--multiline all)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-language-stack-trace-presets-multiline-javapythongo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Language Stack-Trace Presets (--multiline java|python|go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controlling-line-joining" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling Line Joining
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-right-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the Right Parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streams-timeouts-and-safety-caps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streams, Timeouts, and Safety Caps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Streams, Timeouts, and Safety Caps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-nothing-splits-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When nothing splits at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability and Debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/common-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Function Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-multiline-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Multiline Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-multiline-processing-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Multiline Processing Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategy-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-timestamp-headers-multiline-timestamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Timestamp Headers (--multiline timestamp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-indentation-continuations-multiline-indent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Indentation Continuations (--multiline indent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-regex-boundaries-multiline-regexmatchend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Regex Boundaries (--multiline regex:match=...[:end=...])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-blank-line-separated-records-multiline-blank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Blank-Line Separated Records (--multiline blank)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Treat Everything as One Event (--multiline all)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-language-stack-trace-presets-multiline-javapythongo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Language Stack-Trace Presets (--multiline java|python|go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controlling-line-joining" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling Line Joining
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-right-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the Right Parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streams-timeouts-and-safety-caps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streams, Timeouts, and Safety Caps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Streams, Timeouts, and Safety Caps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-nothing-splits-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When nothing splits at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability and Debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="multiline-strategies">Multiline Strategies<a class="headerlink" href="#multiline-strategies" title="Permanent link">&para;</a></h1>
+<p>Kelora can treat clusters of lines as a single event so stack traces, YAML
+payloads, JSON blobs, and other multi-line records stay intact. This page
+explains how multiline detection fits into the pipeline and how to pick the
+right strategy for your data set.</p>
+<h2 id="why-multiline-matters">Why Multiline Matters<a class="headerlink" href="#why-multiline-matters" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Application errors often spill over multiple lines (Java stack traces, Python
+  tracebacks, Go panics).</p>
+</li>
+<li>
+<p>Structured payloads such as JSON, YAML, or CEF frequently span multiple lines
+  when logged with indentation.</p>
+</li>
+<li>
+<p>Batch systems may wrap related log entries between explicit boundary markers
+  like <code>BEGIN</code>/<code>END</code>.</p>
+</li>
+</ul>
+<p>Without multiline detection, Kelora parses each physical line as its own event,
+making it hard to correlate context.</p>
+<h2 id="choosing-a-strategy">Choosing a Strategy<a class="headerlink" href="#choosing-a-strategy" title="Permanent link">&para;</a></h2>
+<p><strong>Start with <code>timestamp</code></strong> if your logs have timestamp prefixes (works for 80% of application logs with stack traces).</p>
+<p><strong>Use a language preset (<code>java</code>, <code>python</code>, <code>go</code>)</strong> for stack traces in output <em>without</em> reliable timestamps — raw stderr, container stdout, CI logs. If your lines do start with timestamps, prefer <code>timestamp</code>: it also keeps non-stacktrace continuations with their events.</p>
+<p><strong>Use <code>indent</code></strong> if continuation lines start with whitespace but the first line doesn't have a timestamp.</p>
+<p><strong>Use <code>blank</code></strong> for paragraph-shaped input where blank lines separate records.</p>
+<p><strong>Use <code>regex</code></strong> only when you have explicit BEGIN/END markers or need custom boundary detection.</p>
+<p><strong>Use <code>all</code></strong> rarely—only for whole-file processing where the entire input is a single logical record.</p>
+<h2 id="how-multiline-processing-works">How Multiline Processing Works<a class="headerlink" href="#how-multiline-processing-works" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Pre-parse stage</strong> – Multiline runs before the input parser. The chunker
+   groups input lines into blocks according to the configured strategy.</p>
+</li>
+<li>
+<p><strong>Parsing</strong> – The aggregated block is fed into the selected parser (<code>-f</code>).
+   Use <code>-f raw</code> when you want to keep the block exactly as-is, including
+   newlines.</p>
+</li>
+<li>
+<p><strong>Downstream pipeline</strong> – Filters, exec scripts, and formatters see the
+   aggregated event exactly once. <code>meta.line_num</code> and <code>meta.filename</code> point at
+   the event's <em>first</em> physical line.</p>
+</li>
+</ol>
+<p>Boundary guarantees:</p>
+<ul>
+<li><strong>Events never span input files.</strong> The buffer is flushed when a new file
+  begins.</li>
+<li><strong>Blank lines are continuations</strong> for <code>timestamp</code>/<code>indent</code> (real stack
+  traces contain them), separators for <code>blank</code>, and ordinary lines for
+  <code>regex</code>. Trailing blank lines are trimmed from each event (<code>all</code> excepted).</li>
+<li><strong>Line filters run before assembly.</strong> <code>--keep-lines</code>/<code>--ignore-lines</code>
+  remove physical lines before the chunker sees them — useful for dropping
+  interleaved noise, but it means a filtered continuation line never reaches
+  the event. To filter whole assembled events, use <code>--filter</code> instead
+  (kelora prints a one-time hint when you combine them).</li>
+</ul>
+<p>Multiline increases per-event memory usage. When processing large files, keep an
+eye on chunk size via <code>--stats</code> and consider tuning <code>--batch-size</code>/<code>--batch-timeout</code>
+when using <code>--parallel</code>.</p>
+<h2 id="strategy-overview">Strategy Overview<a class="headerlink" href="#strategy-overview" title="Permanent link">&para;</a></h2>
+<p>The diagram below illustrates how each multiline strategy groups input lines into
+structured events. Each strategy detects event boundaries differently—timestamp
+prefixes, indentation patterns, regex matches, or treating the entire input as one
+block. Choose the approach that matches your log format.</p>
+<p><img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram.png#only-light" />
+<img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram-dark.png#only-dark" /></p>
+<h2 id="built-in-strategies">Built-in Strategies<a class="headerlink" href="#built-in-strategies" title="Permanent link">&para;</a></h2>
+<p>Kelora ships five general strategies plus three language stack-trace presets.
+Only one can be active at a time.</p>
+<h3 id="1-timestamp-headers-multiline-timestamp">1. Timestamp Headers (<code>--multiline timestamp</code>)<a class="headerlink" href="#1-timestamp-headers-multiline-timestamp" title="Permanent link">&para;</a></h3>
+<p>Best for logs where each entry begins with a timestamp. Detection uses Kelora's
+adaptive timestamp parser and <strong>locks onto the first format family it sees</strong>:
+once your headers match (say) ISO timestamps, a continuation line that merely
+starts with something time-like (<code>17:03 was the incident window</code>, an epoch
+number, <code>Jan 5 ...</code>) cannot split the event. Two options adjust this:</p>
+<ul>
+<li><code>timestamp:format=&lt;chrono&gt;</code> — detect <em>only</em> this format (the hint is a
+  contract, not a preference).</li>
+<li><code>timestamp:loose</code> — accept any recognizable timestamp as a header, for
+  files that genuinely mix formats.</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("Traceback")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("Traceback")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"raw":"2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File \"/app/server.py\", line 42, in handle_request\n    result = process_data(request.body)\n  File \"/app/processor.py\", line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3"}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The event now contains the full Python traceback with preserved line breaks until the next timestamped
+header. Use <code>--multiline-join=newline</code> to keep the stack trace structure intact for display or further processing.
+Pair this strategy with <code>--ts-format</code> if you also need chronological filtering later in the pipeline.</p>
+<h3 id="2-indentation-continuations-multiline-indent">2. Indentation Continuations (<code>--multiline indent</code>)<a class="headerlink" href="#2-indentation-continuations-multiline-indent" title="Permanent link">&para;</a></h3>
+<p>Combine lines that start with leading whitespace. This matches Java stack traces
+and similar outputs where continuation lines are indented. Blank lines inside a
+block are continuations too, so a trace with an empty line in the middle stays
+one event.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("SQLException")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("SQLException")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"raw":"java.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)"}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>In this example the stack trace block remains an atomic event with preserved line breaks.
+If the first line of a block is not indented (for example, <code>Traceback ...</code>), combine strategies by
+preferring <code>timestamp</code> or switching to <code>regex</code> (see below) so the header line is
+included.</p>
+<h3 id="3-regex-boundaries-multiline-regexmatchend">3. Regex Boundaries (<code>--multiline regex:match=...[:end=...]</code>)<a class="headerlink" href="#3-regex-boundaries-multiline-regexmatchend" title="Permanent link">&para;</a></h3>
+<p>Define explicit start and optional end markers. This is ideal for logs that wrap
+records with guard strings such as <code>BEGIN</code>/<code>END</code> or XML tags.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_boundary.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^BEGIN:end=^END'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("database_backup")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_boundary.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^BEGIN:end=^END'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.raw.contains("database_backup")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"raw":"BEGIN\ntype: database_backup\ntimestamp: 2024-01-15T10:00:00Z\nstatus: started\ntarget: postgresql://production\nEND"}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>If no <code>end=</code> is provided, a new <code>match=</code> line flushes the previous block. Regex
+patterns are Rust regular expressions—the same engine used by <code>--filter</code>.
+Patterns may contain literal colons (<code>regex:match=^\d{2}:\d{2}</code> works); only
+<code>:match=</code> / <code>:end=</code> act as option separators.</p>
+<h3 id="4-blank-line-separated-records-multiline-blank">4. Blank-Line Separated Records (<code>--multiline blank</code>)<a class="headerlink" href="#4-blank-line-separated-records-multiline-blank" title="Permanent link">&para;</a></h3>
+<p>Paragraph mode: blank lines separate records, and the separator itself belongs
+to no record. Handy for reports, <code>SHOW ENGINE INNODB STATUS</code>-style dumps, or
+any output that groups related lines into blank-delimited stanzas.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>report.txt<span class="w"> </span>--multiline<span class="w"> </span>blank<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<h3 id="5-treat-everything-as-one-event-multiline-all">5. Treat Everything as One Event (<code>--multiline all</code>)<a class="headerlink" href="#5-treat-everything-as-one-event-multiline-all" title="Permanent link">&para;</a></h3>
+<p>This strategy buffers the entire stream and emits it as a single event. Useful
+for one-off conversions (for example piping a whole JSON array into a script).
+Use with care: the entire input must fit in memory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>big.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'print(e.raw.len())'</span>
+</code></pre></div>
+<h3 id="6-language-stack-trace-presets-multiline-javapythongo">6. Language Stack-Trace Presets (<code>--multiline java|python|go</code>)<a class="headerlink" href="#6-language-stack-trace-presets-multiline-javapythongo" title="Permanent link">&para;</a></h3>
+<p>Say what your logs contain instead of describing boundaries. Each preset is a
+small state machine over the language's real trace shape — the approach Fluent
+Bit's built-in multiline parsers use — aimed at output <strong>without reliable
+timestamps</strong>: raw stderr, container stdout, CI logs. There, no other strategy
+works: <code>timestamp</code> has nothing to lock onto, <code>indent</code> splits on the unindented
+lines every real trace pivots on (Python's final <code>ValueError: ...</code>, Java's
+<code>Caused by:</code>, Go's <code>goroutine N [running]:</code>), and <code>regex:match=</code> has the
+inverse semantics (everything between matches becomes one event).</p>
+<p>Under a preset, <strong>every line is its own event unless it is a recognized trace
+line</strong>. A trace start attaches to the line that logged it — so a
+<code>logger.exception(...)</code> header keeps its traceback — and continuations extend
+the event:</p>
+<ul>
+<li><strong><code>java</code></strong> — a dotted exception line (optionally <code>Exception in thread "..."</code>),
+  <code>at ...</code> frames, <code>Caused by:</code> / <code>Suppressed:</code> chains, <code>... N more</code>. An
+  exception class whose name lacks <code>Exception</code>/<code>Error</code>/<code>Throwable</code> is caught
+  from its first indented frame.</li>
+<li><strong><code>python</code></strong> — <code>Traceback (most recent call last):</code>, indented frames and
+  source lines, the final exception line (dotted name, bare
+  <code>KeyboardInterrupt</code> included), chained-exception bridges (<code>During handling
+  of ...</code> / <code>The above exception ...</code>), exception groups (3.11+), and
+  header-less <code>SyntaxError</code> blocks.</li>
+<li><strong><code>go</code></strong> — <code>panic:</code> / <code>fatal error:</code> / <code>http: panic serving</code>, the <code>[signal
+  ...]</code> line, goroutine headers, call/location pairs, <code>created by ...</code>, and
+  the <strong>blank lines between goroutine blocks</strong>, so a full dump stays one
+  event; standalone SIGQUIT goroutine dumps group too.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>app<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>--multiline<span class="w"> </span>python<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<p>Presets default to <code>--multiline-join=newline</code> — their whole point is stack
+traces, which space-joining destroys.</p>
+<p><strong>On timestamped input, presets are safe but not optimal.</strong> A line starting
+with a timestamp (same lock-in as the <code>timestamp</code> strategy) always begins a
+new event, overriding any trace rule, so a preset can never bleed a trace
+across a real event boundary. But <code>timestamp</code> groups <em>any</em> continuation line
+— wrapped messages, embedded payloads — not just recognized trace shapes, so
+kelora hints once when a preset keeps meeting timestamped headers. Known
+limits, accepted by design: a multi-line exception <em>message</em> (a
+<code>str(e)</code>/<code>getMessage()</code> containing newlines) is not recognized past its first
+line, and the losslessness guarantee still holds — an unrecognized trace shape
+degrades to split events, never to dropped lines.</p>
+<h2 id="controlling-line-joining">Controlling Line Joining<a class="headerlink" href="#controlling-line-joining" title="Permanent link">&para;</a></h2>
+<p>By default, <code>--multiline</code> joins grouped lines with spaces — except <code>all</code> and
+the language presets (<code>java</code>/<code>python</code>/<code>go</code>), which default to newline so
+buffered files and stack traces keep their structure.
+To preserve the original line structure in stack traces or other multi-line content:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
+</code></pre></div>
+<p><strong>When to use <code>newline</code>:</strong> If you need to <code>split("\n")</code> the multiline block, count lines, or preserve formatting for display.</p>
+<p><strong>When to use <code>space</code>:</strong> When line breaks are not semantically important and you want a compact single-line representation.</p>
+<p>All three joins produce the same events — only the text inside the event differs.
+In the regex-based line formats (the auto-detected application-log patterns,
+<code>-f regex:...</code>) and in <code>-f syslog</code>, the trailing message capture spans the
+newlines that <code>newline</code> inserts, so a stack trace lands in the message field
+with its line structure intact.</p>
+<h2 id="choosing-the-right-parser">Choosing the Right Parser<a class="headerlink" href="#choosing-the-right-parser" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong><code>-f raw</code></strong> stores the entire aggregated block in the <code>raw</code> field without further processing. Use this when you want to preserve all text exactly as grouped (combine with <code>--multiline-join=newline</code> if you need to preserve line breaks).</p>
+</li>
+<li>
+<p><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>, <code>-f combined</code>)
+  expect a single logical record. Use multiline to restore that logical record
+  before parsing.</p>
+<p>If the assembled block is <em>not</em> one record — a <code>key=value</code> line followed by
+stack frames, say — the parser fails and <strong>the whole event is dropped</strong>, so
+turning multiline on can leave you with <em>fewer</em> events than leaving it off.
+No <code>--multiline-join</code> value avoids this: a stack frame is not <code>key=value</code>
+under any separator. kelora hints at the multiline settings when a parse
+error lands on a grouped event, so a run that reports
+<code>Key cannot contain spaces</code> also names the real lever. To keep the
+continuation lines, use a parser that accepts free text — <code>-f raw</code>,
+<code>-f line</code>, or a <code>-f regex:...</code> pattern whose trailing capture spans
+newlines (<code>-f syslog</code> and the built-in application-log patterns already do).</p>
+</li>
+<li>
+<p>After parsing, you can still keep the original text by copying the aggregated block
+  into another field inside an exec script.</p>
+</li>
+</ul>
+<h2 id="streams-timeouts-and-safety-caps">Streams, Timeouts, and Safety Caps<a class="headerlink" href="#streams-timeouts-and-safety-caps" title="Permanent link">&para;</a></h2>
+<p>Two flags bound the buffer's behavior:</p>
+<ul>
+<li>
+<p><strong><code>--multiline-timeout DURATION</code></strong> — when input goes quiet with a partial
+  event buffered, flush it after this long (e.g. <code>400ms</code>, <code>2s</code>; <code>0</code> = never).
+  The default depends on the input: <strong>off for regular files</strong>, where lines
+  arrive at pipeline speed and an early flush could only split an event, so
+  file runs are deterministic; <strong>400ms for streams</strong> (stdin, FIFOs), so
+  <code>tail -f | kelora</code> shows events promptly. When a <em>defaulted</em> stream flush
+  fires, kelora prints a one-time hint — if a slow writer's events appear
+  split, raise the timeout or set <code>0</code>.</p>
+</li>
+<li>
+<p><strong><code>--multiline-max-lines N</code></strong> — split an event after N buffered lines and
+  warn once (default: 10000, <code>0</code> = unlimited). This is the safety net for a
+  <code>regex:match=</code> that never matches again: instead of silently buffering the
+  entire input, kelora flushes and tells you. <code>--multiline all</code> is exempt —
+  buffering everything is its purpose.</p>
+</li>
+</ul>
+<h3 id="when-nothing-splits-at-all">When nothing splits at all<a class="headerlink" href="#when-nothing-splits-at-all" title="Permanent link">&para;</a></h3>
+<p>The line cap only engages above its 10000-line default, so on an ordinary file
+a boundary rule that never matches used to be completely silent: one event, no
+errors, exit <code>0</code>. kelora now hints once at end of input when the rule never
+matched <em>any</em> line, naming the premise that failed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>kelora<span class="w"> </span>app.log<span class="w"> </span>--multiline<span class="w"> </span>regex:match<span class="o">=</span><span class="s1">'^NEVERMATCHES'</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="go">kelora hint: multiline 'regex': the start pattern '^NEVERMATCHES' never matched,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="go">so nothing split the input into separate events — check the pattern</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="gp gp-VirtualEnv">(see --help-multiline)</span>
+</code></pre></div>
+<p>The common causes are a typo'd <code>regex:match=</code>, <code>timestamp</code> on a file whose
+lines carry their timestamp inside the record rather than at column 0 (<code>{"ts":
+…</code>, <code>ts=…</code>, <code>[2024-07-14 …]</code>), <code>blank</code> on input with no blank lines, and
+<code>indent</code> where every line is indented.</p>
+<p>Two strategies are exempt, because finding no boundary is not a mistake for
+them: <code>all</code> is asked for exactly one event, and a language preset legitimately
+reports none when the whole input is a single stack trace (a piped crash dump).
+The hint is advisory — <code>--no-hints</code>, <code>--no-diagnostics</code>, <code>--silent</code>, or
+<code>KELORA_NO_HINTS</code> silence it, and like other hints it is hushed in data-only
+modes (<code>-s</code>, <code>-m</code>, …) unless you pass <code>--hints</code>.</p>
+<p>Note that this catches only the <em>total</em> collapse. A strategy that finds some
+boundaries but far fewer than the input has records — <code>timestamp</code> on a
+mixed-format capture where only a minority of lines lead with a timestamp — is
+still silent; <code>-s</code> is the way to spot it, by comparing <code>Lines processed</code> with
+<code>Events created</code>.</p>
+<h2 id="observability-and-debugging">Observability and Debugging<a class="headerlink" href="#observability-and-debugging" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Run with <code>--stats</code> or <code>-s</code> to see how many events were emitted after
+  chunking. A sudden drop or spike indicates the strategy might be too broad or
+  too narrow.</p>
+</li>
+<li>
+<p>Use <code>--take</code> while experimenting so you do not print massive aggregates to the
+  terminal.</p>
+</li>
+<li>
+<p>Inspect the aggregated text with <code>-f raw -F json</code> during tuning to confirm the
+  block boundaries look correct.</p>
+</li>
+</ul>
+<h2 id="advanced-tips">Advanced Tips<a class="headerlink" href="#advanced-tips" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>Custom timestamp formats</strong>: <code>--multiline 'timestamp:format=%d/%b/%Y:%H:%M:%S %z'</code>
+  mirrors Apache/Nginx access log headers.</p>
+</li>
+<li>
+<p><strong>Prefix extraction</strong>: When container runtimes prepend metadata, run
+  <code>--extract-prefix</code> <em>before</em> multiline so the separator line is preserved.</p>
+</li>
+<li>
+<p><strong>Parallel mode</strong>: With <code>--parallel</code>, tune <code>--batch-size</code> and
+  <code>--batch-timeout</code> if you have extremely large blocks to prevent workers from
+  buffering too much at once.</p>
+</li>
+<li>
+<p><strong>Fallback for JSON/YAML</strong>: Complex nested documents may require <code>regex</code>
+  boundaries or pre-processing (for example, <code>jq</code>) because closing braces often
+  return to column zero, breaking the <code>indent</code> heuristic.</p>
+</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>Strategy misfires</strong>: If you see every line printed individually, your start
+  detector did not trigger. Try <code>--multiline regex</code> with an explicit pattern, or
+  switch to <code>timestamp</code> with a format hint.</p>
+</li>
+<li>
+<p><strong>A preset splits a trace it should recognize</strong>: presets match the
+  language's standard trace shapes; unusual output (a multi-line exception
+  message, a custom formatter) can fall outside them. Inspect the boundary
+  with <code>-f raw -F json --take 5</code>; if the shape is genuinely standard, that is
+  a preset gap worth reporting. <code>regex:match=</code> remains the escape hatch.</p>
+</li>
+<li>
+<p><strong>Fewer events with multiline than without</strong>: the grouped block no longer
+  parses as the chosen format, so each failing event is dropped. The parse
+  error names a symptom (<code>Key cannot contain spaces</code>,
+  <code>Invalid combined log format</code>) and the hint beside it names the cause. See
+  <a href="#choosing-the-right-parser">Choosing the Right Parser</a>.</p>
+</li>
+<li>
+<p><strong>Events merge that should split</strong>: with <code>timestamp</code>, lock-in may have
+  latched onto the wrong format if the file's first line looks time-like but
+  isn't a real header. Pin the format with <code>timestamp:format=...</code> or disable
+  locking with <code>timestamp:loose</code>.</p>
+</li>
+<li>
+<p><strong>Events split on a live stream</strong>: a pause longer than the idle timeout
+  flushes the buffered event. Raise <code>--multiline-timeout</code> (or <code>0</code> to never
+  flush early).</p>
+</li>
+<li>
+<p><strong>Truncated blocks</strong>: For JSON or YAML, remember that closing braces/brackets
+  often start at column zero. Use regex boundaries that match <code>^}</code> or <code>^\]</code> to
+  keep the termination line.</p>
+</li>
+<li>
+<p><strong>Out-of-memory risk</strong>: <code>--multiline all</code> accumulates the entire input by
+  design. For the other strategies, <code>--multiline-max-lines</code> (default 10000)
+  caps runaway buffering from a never-matching pattern and warns when it
+  splits.</p>
+</li>
+<li>
+<p><strong>Context flags</strong>: <code>-A/-B/-C</code> require a sliding window. If you combine context
+  with multiline, increase <code>--window</code> so the context has enough buffered events.</p>
+</li>
+</ul>
+<h2 id="related-reading">Related Reading<a class="headerlink" href="#related-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><a href="../pipeline-model/">Pipeline Model</a> – see where multiline sits relative to
+  parsing and transformation.</p>
+</li>
+<li>
+<p><a href="../../reference/cli-reference/#input-options">Reference: CLI Options</a> – full
+  flag syntax for <code>--multiline</code>, <code>--extract-prefix</code>, and timestamp controls.</p>
+</li>
+<li>
+<p><a href="../../tutorials/parsing-custom-formats/">Tutorial: Parsing Custom Formats</a> –
+  practical recipes that often start with multiline normalization.</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
