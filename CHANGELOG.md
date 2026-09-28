@@ -4,6 +4,16 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.1] - 2026-09-28
+
+### Fixed
+
+- **`cargo install kelora` builds again, and uses the same grok code as the release binaries** - 2.1.0 never reached crates.io: its package failed to compile because kelora's patched copy of the grok crate was a `[patch]` override, which `cargo publish` ignores. Earlier crates.io releases were silently affected too: they built against upstream grok, so `cargo install` needed libclang (for bindgen) and missed kelora's grok fixes. The grok code now ships inside kelora (`src/drain/grok/`, Apache-2.0), so every install path builds the same code. Behavior is identical to the 2.1.0 release binaries.
+
+### Changed
+
+- **Package license is now `MIT AND Apache-2.0`** - This reflects the Apache-2.0 grok code and patterns now bundled in the crate. Everything else stays MIT.
+
 ## [2.1.0] - 2026-09-28
 
 Headline changes: stack-trace presets for `--multiline`, `--span-summary` for per-window rollups without a script, `--drain-diff` for comparing two logs at the template level, and a rebuilt `--drain` clustering engine. The rest is fixes, mostly in multiline handling, timestamps, and diagnostics.
@@ -1013,7 +1023,8 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/dloss/kelora/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/dloss/kelora/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/dloss/kelora/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/dloss/kelora/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/dloss/kelora/compare/v1.5.0...v2.0.0
