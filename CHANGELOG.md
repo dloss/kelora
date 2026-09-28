@@ -4,7 +4,7 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [2.1.0] - 2026-09-27
+## [2.1.0] - 2026-09-28
 
 Headline changes: stack-trace presets for `--multiline`, `--span-summary` for per-window rollups without a script, `--drain-diff` for comparing two logs at the template level, and a rebuilt `--drain` clustering engine. The rest is fixes, mostly in multiline handling, timestamps, and diagnostics.
 
