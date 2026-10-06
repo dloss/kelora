@@ -8,7 +8,12 @@
 //
 // A command passes when it exits 0, prints nothing on stderr (no error, warning,
 // or hint — a hint on a skill example usually means a wrong field name), and
-// writes something to stdout unless it redirects stdout itself.
+// writes something to stdout.
+//
+// No shell is involved: each line is split into arguments here and the kelora
+// binary is launched directly, so nothing but kelora can run. Lines must start
+// with `kelora`; pipes, `;`, `&&` and the like are rejected rather than executed.
+// A trailing `> file` redirect is dropped (stdout is captured either way).
 
 use chrono::{Duration, Local, Utc};
 use std::fs;
@@ -40,6 +45,84 @@ fn bash_commands(markdown: &str) -> Vec<String> {
         commands.push(std::mem::take(&mut pending));
     }
     commands
+}
+
+/// Split one example line into kelora's arguments, the way sh would for the
+/// subset the skill uses: words, '...' and "..." quoting, `#` comments, and an
+/// optional trailing `> file`.
+fn parse_command(line: &str) -> Result<Vec<String>, String> {
+    // Each word with whether any part of it was quoted (a quoted `>` is data).
+    let mut words: Vec<(String, bool)> = Vec::new();
+    let mut chars = line.chars().peekable();
+    loop {
+        while chars.next_if(|c| c.is_whitespace()).is_some() {}
+        let Some(&first) = chars.peek() else { break };
+        if first == '#' {
+            break;
+        }
+        let mut word = String::new();
+        let mut quoted = false;
+        while let Some(&c) = chars.peek() {
+            if c.is_whitespace() {
+                break;
+            }
+            chars.next();
+            match c {
+                '\'' => {
+                    quoted = true;
+                    loop {
+                        match chars.next() {
+                            Some('\'') => break,
+                            Some(c) => word.push(c),
+                            None => return Err("unterminated single quote".into()),
+                        }
+                    }
+                }
+                '"' => {
+                    quoted = true;
+                    loop {
+                        match chars.next() {
+                            Some('"') => break,
+                            Some('\\') => match chars.next() {
+                                Some(c @ ('"' | '\\' | '$' | '`')) => word.push(c),
+                                Some(c) => {
+                                    word.push('\\');
+                                    word.push(c);
+                                }
+                                None => return Err("dangling backslash".into()),
+                            },
+                            Some(c @ ('$' | '`')) => {
+                                return Err(format!("shell expansion `{c}` in double quotes"))
+                            }
+                            Some(c) => word.push(c),
+                            None => return Err("unterminated double quote".into()),
+                        }
+                    }
+                }
+                '|' | ';' | '&' | '<' | '$' | '`' | '(' | ')' | '*' | '?' => {
+                    return Err(format!("shell syntax `{c}` outside quotes"))
+                }
+                c => word.push(c),
+            }
+        }
+        words.push((word, quoted));
+    }
+
+    if let Some(pos) = words.iter().position(|(w, q)| !q && w == ">") {
+        if pos + 2 != words.len() {
+            return Err("`>` must be followed by exactly one file name at the end".into());
+        }
+        words.truncate(pos);
+    }
+    if words.iter().any(|(w, q)| !q && w.contains('>')) {
+        return Err("redirection other than a trailing `> file`".into());
+    }
+    match words.first() {
+        Some((w, false)) if w == "kelora" => {
+            Ok(words.into_iter().skip(1).map(|(w, _)| w).collect())
+        }
+        _ => Err("only `kelora ...` lines can be run".into()),
+    }
 }
 
 /// JSON app log with a level, message, latency and nested user. Timestamps sit in
@@ -91,8 +174,62 @@ fn app_log() -> String {
         .collect()
 }
 
+/// Plain-text Java service output with one multi-frame trace (`-M java`).
+fn java_trace_log() -> String {
+    [
+        "Starting OrderService v2.3.1",
+        "Failed to process order batch 7712",
+        "org.springframework.dao.DataAccessResourceFailureException: could not execute statement",
+        "\tat com.example.orders.BatchWriter.flush(BatchWriter.java:88)",
+        "Caused by: java.sql.SQLTransientConnectionException: Connection is not available",
+        "\tat com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:181)",
+        "\t... 4 more",
+        "Batch 7712 processed on retry",
+    ]
+    .join("\n")
+}
+
+/// Plain-text Python output with two tracebacks (`-M python`).
+fn python_trace_log() -> String {
+    let trace = |n: u32| {
+        format!(
+            "Traceback (most recent call last):\n  File \"worker.py\", line {n}, in run\n    \
+             handle(job)\nKeyError: 'job_{n}'"
+        )
+    };
+    [
+        "worker started".to_string(),
+        trace(10),
+        trace(20),
+        "worker stopped".to_string(),
+    ]
+    .join("\n")
+}
+
+/// One minute of JSON service events; `after` adds a new failure template and
+/// drops the pool-recycle one, so `--drain-diff` has `+`, `-` and `*` rows.
+fn deploy_events(minute_prefix: &str, after: bool) -> String {
+    (0..30)
+        .map(|i| {
+            let msg = match (i % 3, after) {
+                (0, false) => format!("connection pool recycled for db{}.internal", i % 4),
+                (0, true) => format!("worker {i} restarted after heartbeat timeout 30s"),
+                (1, true) if i % 2 == 1 => {
+                    format!("upstream auth.internal returned 503 for request r-{i}")
+                }
+                _ => format!("request r-{i} served in {} ms", 10 + i),
+            };
+            format!(
+                r#"{{"ts":"{minute_prefix}{:02}:{:02}Z","level":"INFO","msg":"{msg}"}}"#,
+                if after { 1 } else { 0 },
+                i
+            ) + "\n"
+        })
+        .collect()
+}
+
 fn write_fixtures(dir: &Path) {
-    let files: [(&str, String); 7] = [
+    let files: [(&str, String); 12] = [
         ("app.log", app_log()),
         (
             "api.log",
@@ -144,9 +281,21 @@ fn write_fixtures(dir: &Path) {
             ]
             .join("\n"),
         ),
+        ("trace.log", java_trace_log()),
+        ("app_py.log", python_trace_log()),
+        ("before.log", deploy_events("2024-01-15T09:", false)),
+        ("after.log", deploy_events("2024-01-15T10:", true)),
+        (
+            "deploy.log",
+            deploy_events("2024-01-15T09:", false)
+                + r#"{"ts":"2024-01-15T10:00:30Z","level":"INFO","msg":"deploy v2.4.0 started"}"#
+                + "\n"
+                + &deploy_events("2024-01-15T10:", true),
+        ),
     ];
     for (name, content) in files {
-        fs::write(dir.join(name), content + "\n").expect("write fixture");
+        // Exactly one trailing newline: a blank last line is not part of any example.
+        fs::write(dir.join(name), content.trim_end().to_string() + "\n").expect("write fixture");
     }
 }
 
@@ -160,6 +309,30 @@ fn skill_md_has_bash_examples() {
 }
 
 #[test]
+fn parse_command_runs_only_kelora() {
+    assert_eq!(
+        parse_command(r#"kelora --filter 'e.n > 1 && e.s == "a|b"' app.log # note"#).unwrap(),
+        ["--filter", r#"e.n > 1 && e.s == "a|b""#, "app.log"]
+    );
+    assert_eq!(
+        parse_command("kelora -F json access.log > out.jsonl").unwrap(),
+        ["-F", "json", "access.log"]
+    );
+    for bad in [
+        "rm -rf app.log",
+        "kelora app.log; rm app.log",
+        "kelora app.log && rm app.log",
+        "kelora app.log | sh",
+        "kelora $(rm app.log)",
+        "kelora \"$(rm app.log)\"",
+        "kelora app.log > a > b",
+        "'kelora' app.log",
+    ] {
+        assert!(parse_command(bad).is_err(), "should refuse: {bad}");
+    }
+}
+
+#[test]
 fn skill_md_bash_examples_run_cleanly() {
     let skill = fs::read_to_string(SKILL_PATH).expect("read SKILL.md");
     let dir = tempfile::tempdir().expect("temp dir");
@@ -168,22 +341,24 @@ fn skill_md_bash_examples_run_cleanly() {
     let kelora = env!("CARGO_BIN_EXE_kelora");
     let mut failures = Vec::new();
     for cmd in bash_commands(&skill) {
-        // `kelora` in the skill resolves to the binary under test, regardless of PATH.
-        let script = format!("kelora() {{ \"$KELORA_BIN\" \"$@\"; }}\n{cmd}");
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg(&script)
+        let args = match parse_command(&cmd) {
+            Ok(parsed) => parsed,
+            Err(why) => {
+                failures.push(format!("  $ {cmd}\n    not runnable: {why}"));
+                continue;
+            }
+        };
+        let output = Command::new(kelora)
+            .args(&args)
             .current_dir(dir.path())
-            .env("KELORA_BIN", kelora)
             .env("LLVM_PROFILE_FILE", "/dev/null")
             .env_remove("KELORA_NO_WARNINGS")
             .env_remove("KELORA_NO_HINTS")
             .output()
-            .expect("run sh");
+            .expect("run kelora");
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let redirects_stdout = cmd.contains(" > ");
         let mut problems = Vec::new();
         if !output.status.success() {
             problems.push(format!("exit {:?}", output.status.code()));
@@ -191,7 +366,7 @@ fn skill_md_bash_examples_run_cleanly() {
         if !stderr.trim().is_empty() {
             problems.push(format!("stderr: {}", stderr.trim()));
         }
-        if !redirects_stdout && stdout.trim().is_empty() {
+        if stdout.trim().is_empty() {
             problems.push("no output on stdout".to_string());
         }
         if !problems.is_empty() {
