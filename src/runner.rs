@@ -825,6 +825,13 @@ fn parse_merge_timestamp(
     line: &str,
     ts_config: &crate::timestamp::TsConfig,
 ) -> Result<MergeTimestampResult> {
+    // A blank line holds no event, so it has no timestamp to merge on. The main
+    // pipeline skips blank lines too; without this, a trailing empty line aborted
+    // the whole merge with a parse error ("Invalid JSON: EOF").
+    if line.trim().is_empty() {
+        return Ok(MergeTimestampResult::SkipLine);
+    }
+
     let mut event = match parser {
         MergeTimestampParser::Generic(parser) => parser.parse(line)?,
     };

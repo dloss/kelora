@@ -507,6 +507,78 @@ fn test_merge_sorted_merges_files_chronologically() {
 }
 
 #[test]
+fn test_merge_sorted_skips_blank_lines() {
+    // Regression: a blank line (leading, interior, whitespace-only, or a trailing
+    // empty line) aborted the merge with "Invalid JSON: EOF", although a normal
+    // read of the same file skips it.
+    let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
+    let mut temp_file2 = NamedTempFile::new().expect("Failed to create temp file");
+
+    temp_file1
+        .write_all(
+            b"\n{\"ts\":\"2025-01-01T00:00:02Z\",\"msg\":\"b\"}\n  \n{\"ts\":\"2025-01-01T00:00:04Z\",\"msg\":\"d\"}\n\n",
+        )
+        .expect("Failed to write to temp file");
+    temp_file2
+        .write_all(
+            b"{\"ts\":\"2025-01-01T00:00:01Z\",\"msg\":\"a\"}\n\r\n{\"ts\":\"2025-01-01T00:00:03Z\",\"msg\":\"c\"}\n",
+        )
+        .expect("Failed to write to temp file");
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(
+        &["-f", "json", "-F", "json", "--merge-sorted"],
+        &[
+            temp_file1.path().to_str().unwrap(),
+            temp_file2.path().to_str().unwrap(),
+        ],
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "blank lines must not abort the merge: {stderr}"
+    );
+    let messages: Vec<String> = stdout
+        .lines()
+        .map(|line| {
+            serde_json::from_str::<serde_json::Value>(line)
+                .expect("Output line should be JSON")
+                .get("msg")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string()
+        })
+        .collect();
+    assert_eq!(messages, vec!["a", "b", "c", "d"]);
+}
+
+#[test]
+fn test_merge_sorted_blank_only_file_still_has_no_events() {
+    // Skipping blanks must not hide a file that yields nothing to merge.
+    let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
+    let mut temp_file2 = NamedTempFile::new().expect("Failed to create temp file");
+    temp_file1
+        .write_all(b"{\"ts\":\"2025-01-01T00:00:01Z\",\"msg\":\"a\"}\n")
+        .expect("Failed to write to temp file");
+    temp_file2
+        .write_all(b"\n\n")
+        .expect("Failed to write to temp file");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(
+        &["-f", "json", "--merge-sorted"],
+        &[
+            temp_file1.path().to_str().unwrap(),
+            temp_file2.path().to_str().unwrap(),
+        ],
+    );
+
+    assert_eq!(exit_code, 1, "stderr: {stderr}");
+    assert!(
+        stderr.contains("requires each input file to produce at least one timestamped event"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
 fn test_merge_sorted_auto_detects_standard_timestamp_field_names() {
     let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
     let mut temp_file2 = NamedTempFile::new().expect("Failed to create temp file");

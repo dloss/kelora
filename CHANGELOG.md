@@ -4,6 +4,12 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- **`--merge-sorted` no longer aborts on a blank line** - A blank line anywhere in an input, including the empty last line many tools write, stopped the merge with `failed to parse line for --merge-sorted ... Invalid JSON: EOF`, although a normal read of the same file skips it. Blank lines are now skipped while merging, and error messages still report the correct line numbers.
+
 ## [2.1.1] - 2026-09-28
 
 ### Fixed
