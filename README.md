@@ -113,7 +113,7 @@ See [Power-User Techniques](https://kelora.dev/latest/how-to/power-user-techniqu
 **macOS (Homebrew):**
 
 ```bash
-brew tap dloss/kelora && brew install kelora
+brew install dloss/kelora/kelora
 ```
 
 **Linux (binary):**

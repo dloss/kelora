@@ -402,7 +402,7 @@ The **2.0** line. The headline changes are a redesigned tracking-function family
 
 ### Added
 
-- **Homebrew tap support** - Install via `brew install dloss/tap/kelora`
+- **Homebrew tap support** - Install via `brew install dloss/kelora/kelora`
 - **Debian package builds** - `.deb` packages now included in GitHub releases
 - **RPM package builds** - `.rpm` packages now included in GitHub releases
 

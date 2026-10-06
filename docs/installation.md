@@ -3,7 +3,7 @@
 === "macOS"
 
     ```bash
-    brew tap dloss/kelora && brew install kelora
+    brew install dloss/kelora/kelora
     ```
 
     Or download a signed binary: [Apple Silicon](https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz) | [Intel](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz)
