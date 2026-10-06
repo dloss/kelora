@@ -31,7 +31,9 @@ kelora --discover app.log          # Field names, types, cardinality, samples (-
 kelora --drain -k msg app.log      # Cluster near-duplicate lines into templates
 ```
 
-`--discover` reports the detected format and how every field maps. `--drain` collapses noisy, near-identical messages into a handful of templates so you see what's actually happening.
+`--discover` reports the detected format and how every field maps. `--drain` collapses noisy, near-identical messages into a handful of templates so you see what's actually happening; it needs exactly one text field in `-k`, so take the name from `--discover` (often `msg` or `message`).
+
+Field names depend on the format — e.g. syslog yields `ts`, `host`, `level`, `msg`, not `timestamp`/`message`. Check `--discover` before writing `-k` lists or filters.
 
 ## Core Patterns
 
@@ -39,7 +41,8 @@ kelora --drain -k msg app.log      # Cluster near-duplicate lines into templates
 ```bash
 kelora -l ERROR,WARN app.log                          # By level
 kelora --filter 'e.status >= 500' api.log             # By expression
-kelora --since "1 hour ago" --until now app.log       # By time
+kelora --since 1h app.log                             # Last hour (also: now-15m, 2024-01-15T10:00:00Z)
+kelora --since 10:00 --until since+30m app.log        # Anchored window
 ```
 
 **Transform:**
@@ -52,7 +55,7 @@ kelora -e 'e.absorb_json("data")' events.log          # Parse embedded JSON
 ```bash
 kelora -f combined -J access.log > access.jsonl       # Apache to JSON
 kelora -j -F logfmt events.jsonl                      # JSON to logfmt
-kelora -f syslog -F csv syslog.log                    # Syslog to CSV
+kelora -f syslog -F csv -k ts,host,level,msg syslog.log  # Syslog to CSV (csv needs -k)
 ```
 
 **Mixed formats in one file (cascade):** try each parser per line, first success wins; the winner is tagged in `_format`.
@@ -89,14 +92,14 @@ e.has("field")       // Check exists
 | Option | Purpose |
 |--------|---------|
 | `-f <fmt>` | Input format (auto/json/logfmt/syslog/combined/csv/cols:.../regex:...); comma-list or repeated `-f` builds a cascade |
-| `-F <fmt>` | Output format (default/json/logfmt/csv/tsv/inspect/levelmap/keymap/tailmap) |
+| `-F <fmt>` | Output format (default/json/logfmt/csv/tsv/inspect/levelmap/keymap/tailmap); csv/tsv need `-k` for column order, keymap/tailmap need exactly one field in `-k` |
 | `-j` / `-J` | Shorthand for `-f json` / `-F json` |
 | `--filter` | Boolean expression filter |
 | `-e` / `-E` | Rhai script / script file per event |
 | `--begin` / `--end` | Run once before / after processing |
 | `-l` / `-L` | Include / exclude log levels |
-| `-k` / `-K` | Include / exclude top-level fields |
-| `-n` / `--head` | Limit output events / input lines (faster) |
+| `-k` / `-K` | Include / exclude top-level fields (nested paths like `user.id` are not selectable — flatten first: `-e 'e.uid = e.get_path("user.id")' -k uid`) |
+| `-n` (`--take`) / `--head` | Limit output events / input lines (faster) |
 | `--since` / `--until` | Time-window filter (journalctl-style) |
 | `-d` / `-D` | Profile fields (input / final) |
 | `--drain` | Cluster lines into message templates |
