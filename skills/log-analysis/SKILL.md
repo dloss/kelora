@@ -70,12 +70,12 @@ Presets: `java`, `python`, `go`, plus `timestamp`, `indent`, `blank` (paragraphs
 `--drain-diff` compares message templates between two logs, ignoring the variable parts (IDs, numbers, durations):
 
 ```bash
-kelora --drain-diff -k msg before.log after.log                  # Two files: baseline, target
+kelora --drain-diff=table -k msg before.log after.log            # Two files: baseline, target
 kelora --drain-diff -k msg --cut-at 2024-01-15T10:00:30Z deploy.log   # One file, split at a time
 kelora --drain-diff -k msg --cut-before 'e.msg.contains("deploy")' deploy.log  # ...or at the first match
 ```
 
-Output reads like a diff: `+` templates only in the target, `-` templates that disappeared, `*` templates whose rate changed materially.
+The `table` view reads like a diff: `+` templates only in the target, `-` templates that disappeared, `*` templates whose rate changed materially (e.g. "14x more"), plus a footer on what stayed the same. Without `=table`, piped output is TSV (`new`/`gone`/`freq_changed` rows, no footer); use `=json` to parse it.
 
 ## 4. Transform and Convert
 
