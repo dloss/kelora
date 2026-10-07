@@ -72,7 +72,7 @@ it refuses the combination. `state` raises a script error on every event — the
 
 ## How fast is it?
 
-Fast enough for most log work, and slower than tools built for one job.
+Kelora favors flexibility over speed, and tools built for one job are faster.
 Built-in options like `-l`, `--keep-lines`, and `--freq` are several times
 faster than scripts that run on every event; `--parallel` gave about 3× on six
 cores. Plain-text search (`rg`),
