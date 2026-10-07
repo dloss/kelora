@@ -2196,6 +2196,16 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
             .try_into()
             .map_err(|_| anyhow::anyhow!("--span duration is too large"))?;
 
+        // Checked after the millisecond conversion, not before: a sub-ms
+        // duration is non-zero as a Duration but truncates to 0 ms here, and
+        // window alignment divides by it (#414).
+        if duration_ms == 0 {
+            return Err(anyhow::anyhow!(
+                "--span duration must be at least 1ms (got '{}'); span windows are tracked in milliseconds",
+                span_spec
+            ));
+        }
+
         return Ok(Some(SpanConfig {
             mode: SpanMode::Time { duration_ms },
             close_script: cli.span_close.clone(),

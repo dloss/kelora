@@ -776,3 +776,29 @@ fn time_span_ignores_events_outside_since_until() {
         "only windows inside the range; the filtered INFO event keeps its window"
     );
 }
+
+// --- duration validation -----------------------------------------------------
+
+#[test]
+fn sub_millisecond_span_is_a_usage_error_not_a_panic() {
+    // #414: a sub-ms duration truncated to 0 ms and divided by zero during
+    // window alignment, aborting the process under the release profile.
+    for spec in ["999us", "500us", "1us", "1ns"] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(
+            &["-f", "json", "--span", spec, "--span-summary=text"],
+            SUMMARY_INPUT,
+        );
+        assert_eq!(exit_code, 2, "{spec}: {stderr}");
+        assert!(
+            stderr.contains("--span duration must be at least 1ms"),
+            "{spec}: {stderr}"
+        );
+        assert!(!stderr.contains("panicked"), "{spec}: {stderr}");
+    }
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "1ms", "--span-summary=text"],
+        SUMMARY_INPUT,
+    );
+    assert_eq!(exit_code, 0, "{stderr}");
+}
