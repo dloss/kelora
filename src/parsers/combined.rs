@@ -308,9 +308,120 @@ impl EventParser for CombinedParser {
         else if let Some(event) = self.try_parse_common(line) {
             Ok(event)
         } else {
-            Err(anyhow::anyhow!("Invalid combined log format"))
+            Err(anyhow::anyhow!(
+                "Invalid combined log format: {}",
+                diagnose_combined_failure(line)
+            ))
         }
     }
+}
+
+/// The parts of a combined/common log line in order, each with the pattern for
+/// the part *including* its leading separator. Mirrors the parse regexes above;
+/// used only on the failure path to say where a line stopped matching (#362).
+static COMBINED_PARTS: std::sync::LazyLock<Vec<(&'static str, &'static str, Regex)>> =
+    std::sync::LazyLock::new(|| {
+        [
+            ("ip", "a client address", r"^\S+"),
+            ("identity", "an identity field ('-' if unused)", r"^ \S+"),
+            ("user", "a user field ('-' if unused)", r"^ \S+"),
+            ("ts", "a timestamp in [brackets]", r"^ \[[^\]]+\]"),
+            (
+                "request",
+                "a quoted request (\"GET /path HTTP/1.1\")",
+                r#"^ "[^"]*""#,
+            ),
+            ("status", "a numeric status code", r"^ \d+"),
+            ("bytes", "a byte count ('-' if none)", r"^ \S+"),
+        ]
+        .into_iter()
+        .map(|(name, what, re)| {
+            (
+                name,
+                what,
+                Regex::new(re).expect("valid combined part regex"),
+            )
+        })
+        .collect()
+    });
+
+static COMBINED_REFERER_AGENT: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
+    Regex::new(r#"^ "[^"]*" "[^"]*""#).expect("valid referer/user_agent regex")
+});
+
+static COMBINED_REQUEST_TIME: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
+    Regex::new(r#"^ (?:"[^"]*"|[0-9]+(?:\.[0-9]+)?)"#).expect("valid request_time regex")
+});
+
+/// Explain where `line` stops being a combined/common log line: either which
+/// leading part did not match, or what unexpected text follows the last part
+/// that did. The parser stays strict — this only names the reason.
+fn diagnose_combined_failure(line: &str) -> String {
+    fn column(line: &str, byte_pos: usize) -> usize {
+        line[..byte_pos].chars().count() + 1
+    }
+    fn snippet(text: &str) -> String {
+        const MAX_CHARS: usize = 40;
+        if text.chars().count() > MAX_CHARS {
+            let cut: String = text.chars().take(MAX_CHARS - 3).collect();
+            format!("{cut}...")
+        } else {
+            text.to_string()
+        }
+    }
+
+    let mut pos = 0;
+    for (i, (_, what, re)) in COMBINED_PARTS.iter().enumerate() {
+        match re.find(&line[pos..]) {
+            Some(m) => pos += m.end(),
+            None => {
+                // Every part after the first is preceded by exactly one space.
+                let sep = if i == 0 { 0 } else { 1 };
+                let rest = &line[pos..];
+                let found = rest.get(sep..).unwrap_or("");
+                let col = column(line, (pos + sep).min(line.len()));
+                return if rest.trim().is_empty() {
+                    format!("line ends at column {col} where {what} was expected")
+                } else if found.starts_with(char::is_whitespace) {
+                    format!("extra whitespace at column {col} where {what} was expected")
+                } else {
+                    format!(
+                        "expected {what} at column {col}, found '{}'",
+                        snippet(found)
+                    )
+                };
+            }
+        }
+    }
+
+    let mut last = "bytes";
+    if let Some(m) = COMBINED_REFERER_AGENT.find(&line[pos..]) {
+        pos += m.end();
+        last = "user_agent";
+        if let Some(m) = COMBINED_REQUEST_TIME.find(&line[pos..]) {
+            pos += m.end();
+            last = "request_time";
+        }
+    }
+
+    let rest = &line[pos..];
+    let trimmed = rest.trim_start();
+    let col = column(line, pos + (rest.len() - trimmed.len()));
+    if trimmed.is_empty() {
+        return format!(
+            "unexpected trailing whitespace after {last} at column {}",
+            column(line, pos)
+        );
+    }
+    let expected = match last {
+        "bytes" => "end of line, or \"referer\" \"user_agent\"",
+        "user_agent" => "end of line, or a request_time",
+        _ => "end of line",
+    };
+    format!(
+        "unexpected trailing text after {last} at column {col}: '{}' (expected {expected})",
+        snippet(trimmed)
+    )
 }
 
 #[cfg(test)]
@@ -583,6 +694,72 @@ mod tests {
         let parser = CombinedParser::new().unwrap();
         let line = "This is not a log line";
         assert!(EventParser::parse(&parser, line).is_err());
+    }
+
+    fn parse_error(line: &str) -> String {
+        let parser = CombinedParser::new().unwrap();
+        EventParser::parse(&parser, line).unwrap_err().to_string()
+    }
+
+    #[test]
+    fn test_error_names_trailing_text_after_user_agent() {
+        // #362: one extra field after user_agent must be named, not just rejected.
+        let err = parse_error(
+            r#"10.0.4.77 - - [14/Jul/2024:00:01:02 +0000] "PUT /v1/users/me HTTP/1.1" 200 2314 "https://acme.example/cart" "curl/8.4.0" trace=abc123"#,
+        );
+        assert_eq!(
+            err,
+            "Invalid combined log format: unexpected trailing text after user_agent at column 122: 'trace=abc123' (expected end of line, or a request_time)"
+        );
+    }
+
+    #[test]
+    fn test_error_names_trailing_text_after_request_time() {
+        let err = parse_error(
+            r#"10.0.0.1 - - [26/Jul/2026:13:40:00 +0000] "GET /x HTTP/1.1" 200 123 "-" "curl/8" 0.010 upstream=api"#,
+        );
+        assert!(
+            err.contains("unexpected trailing text after request_time")
+                && err.contains("'upstream=api'"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn test_error_names_trailing_text_after_bytes() {
+        let err = parse_error(
+            r#"10.0.0.1 - - [26/Jul/2026:13:40:00 +0000] "GET /x HTTP/1.1" 200 123 rt=0.1"#,
+        );
+        assert!(
+            err.contains("unexpected trailing text after bytes") && err.contains("'rt=0.1'"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn test_error_names_the_leading_part_that_did_not_match() {
+        let err = parse_error(r#"10.0.0.1 - - 26/Jul/2026:13:40:00 "GET / HTTP/1.1" 200 1"#);
+        assert!(
+            err.contains("expected a timestamp in [brackets] at column 14, found '26/Jul"),
+            "{err}"
+        );
+
+        let err = parse_error(r#"10.0.0.1 - - [26/Jul/2026:13:40:00 +0000] "GET / HTTP/1.1" OK 1"#);
+        assert!(err.contains("expected a numeric status code"), "{err}");
+
+        let err = parse_error("garbage");
+        assert!(
+            err.contains("line ends at column 8 where an identity field"),
+            "{err}"
+        );
+
+        let err = parse_error(
+            r#"10.0.0.1 - - [26/Jul/2026:13:40:00 +0000] "GET / HTTP/1.1" 200 1 "-" "ua" "#,
+        );
+        assert!(
+            err.contains("unexpected trailing whitespace after user_agent"),
+            "{err}"
+        );
     }
 
     #[test]

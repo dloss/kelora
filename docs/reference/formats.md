@@ -120,6 +120,8 @@ Handles Common Log Format, Combined, and Nginx Combined with a trailing request 
 
 Any field whose value is `-` is omitted.
 
+A line with anything after `user_agent` and the optional request time (an nginx `log_format` with extra fields such as `rt=` or `upstream=`) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. `unexpected trailing text after user_agent at column 122: 'trace=abc123'`; parse such logs with a `regex:` format that captures the extra fields.
+
 ### CEF Format
 
 ```
