@@ -104,7 +104,7 @@ Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's
 - **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
 - **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
 
-Simple filters and summaries handle multi-gigabyte files comfortably; scripts that run on every event are several times slower ([benchmarks](https://kelora.dev/latest/reference/benchmarks/)). Tools built for one job — `rg`/`grep` for text search, `jq` for JSON — are faster at it; pipe them in front or behind.
+Kelora favors flexibility over speed: line and level filters are quick, while parsing text formats, scripts, and most summaries are much slower, so cut large files down first ([benchmarks](https://kelora.dev/latest/reference/benchmarks/)). Tools built for one job — `rg`/`grep` for text search, `jq` for JSON — are faster at it; pipe them in front or behind.
 
 The [Cookbook](https://kelora.dev/latest/cookbook/) has ready-made commands for incident triage, web traffic, security, privacy, and monitoring.
 

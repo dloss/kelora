@@ -74,9 +74,11 @@ with a script. [Get Logs into Shape](guide/parse.md) covers all of it.
   macOS, and Windows ([all options](installation.md)).
 - **Input:** files, `.gz` and `.zst`, globs, or stdin:
   `tail -F app.log | kelora -l error`.
-- **Speed:** simple filters and summaries handle multi-gigabyte files
-  comfortably; scripts that run on every event are slower. For big jobs, filter
-  with `rg` first or add `--parallel` ([benchmarks](reference/benchmarks.md)).
+- **Speed:** Kelora favors flexibility over speed. Line filters
+  (`--keep-lines`), level filters, and simple field comparisons are quick;
+  parsing text formats, scripts, and most summaries are much slower. For large
+  files, cut them down first — with `rg`, `--keep-lines`, or `--since` — or use
+  `--parallel` for batch jobs ([benchmarks](reference/benchmarks.md)).
 - **Scripting:** [Rhai](https://rhai.rs), for what the options can't express:
   `--filter 'e.status >= 500 && e.path.starts_with("/api")'`.
 - **Video:** a [5-minute introduction](https://www.youtube.com/watch?v=IwkicmS3RYo)
