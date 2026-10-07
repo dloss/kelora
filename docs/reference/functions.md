@@ -1632,7 +1632,7 @@ A read-only `span` object exists while a `--span-close` script runs (with `--spa
 | count (`--span 100`) | `#0`, `#1`, … | same as id |
 | time (`--span 5m`) | `2024-05-19T12:00:00Z/5m` | `2024-05-19T12:00:00Z` |
 | field (`--span service`) | the field value, e.g. `api` | same as id |
-| idle (`--span-idle 5m`) | `idle-#0-2024-05-19T12:01:00+00:00` | `2024-05-19T12:01:00Z` |
+| idle (`--span-idle 5m`) | `idle-#0-2024-05-19T12:01:00Z` | `2024-05-19T12:01:00Z` |
 
 ```rhai
 print(span.label + ": " + span.size + " events");

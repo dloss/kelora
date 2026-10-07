@@ -796,6 +796,30 @@ fn span_metric_returns_unit_for_an_omitted_non_additive_metric() {
 }
 
 #[test]
+fn idle_span_ids_use_z_like_time_span_ids() {
+    // #421: idle ids used `+00:00` where time ids and labels use `Z`.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span-idle",
+            "30s",
+            "--span-close",
+            "print(span.id)",
+        ],
+        SUMMARY_INPUT,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(
+        stdout.trim_end().lines().next(),
+        Some("idle-#0-2024-01-15T10:00:00Z"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn span_label_falls_back_to_the_id_when_there_is_no_start() {
     let (stdout, _stderr, exit_code) = run_kelora_with_input(
         &[

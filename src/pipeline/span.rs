@@ -223,7 +223,12 @@ impl ActiveSpan {
     ) -> Self {
         Self {
             sequence,
-            span_id: format!("idle-#{}-{}", sequence, start_ts.to_rfc3339()),
+            // `Z`, not `+00:00`, matching time span ids and span.label (#421).
+            span_id: format!(
+                "idle-#{}-{}",
+                sequence,
+                start_ts.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
+            ),
             span_start: Some(start_ts),
             span_end: Some(start_ts),
             last_event_timestamp: Some(start_ts),
