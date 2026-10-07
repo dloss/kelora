@@ -1,0 +1,5416 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.2.0/reference/cli-reference/">
+      
+      
+        <link rel="prev" href="../../how-it-works/">
+      
+      
+        <link rel="next" href="../formats/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CLI Options - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cli-options" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CLI Options
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/explore/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/security-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [FILES]...
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -h, --help
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -V, --version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -f, --input-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opt-j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -j
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --file-order &lt;ORDER&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-sorted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --merge-sorted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --skip-lines &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#head" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --head &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-from &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-after &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-before &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-through &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --max-sections &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --keep-lines &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-lines &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ts-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ts-field &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ts-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ts-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-tz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --input-tz &lt;TZ&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-year" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --input-year &lt;YEAR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -M, --multiline &lt;STRATEGY&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-join" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-join &lt;JOIN&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-timeout &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-max-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-max-lines &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --extract-prefix &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-sep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --prefix-sep &lt;SEP&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cols-sep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cols-sep &lt;SEP&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-line-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --max-line-bytes &lt;SIZE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processing Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#begin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --begin &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --filter &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -e, --exec &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -E, --exec-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --assert &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#include" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -I, --include &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --end &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allow-fs-writes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --allow-fs-writes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --window &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span &lt;N|DURATION|FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-idle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-idle &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-close &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-summary[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalize-ts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --normalize-ts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --strict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strict-utf8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --strict-utf8
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verbose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -v, --verbose...
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filtering Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -l, --levels &lt;LEVELS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -L, --exclude-levels &lt;EXCLUDE_LEVELS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -k, --keys &lt;KEYS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -K, --exclude-keys &lt;EXCLUDE_KEYS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#since" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --since &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#until" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --until &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#take" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -n, --take &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#before-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -B, --before-context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -A, --after-context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -C, --context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -F, --output-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opt-J" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -J
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -c, --core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -o, --output-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quiet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -q, --quiet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#silent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --silent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#script-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --script-output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --legend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-legend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-legend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Format Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default Format Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#brief" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -b, --brief
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expand-nested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --expand-nested
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --wrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-wrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-wrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-ts-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -z, --show-ts-local
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-ts-utc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -Z, --show-ts-utc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Display Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#force-color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --force-color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mark-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --mark-gaps &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force-emoji" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --force-emoji
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-emoji" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-emoji
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parallel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -P, --parallel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --threads &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --batch-size &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --batch-timeout &lt;MS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unordered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --unordered
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and Stats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics and Stats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -s, --stats[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --with-stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -m, --metrics[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --with-metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --metrics-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --freq &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --describe &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --card &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --drain[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drain-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --drain-diff[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-at" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-at &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-before &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-after &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -d, --discover[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-final" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -D, --discover-final[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover-depth &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --config-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -a, --alias &lt;NAME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --save-alias &lt;NAME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --show-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --edit-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Help Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Help Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#help-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-rhai
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-functions [&lt;KEYWORD&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-multiline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-multiline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-regex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#completions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --completions &lt;COMPLETIONS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [FILES]...
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -h, --help
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -V, --version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -f, --input-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opt-j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -j
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --file-order &lt;ORDER&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-sorted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --merge-sorted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --skip-lines &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#head" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --head &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-from &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-after &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-before &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --section-through &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --max-sections &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --keep-lines &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-lines &lt;REGEX&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ts-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ts-field &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ts-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ts-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-tz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --input-tz &lt;TZ&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-year" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --input-year &lt;YEAR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -M, --multiline &lt;STRATEGY&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-join" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-join &lt;JOIN&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-timeout &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiline-max-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --multiline-max-lines &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --extract-prefix &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-sep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --prefix-sep &lt;SEP&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cols-sep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cols-sep &lt;SEP&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-line-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --max-line-bytes &lt;SIZE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processing Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#begin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --begin &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --filter &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -e, --exec &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -E, --exec-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --assert &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#include" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -I, --include &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --end &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allow-fs-writes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --allow-fs-writes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --window &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span &lt;N|DURATION|FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-idle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-idle &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-close &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-summary[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalize-ts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --normalize-ts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --strict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strict-utf8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --strict-utf8
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verbose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -v, --verbose...
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filtering Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -l, --levels &lt;LEVELS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -L, --exclude-levels &lt;EXCLUDE_LEVELS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -k, --keys &lt;KEYS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -K, --exclude-keys &lt;EXCLUDE_KEYS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#since" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --since &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#until" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --until &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#take" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -n, --take &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#before-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -B, --before-context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -A, --after-context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -C, --context &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -F, --output-format &lt;FORMAT&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opt-J" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -J
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -c, --core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -o, --output-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quiet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -q, --quiet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#silent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --silent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#script-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --script-output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --legend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-legend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-legend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Format Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default Format Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#brief" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -b, --brief
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expand-nested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --expand-nested
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --wrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-wrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-wrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-ts-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -z, --show-ts-local
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-ts-utc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -Z, --show-ts-utc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Display Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#force-color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --force-color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mark-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --mark-gaps &lt;DURATION&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force-emoji" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --force-emoji
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-emoji" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-emoji
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parallel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -P, --parallel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --threads &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --batch-size &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --batch-timeout &lt;MS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unordered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --unordered
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and Stats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics and Stats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -s, --stats[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --with-stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -m, --metrics[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --with-metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --metrics-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --freq &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --describe &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --card &lt;FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --drain[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drain-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --drain-diff[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-at" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-at &lt;TIME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-before &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cut-after" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --cut-after &lt;EXPR&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -d, --discover[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-final" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -D, --discover-final[=&lt;FORMAT&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover-depth &lt;N&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --config-file &lt;FILE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignore-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -a, --alias &lt;NAME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --save-alias &lt;NAME&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --show-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --edit-config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Help Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Help Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#help-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-rhai
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-functions [&lt;KEYWORD&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-multiline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-multiline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-regex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --help-formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#completions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --completions &lt;COMPLETIONS&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cli-options">CLI Options<a class="headerlink" href="#cli-options" title="Permanent link">&para;</a></h1>
+<p>Every command-line option, grouped as in <code>kelora --help</code>. This page is
+generated from the help text of the Kelora version it documents, so the two
+always agree. In the terminal, <code>kelora --help KEYWORD</code> shows only the options
+matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
+<p>Topic references in the terminal: <code>--help-formats</code>, <code>--help-time</code>,
+<code>--help-multiline</code>, <code>--help-regex</code>, <code>--help-rhai</code>, <code>--help-functions</code>,
+<code>--help-examples</code>.</p>
+<p><h2 id="arguments">Arguments<a class="headerlink" href="#arguments" title="Permanent link">&para;</a></h2>
+<h3 id="files"><code>[FILES]...</code><a class="headerlink" href="#files" title="Permanent link">&para;</a></h3>
+<p>Input files (stdin if not specified, or use "-" to explicitly specify stdin)</p>
+<h2 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h2>
+<h3 id="help"><code>-h, --help</code><a class="headerlink" href="#help" title="Permanent link">&para;</a></h3>
+<p>Print help (see a summary with '-h')</p>
+<h3 id="version"><code>-V, --version</code><a class="headerlink" href="#version" title="Permanent link">&para;</a></h3>
+<p>Print version</p>
+<h2 id="input-options">Input Options<a class="headerlink" href="#input-options" title="Permanent link">&para;</a></h2>
+<h3 id="no-input"><code>--no-input</code><a class="headerlink" href="#no-input" title="Permanent link">&para;</a></h3>
+<p>Run without reading input (useful for scripts that only use --begin/--end stages)</p>
+<h3 id="input-format"><code>-f, --input-format &lt;FORMAT&gt;</code><a class="headerlink" href="#input-format" title="Permanent link">&para;</a></h3>
+<p>Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:&lt;spec&gt;, regex:&lt;pattern&gt;. With 'auto', the format is detected from the first non-empty line (stdin) or a sample of the file (files: the head plus, for larger plain files, a few probe windows deeper in); a file that mixes formats is parsed with a cascade of the detected formats automatically. For mixed stdin streams pass a cascade (below) explicitly. Use cols:&lt;spec&gt; for column parsing, regex:&lt;pattern&gt; for regex parsing with named groups, and csv/tsv with optional type annotations. Built-in application-log formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, postgres, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f &lt;name&gt;; most are also recognized by auto-detection. See --help-formats. Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event, unless the record already has one of its own (that value is kept). Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier). Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)', -f 'csv status:int bytes:int'</p>
+<p><em>Default:</em> <code>auto</code></p>
+<h3 id="opt-j"><code>-j</code><a class="headerlink" href="#opt-j" title="Permanent link">&para;</a></h3>
+<p>Shortcut for -f json</p>
+<h3 id="file-order"><code>--file-order &lt;ORDER&gt;</code><a class="headerlink" href="#file-order" title="Permanent link">&para;</a></h3>
+<p>File processing order</p>
+<p><em>Default:</em> <code>cli</code></p>
+<p><em>Values:</em> <code>cli, name, mtime</code></p>
+<h3 id="merge-sorted"><code>--merge-sorted</code><a class="headerlink" href="#merge-sorted" title="Permanent link">&para;</a></h3>
+<p>Merge already-sorted input files by timestamp; aborts on missing timestamps, parse failures, or per-file disorder</p>
+<h3 id="skip-lines"><code>--skip-lines &lt;N&gt;</code><a class="headerlink" href="#skip-lines" title="Permanent link">&para;</a></h3>
+<p>Skip the first N input lines</p>
+<h3 id="head"><code>--head &lt;N&gt;</code><a class="headerlink" href="#head" title="Permanent link">&para;</a></h3>
+<p>Read only the first N input lines (stops I/O early, complementing --take which limits output events)</p>
+<h3 id="section-from"><code>--section-from &lt;REGEX&gt;</code><a class="headerlink" href="#section-from" title="Permanent link">&para;</a></h3>
+<p>Start emitting sections from the line matching this regex (inclusive start). All --section-* regexes are unanchored; use ^...$ to match a whole line</p>
+<h3 id="section-after"><code>--section-after &lt;REGEX&gt;</code><a class="headerlink" href="#section-after" title="Permanent link">&para;</a></h3>
+<p>Start emitting sections after the line matching this regex (exclusive start)</p>
+<h3 id="section-before"><code>--section-before &lt;REGEX&gt;</code><a class="headerlink" href="#section-before" title="Permanent link">&para;</a></h3>
+<p>Stop before the line matching this regex (exclusive end)</p>
+<h3 id="section-through"><code>--section-through &lt;REGEX&gt;</code><a class="headerlink" href="#section-through" title="Permanent link">&para;</a></h3>
+<p>Stop after emitting the line matching this regex (inclusive end)</p>
+<h3 id="max-sections"><code>--max-sections &lt;N&gt;</code><a class="headerlink" href="#max-sections" title="Permanent link">&para;</a></h3>
+<p>Maximum number of sections to process (default: -1 for unlimited)</p>
+<p><em>Default:</em> <code>-1</code></p>
+<h3 id="keep-lines"><code>--keep-lines &lt;REGEX&gt;</code><a class="headerlink" href="#keep-lines" title="Permanent link">&para;</a></h3>
+<p>Keep only input lines matching this regex pattern (applied before ignore-lines)</p>
+<h3 id="ignore-lines"><code>--ignore-lines &lt;REGEX&gt;</code><a class="headerlink" href="#ignore-lines" title="Permanent link">&para;</a></h3>
+<p>Ignore input lines matching this regex pattern</p>
+<h3 id="ts-field"><code>--ts-field &lt;FIELD&gt;</code><a class="headerlink" href="#ts-field" title="Permanent link">&para;</a></h3>
+<p>Custom timestamp field name for parsing</p>
+<h3 id="ts-format"><code>--ts-format &lt;FORMAT&gt;</code><a class="headerlink" href="#ts-format" title="Permanent link">&para;</a></h3>
+<p>Custom timestamp format for parsing (uses chrono format strings)</p>
+<h3 id="input-tz"><code>--input-tz &lt;TZ&gt;</code><a class="headerlink" href="#input-tz" title="Permanent link">&para;</a></h3>
+<p>Assume timezone for input timestamps without timezone info (default: the TZ environment variable if set, else UTC). Use 'local' for system local time. Examples: 'Europe/Berlin', 'local', 'UTC'</p>
+<h3 id="input-year"><code>--input-year &lt;YEAR&gt;</code><a class="headerlink" href="#input-year" title="Permanent link">&para;</a></h3>
+<p>Supply the year for year-less timestamps (syslog, glog, ...) instead of guessing it from the wall clock. Use 'auto' for the ±1yr heuristic (default). Examples: '2005', 'auto'</p>
+<h3 id="multiline"><code>-M, --multiline &lt;STRATEGY&gt;</code><a class="headerlink" href="#multiline" title="Permanent link">&para;</a></h3>
+<p>Multi-line event detection strategy. Supply values like <code>timestamp</code>, <code>timestamp:format=%Y-%m-%d %H-%M-%S</code>, <code>indent</code>, <code>blank</code>, <code>regex:match=^START</code>, <code>regex:match=^START:end=^END$</code>, or a language stack-trace preset (<code>java</code>, <code>python</code>, <code>go</code>) for logs without timestamped headers. See <code>kelora --help-multiline</code> for details</p>
+<h3 id="multiline-join"><code>--multiline-join &lt;JOIN&gt;</code><a class="headerlink" href="#multiline-join" title="Permanent link">&para;</a></h3>
+<p>Join multiline lines with: space, newline, or empty. Default: space (newline for <code>--multiline all</code>)</p>
+<p><em>Values:</em> <code>space, newline, empty</code></p>
+<h3 id="multiline-timeout"><code>--multiline-timeout &lt;DURATION&gt;</code><a class="headerlink" href="#multiline-timeout" title="Permanent link">&para;</a></h3>
+<p>Flush a buffered multiline event after this much input inactivity (e.g. <code>400ms</code>, <code>2s</code>; <code>0</code> = never). Default: off when reading regular files, 400ms when reading a stream (stdin, FIFO)</p>
+<h3 id="multiline-max-lines"><code>--multiline-max-lines &lt;N&gt;</code><a class="headerlink" href="#multiline-max-lines" title="Permanent link">&para;</a></h3>
+<p>Split a multiline event after this many buffered lines (safety cap; <code>0</code> = unlimited). Default: 10000. Ignored by <code>--multiline all</code></p>
+<h3 id="extract-prefix"><code>--extract-prefix &lt;FIELD&gt;</code><a class="headerlink" href="#extract-prefix" title="Permanent link">&para;</a></h3>
+<p>Extract text before separator to specified field (runs before parsing)</p>
+<h3 id="prefix-sep"><code>--prefix-sep &lt;SEP&gt;</code><a class="headerlink" href="#prefix-sep" title="Permanent link">&para;</a></h3>
+<p>Separator string for prefix extraction (default: pipe '|')</p>
+<p><em>Default:</em> <code>|</code></p>
+<h3 id="cols-sep"><code>--cols-sep &lt;SEP&gt;</code><a class="headerlink" href="#cols-sep" title="Permanent link">&para;</a></h3>
+<p>Column separator for cols:&lt;spec&gt; format (default: whitespace)</p>
+<h3 id="max-line-bytes"><code>--max-line-bytes &lt;SIZE&gt;</code><a class="headerlink" href="#max-line-bytes" title="Permanent link">&para;</a></h3>
+<p>Cap the number of bytes a single input line may consume in memory (default 64MiB).</p>
+<p>This is a safety circuit breaker against runaway memory: a newline-free stream — including a tiny gzip/zstd payload that decompresses into one enormous line — would otherwise grow without bound and exhaust RAM. No real log line approaches the default, so it normally never triggers.</p>
+<p>When a line exceeds the cap it is truncated to the cap and a warning (🔸) reports how many lines were clipped; the run still succeeds (exit 0). With --strict an over-limit line is a hard error (exit 1) instead. Accepts a byte count or an IEC/SI suffix (64MiB, 1GiB, 1048576); 0/off/unlimited disables the cap.</p>
+<p>Reading is streamed, so a large multi-line compressed file is unaffected — only a single over-long line trips this.</p>
+<h2 id="processing-options">Processing Options<a class="headerlink" href="#processing-options" title="Permanent link">&para;</a></h2>
+<h3 id="begin"><code>--begin &lt;EXPR&gt;</code><a class="headerlink" href="#begin" title="Permanent link">&para;</a></h3>
+<p>Pre-run a Rhai script before any other stage runs.</p>
+<p>Typical use: seed the global <code>conf</code> map with lookup tables or shared context.</p>
+<p>Helpers available only here:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>read_lines(path) -&gt; Array&lt;String&gt;  # UTF-8, one entry per line
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>read_file(path)  -&gt; String         # UTF-8, entire file contents
+</code></pre></div>
+<p>Data stored in <code>conf</code> becomes read-only afterwards. See --help-rhai for stage order.</p>
+<h3 id="filter"><code>--filter &lt;EXPR&gt;</code><a class="headerlink" href="#filter" title="Permanent link">&para;</a></h3>
+<p>Boolean filter expression; events where it evaluates to true are kept.</p>
+<p>Can be combined with --include (-I) to call helper functions defined in an include file. Include files used with --filter must contain only function definitions — top-level statements are rejected with an error.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora -I helpers.rhai --filter 'is_error(e.level)' app.log
+</code></pre></div>
+<p>See --help-rhai for expression syntax.</p>
+<h3 id="exec"><code>-e, --exec &lt;EXPR&gt;</code><a class="headerlink" href="#exec" title="Permanent link">&para;</a></h3>
+<p>Transform/process exec scripts evaluated on each event. See --help-rhai for stage semantics</p>
+<h3 id="exec-file"><code>-E, --exec-file &lt;FILE&gt;</code><a class="headerlink" href="#exec-file" title="Permanent link">&para;</a></h3>
+<p>Execute script from file (contents run in the exec stage)</p>
+<h3 id="assert"><code>--assert &lt;EXPR&gt;</code><a class="headerlink" href="#assert" title="Permanent link">&para;</a></h3>
+<p>Assertion expressions that must evaluate to true. Violations are reported to stderr; processing continues unless --strict is enabled. See --help-rhai for expression syntax</p>
+<h3 id="include"><code>-I, --include &lt;FILE&gt;</code><a class="headerlink" href="#include" title="Permanent link">&para;</a></h3>
+<p>Include a Rhai file of helper functions, loaded into the adjacent script stage.</p>
+<p>Command-line position selects which stage the file applies to:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>--include before a --filter/--exec    → that filter/exec stage
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>--include before the first stage       → the --begin stage (if present)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>--include after the last stage         → the --end stage (if present)
+</code></pre></div>
+<p>Each stage has its own scope: an include's functions are only visible to the stage it is attached to. Repeat --include to share helpers across several stages. An include that attaches to begin/end has no effect unless that --begin/--end stage exists.</p>
+<p>When used with --filter, the include file must contain only function definitions. Top-level statements (side effects) are rejected with an error.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora -I helpers.rhai --filter 'is_error(e.level)' app.log
+</code></pre></div>
+<h3 id="end"><code>--end &lt;EXPR&gt;</code><a class="headerlink" href="#end" title="Permanent link">&para;</a></h3>
+<p>Run once after processing completes (post-processing stage). Ideal for summarising metrics or emitting reports. The global <code>metrics</code> map from track_*() calls is accessible here</p>
+<h3 id="allow-fs-writes"><code>--allow-fs-writes</code><a class="headerlink" href="#allow-fs-writes" title="Permanent link">&para;</a></h3>
+<p>Allow Rhai scripts to create directories and write files on disk (required for file helpers like append_file or mkdir)</p>
+<h3 id="window"><code>--window &lt;N&gt;</code><a class="headerlink" href="#window" title="Permanent link">&para;</a></h3>
+<p>Keep the current event and the N before it in the <code>window</code> array for scripts (window[0] is the current event)</p>
+<h3 id="span"><code>--span &lt;N|DURATION|FIELD&gt;</code><a class="headerlink" href="#span" title="Permanent link">&para;</a></h3>
+<p>Aggregate events into consecutive spans.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>--span &lt;N&gt;         Close after every N events that pass filters.
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>--span &lt;DURATION&gt;  Close on aligned time windows (e.g. 30s, 5m, 1h, 1d).
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>                   Units: ms, s, m, h, d, w. Windows are fixed-length
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                   and aligned to the Unix epoch in UTC, so weeks run
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                   Thursday to Wednesday.
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>--span &lt;FIELD&gt;     Close when the specified field value changes.
+</code></pre></div>
+<p>Use with --span-close to run a Rhai snippet when each span finishes.</p>
+<h3 id="span-idle"><code>--span-idle &lt;DURATION&gt;</code><a class="headerlink" href="#span-idle" title="Permanent link">&para;</a></h3>
+<p>Close span after this duration of inactivity (e.g. --span-idle 5m). Requires timestamps and cannot be combined with --span.</p>
+<h3 id="span-close"><code>--span-close &lt;EXPR&gt;</code><a class="headerlink" href="#span-close" title="Permanent link">&para;</a></h3>
+<p>Run a Rhai snippet when each span closes. For a plain per-window rollup, use --span-summary instead — no script, and its rows survive -m/--freq (a hook's print does not).</p>
+<p>Within the hook, read span.start, span.end, span.first_ts, span.last_ts, span.id, span.label, span.events, span.size, and span.metrics for span context. span.start/span.end are the window bounds (() for count and field spans); span.first_ts/span.last_ts are the timestamps of the first and last events in the span, in every mode. span.metric("name") returns one metric's per-window value or 0 when the window produced none (() for an omitted non-additive metric), and takes a dotted path (span.metric("level.ERROR")); prefer it over indexing span.metrics, which yields () for an omitted zero delta. span.label is span.start as RFC3339 when the mode has one, else span.id, so a hook need not branch on the span mode.</p>
+<p>span.metrics carries per-window values for additive aggregators (count, sum, avg, unique, bucket) and the window's own min and max; non-additive ones (percentiles, cardinality, top, bottom) are omitted with a warning, so use span.events for those. Events are only retained for span.events when this hook is present.</p>
+<h3 id="span-summary"><code>--span-summary[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#span-summary" title="Permanent link">&para;</a></h3>
+<p>One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.</p>
+<p>Each row carries the span label, the event count, and every per-window metric from additive track_* calls and track_min/track_max (including those synthesized by --freq/--describe).</p>
+<p>Formats: text (key=value lines), tsv (label&lt;TAB&gt;metric&lt;TAB&gt;key&lt;TAB&gt;value records), json (one object per line). Bare --span-summary auto-selects: text on a terminal, tsv when piped or redirected (like -m).</p>
+<p>Rows are data on stdout, so --no-script-output and -m do not suppress them. A window that received no input produces no row, so a time series has gaps where nothing was logged; a window whose events were all removed by --filter/--levels still produces a row, with events=0. Windows outside --since/--until never appear.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--span 1m --span-summary               Events per minute
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>-l error --span 5m --span-summary      Errors per 5 minutes
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>--span 1m --freq level --span-summary  Per-minute level breakdown
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>--span-idle 5m --span-summary          Session sizes
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>--span 1m --span-summary=tsv &gt; series.tsv  Time series for a database or plot
+</code></pre></div>
+<p>Note the '=': --span-summary=tsv (a space is read as a filename).</p>
+<p>Possible values:</p>
+<ul>
+<li>text: One <code>key=value</code> line per span; nested metrics flatten with a dot</li>
+<li>tsv:  Long/tidy <code>label&lt;TAB&gt;metric&lt;TAB&gt;key&lt;TAB&gt;value</code> records, one per value</li>
+<li>json: One JSON object per span, preserving nested metrics</li>
+</ul>
+<h3 id="normalize-ts"><code>--normalize-ts</code><a class="headerlink" href="#normalize-ts" title="Permanent link">&para;</a></h3>
+<p>Normalize the primary timestamp field to RFC3339 (ISO 8601 compatible). Modifies event data - affects all output formats</p>
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<h3 id="strict"><code>--strict</code><a class="headerlink" href="#strict" title="Permanent link">&para;</a></h3>
+<p>Exit on first error (fail-fast behavior). Use --no-strict to force resilient mode, overriding a config default</p>
+<h3 id="strict-utf8"><code>--strict-utf8</code><a class="headerlink" href="#strict-utf8" title="Permanent link">&para;</a></h3>
+<p>Abort on the first non-UTF-8 byte instead of the default lossy decoding.</p>
+<p>By default, kelora tolerates non-UTF-8 input the way grep does: invalid byte sequences are replaced with U+FFFD (�) and a diagnostic reports how many lines were affected, so a single bad byte no longer truncates the rest of the stream. Pass --strict-utf8 to restore hard failure (exit 1) on invalid UTF-8.</p>
+<h3 id="verbose"><code>-v, --verbose...</code><a class="headerlink" href="#verbose" title="Permanent link">&para;</a></h3>
+<p>Show detailed error information (use multiple times for more verbosity: -v, -vv, -vvv)</p>
+<h2 id="filtering-options">Filtering Options<a class="headerlink" href="#filtering-options" title="Permanent link">&para;</a></h2>
+<h3 id="levels"><code>-l, --levels &lt;LEVELS&gt;</code><a class="headerlink" href="#levels" title="Permanent link">&para;</a></h3>
+<p>Include only events with these log levels (comma-separated, case-insensitive).</p>
+<p>Use comma-separated values for OR logic: --levels ERROR,WARN Multiple flags create sequential AND filters (advanced).</p>
+<p>On json and logfmt input, lines whose text contains none of the levels are skipped before parsing, so their parse errors go uncounted: the parse-error summary can report fewer errors than a run without -l. A run in which no line parses still fails with exit 1. Run without -l, or with -s/--stats, to count every parse error.</p>
+<h3 id="exclude-levels"><code>-L, --exclude-levels &lt;EXCLUDE_LEVELS&gt;</code><a class="headerlink" href="#exclude-levels" title="Permanent link">&para;</a></h3>
+<p>Exclude events with these log levels (comma-separated, case-insensitive).</p>
+<h3 id="keys"><code>-k, --keys &lt;KEYS&gt;</code><a class="headerlink" href="#keys" title="Permanent link">&para;</a></h3>
+<p>Output only these fields, in the order given (comma-separated list).</p>
+<p>Acts on whole top-level fields. Nested values that --discover prints as dotted or bracketed paths (e.g. api.queries, tags[]) are NOT selectable here — flatten them first, e.g. --exec 'e.val = e.get_path("api.queries")' then -k val. (A top-level field whose literal name contains a dot is matched as-is.)</p>
+<h3 id="exclude-keys"><code>-K, --exclude-keys &lt;EXCLUDE_KEYS&gt;</code><a class="headerlink" href="#exclude-keys" title="Permanent link">&para;</a></h3>
+<p>Exclude these fields from output (comma-separated list).</p>
+<p>Acts on whole top-level fields; nested values (the dotted/bracketed paths shown by --discover) cannot be dropped here — remove them in an --exec stage instead.</p>
+<h3 id="since"><code>--since &lt;TIME&gt;</code><a class="headerlink" href="#since" title="Permanent link">&para;</a></h3>
+<p>Keep only events at or after this time.</p>
+<p>Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '-30m', 'yesterday'). Can also use 'until+DURATION', 'until-DURATION', 'now+DURATION', or 'now-DURATION' anchors.</p>
+<p>Reads the timestamp the parser produced, before any script stage: use --ts-field/--ts-format to change what that is, and a --filter for a timestamp you build in a script. See --help-time.</p>
+<h3 id="until"><code>--until &lt;TIME&gt;</code><a class="headerlink" href="#until" title="Permanent link">&para;</a></h3>
+<p>Keep only events at or before this time.</p>
+<p>Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '+30m', 'tomorrow'). Can also use 'since+DURATION', 'since-DURATION', 'now+DURATION', or 'now-DURATION' anchors.</p>
+<p>Reads the timestamp the parser produced, before any script stage: use --ts-field/--ts-format to change what that is, and a --filter for a timestamp you build in a script. See --help-time.</p>
+<h3 id="take"><code>-n, --take &lt;N&gt;</code><a class="headerlink" href="#take" title="Permanent link">&para;</a></h3>
+<p>Limit output to the first N events</p>
+<h3 id="before-context"><code>-B, --before-context &lt;N&gt;</code><a class="headerlink" href="#before-context" title="Permanent link">&para;</a></h3>
+<p>Show N events before each match (requires filtering).</p>
+<p>See -C for how context lines are marked and which filters define a match.</p>
+<h3 id="after-context"><code>-A, --after-context &lt;N&gt;</code><a class="headerlink" href="#after-context" title="Permanent link">&para;</a></h3>
+<p>Show N events after each match (requires filtering).</p>
+<p>See -C for how context lines are marked and which filters define a match.</p>
+<h3 id="context"><code>-C, --context &lt;N&gt;</code><a class="headerlink" href="#context" title="Permanent link">&para;</a></h3>
+<p>Show N events before and after each match, like grep -C (requires filtering: --filter, --levels/-l, --exclude-levels/-L, --since/--until).</p>
+<p>In the default output format each event carries a marker naming its role. Every event appears exactly once, with the marker that describes it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>◉ / *   the match itself (◉ on a color terminal, * otherwise)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>/       before-context: run-up to a later match
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>\       after-context: trails an earlier match
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>|       both at once, between two matches close enough to overlap
+</code></pre></div>
+<p>Markers appear only in the default format; -F json/csv/logfmt emit the same events unmarked. They are part of the event line on stdout, so --no-warnings/--no-hints/--no-diagnostics leave them alone; -q and --silent drop the events entirely.</p>
+<p>A match is an event that passes every filter in the pipeline's leading run of filters, so <code>--filter A --filter B -C 2</code> and <code>--filter A -l error -C 2</code> both mean "context around events passing both". The context lines that run selects are neighbours, not matches, so a later --filter (one placed behind an --exec or --assert) does not re-judge them; kelora warns when a filter sits there, since it can drop matches and leave their context behind.</p>
+<p>--since/--until stay outside that run: they define which events exist at all, so context is drawn from inside the time window rather than across its edges.</p>
+<p>Requires sequential mode; --parallel is ignored with a warning.</p>
+<h2 id="output-options">Output Options<a class="headerlink" href="#output-options" title="Permanent link">&para;</a></h2>
+<h3 id="output-format"><code>-F, --output-format &lt;FORMAT&gt;</code><a class="headerlink" href="#output-format" title="Permanent link">&para;</a></h3>
+<p>Output format.</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>default   Colored key-value output
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>json      JSON Lines (one object per line)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>logfmt    Key=value pairs on one line
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>inspect   Debug view with type information
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>levelmap  Compact level timeline
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>keymap    First-character map for one selected field
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>tailmap   Percentile map for one numeric field
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>csv       Comma-separated with header row
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>tsv       Tab-separated with header row
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>csvnh     CSV without header row
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>tsvnh     TSV without header row
+</code></pre></div>
+<p>See --help-formats for requirements, extracted fields, and examples.</p>
+<p><em>Default:</em> <code>default</code></p>
+<p><em>Values:</em> <code>default, json, logfmt, inspect, levelmap, keymap, tailmap, csv, tsv, csvnh, tsvnh</code></p>
+<h3 id="opt-J"><code>-J</code><a class="headerlink" href="#opt-J" title="Permanent link">&para;</a></h3>
+<p>Shortcut for -F json</p>
+<h3 id="core"><code>-c, --core</code><a class="headerlink" href="#core" title="Permanent link">&para;</a></h3>
+<p>Output only core fields</p>
+<h3 id="output-file"><code>-o, --output-file &lt;FILE&gt;</code><a class="headerlink" href="#output-file" title="Permanent link">&para;</a></h3>
+<p>Output file for formatted events</p>
+<h3 id="quiet"><code>-q, --quiet</code><a class="headerlink" href="#quiet" title="Permanent link">&para;</a></h3>
+<p>Suppress events (formatter output)</p>
+<h3 id="warnings"><code>--warnings</code><a class="headerlink" href="#warnings" title="Permanent link">&para;</a></h3>
+<p>Show warnings (🔸) — problems that did not stop the run. Overrides a KELORA_NO_WARNINGS / config default and re-enables warnings in data-only modes like --metrics/--drain/--discover</p>
+<h3 id="no-warnings"><code>--no-warnings</code><a class="headerlink" href="#no-warnings" title="Permanent link">&para;</a></h3>
+<p>Suppress warnings (🔸). Errors still print; use --silent to hide those too</p>
+<h3 id="hints"><code>--hints</code><a class="headerlink" href="#hints" title="Permanent link">&para;</a></h3>
+<p>Show hints (💡) — advisory suggestions (zero-result/typo/format tips). Overrides a KELORA_NO_HINTS / config default and re-enables hints in data-only modes like --metrics/--drain/--discover</p>
+<h3 id="no-hints"><code>--no-hints</code><a class="headerlink" href="#no-hints" title="Permanent link">&para;</a></h3>
+<p>Suppress hints (💡, zero-result hints, format/typo tips)</p>
+<h3 id="diagnostics"><code>--diagnostics</code><a class="headerlink" href="#diagnostics" title="Permanent link">&para;</a></h3>
+<p>Show both warnings and hints (shortcut for --warnings --hints), even in data-only modes. Error summaries always show unless --silent</p>
+<h3 id="no-diagnostics"><code>--no-diagnostics</code><a class="headerlink" href="#no-diagnostics" title="Permanent link">&para;</a></h3>
+<p>Suppress both warnings and hints (shortcut for --no-warnings --no-hints), plus per-line verbose errors. Error and parse summaries still print; use --silent to hide those too</p>
+<h3 id="silent"><code>--silent</code><a class="headerlink" href="#silent" title="Permanent link">&para;</a></h3>
+<p>Silence pipeline stdout/stderr emitters (events/diagnostics/stats/terminal metrics); script output still allowed. Metrics files still write. Use --no-silent to override a config default</p>
+<h3 id="script-output"><code>--script-output</code><a class="headerlink" href="#script-output" title="Permanent link">&para;</a></h3>
+<p>Enable Rhai print/eprint output</p>
+<h3 id="legend"><code>--legend</code><a class="headerlink" href="#legend" title="Permanent link">&para;</a></h3>
+<p>Append a legend to map outputs (levelmap/keymap/tailmap) even when piped. By default the legend shows only when stdout is a terminal</p>
+<h3 id="no-legend"><code>--no-legend</code><a class="headerlink" href="#no-legend" title="Permanent link">&para;</a></h3>
+<p>Suppress the legend on map outputs (levelmap/keymap/tailmap)</p>
+<h2 id="default-format-options">Default Format Options<a class="headerlink" href="#default-format-options" title="Permanent link">&para;</a></h2>
+<h3 id="brief"><code>-b, --brief</code><a class="headerlink" href="#brief" title="Permanent link">&para;</a></h3>
+<p>Output only field values (omit keys)</p>
+<h3 id="expand-nested"><code>--expand-nested</code><a class="headerlink" href="#expand-nested" title="Permanent link">&para;</a></h3>
+<p>Expand nested structures (maps/arrays) with indentation</p>
+<h3 id="wrap"><code>--wrap</code><a class="headerlink" href="#wrap" title="Permanent link">&para;</a></h3>
+<p>Always word-wrap wide events onto indented continuation lines, even when piped or redirected. By default wrapping is enabled only when stdout is a terminal, so piped output stays one line per event</p>
+<h3 id="no-wrap"><code>--no-wrap</code><a class="headerlink" href="#no-wrap" title="Permanent link">&para;</a></h3>
+<p>Never word-wrap; keep each event on a single line</p>
+<h3 id="show-ts-local"><code>-z, --show-ts-local</code><a class="headerlink" href="#show-ts-local" title="Permanent link">&para;</a></h3>
+<p>Display timestamps as local RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output</p>
+<h3 id="show-ts-utc"><code>-Z, --show-ts-utc</code><a class="headerlink" href="#show-ts-utc" title="Permanent link">&para;</a></h3>
+<p>Display timestamps as UTC RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output</p>
+<h2 id="display-options">Display Options<a class="headerlink" href="#display-options" title="Permanent link">&para;</a></h2>
+<h3 id="force-color"><code>--force-color</code><a class="headerlink" href="#force-color" title="Permanent link">&para;</a></h3>
+<p>Force colored output</p>
+<h3 id="no-color"><code>--no-color</code><a class="headerlink" href="#no-color" title="Permanent link">&para;</a></h3>
+<p>Disable colored output</p>
+<h3 id="mark-gaps"><code>--mark-gaps &lt;DURATION&gt;</code><a class="headerlink" href="#mark-gaps" title="Permanent link">&para;</a></h3>
+<p>Insert a centered marker when the time delta between events exceeds the given duration. Example: --mark-gaps 30s prints a divider when consecutive events are separated by &gt;=30s.</p>
+<h3 id="force-emoji"><code>--force-emoji</code><a class="headerlink" href="#force-emoji" title="Permanent link">&para;</a></h3>
+<p>Force emoji prefixes (override auto-detection)</p>
+<h3 id="no-emoji"><code>--no-emoji</code><a class="headerlink" href="#no-emoji" title="Permanent link">&para;</a></h3>
+<p>Disable emoji prefixes</p>
+<h2 id="performance-options">Performance Options<a class="headerlink" href="#performance-options" title="Permanent link">&para;</a></h2>
+<h3 id="parallel"><code>-P, --parallel</code><a class="headerlink" href="#parallel" title="Permanent link">&para;</a></h3>
+<p>Enable parallel processing (default: sequential processing). Use --no-parallel to force sequential, overriding a config default</p>
+<h3 id="threads"><code>--threads &lt;N&gt;</code><a class="headerlink" href="#threads" title="Permanent link">&para;</a></h3>
+<p>Number of worker threads (0 = auto-detect, one per available core)</p>
+<p><em>Default:</em> <code>0</code></p>
+<h3 id="batch-size"><code>--batch-size &lt;N&gt;</code><a class="headerlink" href="#batch-size" title="Permanent link">&para;</a></h3>
+<p>Batch size (events per batch) for parallel processing</p>
+<h3 id="batch-timeout"><code>--batch-timeout &lt;MS&gt;</code><a class="headerlink" href="#batch-timeout" title="Permanent link">&para;</a></h3>
+<p>Flush partially full parallel batches after this idle period (milliseconds). Lower values reduce latency; higher values improve throughput.</p>
+<p><em>Default:</em> <code>200</code></p>
+<h3 id="unordered"><code>--unordered</code><a class="headerlink" href="#unordered" title="Permanent link">&para;</a></h3>
+<p>Disable ordered output</p>
+<h2 id="metrics-and-stats">Metrics and Stats<a class="headerlink" href="#metrics-and-stats" title="Permanent link">&para;</a></h2>
+<h3 id="stats"><code>-s, --stats[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#stats" title="Permanent link">&para;</a></h3>
+<p>Show stats only (implies -q/--quiet).</p>
+<p>Formats: table, json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>-s              Default table format
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>--stats=json    JSON output
+</code></pre></div>
+<p>Use --no-stats to override a config default. Note the '=': --stats=json (a space, as in '-s json', is read as a filename).</p>
+<p><em>Values:</em> <code>table, json</code></p>
+<h3 id="with-stats"><code>--with-stats</code><a class="headerlink" href="#with-stats" title="Permanent link">&para;</a></h3>
+<p>Show stats alongside events (rare case)</p>
+<h3 id="metrics"><code>-m, --metrics[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h3>
+<p>Show metrics only (implies -q/--quiet).</p>
+<p>Formats: short (first 5), full, tsv, json. Bare -m auto-selects: the human-readable table on a terminal, tsv when piped or redirected (like ls).</p>
+<p>tsv emits one tab-separated 'metric&lt;TAB&gt;key&lt;TAB&gt;value' record per line, sorted by count descending, so | head is top-N and | tail is bottom-N.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>-m               Auto (table on a TTY, tsv when piped)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>--metrics=full   Force the table even through a pipe
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>--metrics=tsv    Force the record stream even to a TTY
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>--metrics=short  Abbreviated (first 5 items)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>--metrics=json   JSON output
+</code></pre></div>
+<p>Use --no-metrics to override a config default. Note the '=': --metrics=json (a space, as in '-m json', is read as a filename).</p>
+<p>Possible values:</p>
+<ul>
+<li>short</li>
+<li>full</li>
+<li>json</li>
+<li>tsv:   Tab-separated record stream (one <code>metric&lt;TAB&gt;key&lt;TAB&gt;value</code> row per line, sorted by count/score descending) for piping to head/tail/sort/awk</li>
+</ul>
+<h3 id="with-metrics"><code>--with-metrics</code><a class="headerlink" href="#with-metrics" title="Permanent link">&para;</a></h3>
+<p>Show metrics alongside events (rare case)</p>
+<h3 id="metrics-file"><code>--metrics-file &lt;FILE&gt;</code><a class="headerlink" href="#metrics-file" title="Permanent link">&para;</a></h3>
+<p>Persist the metrics map (populated by track_*()) to disk as JSON.</p>
+<h3 id="freq"><code>--freq &lt;FIELD&gt;</code><a class="headerlink" href="#freq" title="Permanent link">&para;</a></h3>
+<p>Frequency table: count occurrences per distinct value of FIELD.</p>
+<p>Shorthand for track_freq("FIELD", e.FIELD). Runs after all filters/transforms and implies -m. Repeatable or comma-separated (--freq level,service). Nested fields use dotted paths (e.g. user.id). Results are sorted by count descending, so piping the tsv output to head gives the top-N and tail gives the bottom-N (no --top/--bottom flags needed). Control output with --metrics=short|full|tsv|json or --metrics-file.</p>
+<p>Takes a field name, not an expression. To tally a derived value, call track_freq directly in a script stage — it accepts any expression, names the metric itself, and needs no throwaway field:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>-m --exec 'track_freq("hour", meta.parsed_ts.round_to("1h"))'   # per hour
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>-m --exec 'track_freq("class", e.status / 100)'                  # per 1xx/2xx/...
+</code></pre></div>
+<p>By itself --freq tallies the whole run: adding --span does NOT window it. For per-window tallies add --span-summary, which puts each window's deltas in a row:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>--span 1m --freq level --span-summary
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>--freq level
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>--filter 'e.status&gt;=500' --freq url
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>--freq url | head        # top URLs (tsv auto-selected when piped)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>--freq url | tail        # rarest URLs
+</code></pre></div>
+<h3 id="describe"><code>--describe &lt;FIELD&gt;</code><a class="headerlink" href="#describe" title="Permanent link">&para;</a></h3>
+<p>Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.</p>
+<p>Shorthand for track_stats("FIELD", e.FIELD). Runs after all filters/transforms and implies -m. Repeatable or comma-separated (--describe a,b). Non-numeric/missing values are skipped. Control output with --metrics=short|full|tsv|json or --metrics-file.</p>
+<p>Takes a field name, not an expression. For a derived value, call track_stats directly in a script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>-m --exec 'track_stats("seconds", e.duration_ms / 1000.0)'
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>--describe duration_ms
+</code></pre></div>
+<h3 id="card"><code>--card &lt;FIELD&gt;</code><a class="headerlink" href="#card" title="Permanent link">&para;</a></h3>
+<p>Estimate the number of distinct values of FIELD (HyperLogLog).</p>
+<p>Shorthand for track_cardinality("FIELD", e.FIELD). Runs after all filters/transforms and implies -m. Repeatable or comma-separated (--card user_id,trace_id). Missing values are skipped. The count is approximate (~1% error) but uses constant memory, so it scales to high-cardinality fields where track_freq/track_unique would not. Control output with --metrics=short|full|tsv|json or --metrics-file.</p>
+<p>Takes a field name, not an expression. For a derived value, call track_cardinality directly in a script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>-m --exec 'track_cardinality("prefix", e.client_ip.split(".")[0])'
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>--card user.id
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>--filter 'e.status&gt;=500' --card client_ip
+</code></pre></div>
+<h2 id="template-discovery">Template Discovery<a class="headerlink" href="#template-discovery" title="Permanent link">&para;</a></h2>
+<h3 id="drain"><code>--drain[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#drain" title="Permanent link">&para;</a></h3>
+<p>Summarize log templates using Drain (summary-only; requires --keys with exactly one field; sequential mode only).</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>table (default)  Clean output: count + template
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>full             Detailed: adds line ranges + sample + template ID
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>id               Stable output: template_id + template (sorted by ID)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>json             JSON with all metadata
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>--drain          Clean table (count + template)
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>--drain=full     With line numbers, samples, and IDs
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>--drain=id       Stable ID list for diffs
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>--drain=json     JSON output for scripting
+</code></pre></div>
+<p><em>Values:</em> <code>table, full, id, json</code></p>
+<h3 id="drain-diff"><code>--drain-diff[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#drain-diff" title="Permanent link">&para;</a></h3>
+<p>Compare template frequencies between a baseline and a target log (summary-only; requires --keys with exactly one field; sequential mode only).</p>
+<p>Three ways to define baseline and target:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora --drain-diff old.log new.log -k msg      First input is baseline, second is target
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg   One input split at a timestamp
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>kelora --drain-diff --cut-before 'e.msg.contains("deploy")' incident.log -k msg   One input split at the first match
+</code></pre></div>
+<p>Diffs *which message templates occur and how often*, not what the messages say. Output reads like a unified diff:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>--- / +++       name the baseline and target, with each side's event count
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>                and observed span (in the form --cut-at accepts back)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>+               a template only the target has, with its event count
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>-               a template only the baseline had, with its event count
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>*               a template both have, at a materially different rate,
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>                shown as a plain multiple ("14x more")
+</code></pre></div>
+<p>A * row is reported when the change is bigger than sampling noise for the number of events on each side, and big enough to act on (&gt;= 0.5pp of share, or a &gt;= 1.5x change in rate). Templates that change less are this diff's context lines: tallied in the footer as unchanged, not printed. All comparisons use per-side shares, so sides of very different sizes compare fairly.</p>
+<p>Rewording is invisible to it: "timeout after 5s" becoming "timed out after 5s" reads as one - plus one +, never as a modified template. Composes with the pipeline: --filter/--exec run before diffing.</p>
+<p>A vacuous comparison is refused rather than reported (exit 1):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>- No event carries the field named by -k: the error names the nearest field it
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  did see, instead of printing an all-empty "nothing changed" report.
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>- One side got every event and the other none (usually a splitter that missed):
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>  every template would be + or - by construction, so the error names the
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>  resolved cut and the span the input covers, or says the predicate never
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>  matched, instead.
+</code></pre></div>
+<p>A field present on only some events warns with the excluded and compared counts.</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>table   Diff-style rows + footer. The default on a terminal.
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>full    The same rows, each followed by indented detail: template id,
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>        both counts and shares, and a sample of a real line it matched.
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>tsv     One 'change&lt;TAB&gt;template_id&lt;TAB&gt;counts&lt;TAB&gt;percents&lt;TAB&gt;template'
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>        record per changed template; no header, no report around it.
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>        The default when stdout is piped or redirected (like -m), so
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>        --drain-diff=table forces the report through a pipe.
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>json    One JSON object (new/gone/freq_changed, per-side totals, the
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>        unchanged tally, spans and exclusion counts; each freq_changed
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>        entry carries delta_pp and a signed z_score for your own
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>        filtering)
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>--drain-diff old.log new.log -k msg
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>--drain-diff=json before.log after.log -k msg
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>--drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>--drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+</code></pre></div>
+<p>Possible values:</p>
+<ul>
+<li>table</li>
+<li>full:  The same rows, each followed by indented detail: template id, the counts and shares the compact row leaves out, and a sample line</li>
+<li>json</li>
+<li>tsv:   One tab-separated record per changed template, no header and no surrounding report, for piping to awk/sort/duckdb</li>
+</ul>
+<h3 id="cut-at"><code>--cut-at &lt;TIME&gt;</code><a class="headerlink" href="#cut-at" title="Permanent link">&para;</a></h3>
+<p>Timestamp splitting one --drain-diff input into baseline (before the cut) and target (at/after).</p>
+<p>Accepts the same timestamp formats as --since/--until (e.g., 2026-07-24T14:00:00Z, '2026-07-24 14:00', '1h', 'yesterday'). See --help-time. Events without a parseable timestamp are excluded from the comparison and counted in a warning.</p>
+<p>The cut resolves against the clock, not the log: '1h' means an hour before now, and a bare '14:00' means today at 14:00. For a historical log, give an absolute timestamp — a cut that lands outside the data leaves one side empty, which is refused (exit 1) with the span the input actually covers, so a missed first attempt tells you what to use. When you know what the change looks like but not when it happened, --cut-before / --cut-after split on a predicate instead and need no clock.</p>
+<p>Every report states where the split landed ('baseline spans .. / target spans ..'), in the same form --cut-at accepts back.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>--drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
+</code></pre></div>
+<h3 id="cut-before"><code>--cut-before &lt;EXPR&gt;</code><a class="headerlink" href="#cut-before" title="Permanent link">&para;</a></h3>
+<p>Boolean Rhai expression whose first match splits one --drain-diff input, with the cut placed immediately BEFORE the match: the matching event is the first target event.</p>
+<p>Use this when the matching line is the start of the new regime — a deploy marker, the first error of an incident. Use --cut-after instead when the match is the end of the old one.</p>
+<p>Needs no timestamps and no clock: you say what the change looks like, not when it happened. The boundary latches on the first match, so a predicate that keeps matching still splits the log exactly once, and no events are buffered.</p>
+<p>Same expression syntax as --filter (see --help-rhai), and -I/--include helpers are available. A predicate that never matches leaves the target side empty, and one matching the first event leaves the baseline empty; both are refused (exit 1) rather than reported as change. One matching the last event leaves a one-event target, which prints with a warning (🔸) rather than being refused.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>--drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>--drain-diff --cut-before 'e.status &gt;= 500' access.log -k msg
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>--drain-diff --cut-before 'e.version != "1.4.2"' rollout.log -k msg
+</code></pre></div>
+<h3 id="cut-after"><code>--cut-after &lt;EXPR&gt;</code><a class="headerlink" href="#cut-after" title="Permanent link">&para;</a></h3>
+<p>Boolean Rhai expression whose first match splits one --drain-diff input, with the cut placed immediately AFTER the match: the matching event is the last baseline event.</p>
+<p>Use this when the matching line closes out the old regime — 'deploy finished', 'migration complete', the last healthy heartbeat. Use --cut-before when the match opens the new one.</p>
+<p>Otherwise identical to --cut-before: same expression syntax as --filter (see --help-rhai), -I/--include helpers available, boundary latches on the first match, nothing buffered. A predicate that never matches, or one matching the last event, leaves the target side empty and is refused (exit 1) rather than reported as change. One matching the first event leaves a one-event baseline, which is well-formed enough to report: it prints, with a warning (🔸) that the NEW section reflects that shortfall rather than a change.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>--drain-diff --cut-after 'e.msg.contains("deploy finished")' incident.log -k msg
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>--drain-diff --cut-after 'e.phase == "warmup"' rollout.log -k msg
+</code></pre></div>
+<h2 id="field-discovery">Field Discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h2>
+<h3 id="discover"><code>-d, --discover[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#discover" title="Permanent link">&para;</a></h3>
+<p>Profile fields: names, inferred types, cardinality estimates, and sample values. Nested maps and arrays are flattened to 3 levels (e.g. user.name, user.roles[]). Implies -q/--quiet (events suppressed). Sequential mode only.</p>
+<p>Formats: table (default), json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>-d, --discover      Table summary
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>-d=json, --discover=json     Machine-readable JSON
+</code></pre></div>
+<p><em>Values:</em> <code>table, json</code></p>
+<h3 id="discover-final"><code>-D, --discover-final[=&lt;FORMAT&gt;]</code><a class="headerlink" href="#discover-final" title="Permanent link">&para;</a></h3>
+<p>Profile final emitted fields after scripts and filters. Implies -q/--quiet (events suppressed). Sequential mode only.</p>
+<p>Formats: table (default), json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>-D, --discover-final          Table summary of final fields
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>-D=json, --discover-final=json     Machine-readable JSON of final fields
+</code></pre></div>
+<p><em>Values:</em> <code>table, json</code></p>
+<h3 id="discover-depth"><code>--discover-depth &lt;N&gt;</code><a class="headerlink" href="#discover-depth" title="Permanent link">&para;</a></h3>
+<p>Maximum depth for flattening nested maps/arrays into dotted keys (default: 3). Depth counts descents from the event root: a.b.c is depth 3. Use a higher value to inspect deeply nested JSON; use 1 to see only top-level fields; use 0 for unlimited depth.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>--discover --discover-depth=5    Descend up to 5 levels deep
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>--discover --discover-depth=1    Top-level fields only
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>--discover --discover-depth=0    Unlimited depth
+</code></pre></div>
+<h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
+<h3 id="config-file"><code>--config-file &lt;FILE&gt;</code><a class="headerlink" href="#config-file" title="Permanent link">&para;</a></h3>
+<p>Specify custom configuration file path</p>
+<h3 id="ignore-config"><code>--ignore-config</code><a class="headerlink" href="#ignore-config" title="Permanent link">&para;</a></h3>
+<p>Ignore configuration file</p>
+<h3 id="alias"><code>-a, --alias &lt;NAME&gt;</code><a class="headerlink" href="#alias" title="Permanent link">&para;</a></h3>
+<p>Use alias from configuration file</p>
+<h3 id="save-alias"><code>--save-alias &lt;NAME&gt;</code><a class="headerlink" href="#save-alias" title="Permanent link">&para;</a></h3>
+<p>Save current command as alias to configuration file</p>
+<h3 id="show-config"><code>--show-config</code><a class="headerlink" href="#show-config" title="Permanent link">&para;</a></h3>
+<p>Show configuration file and exit</p>
+<h3 id="edit-config"><code>--edit-config</code><a class="headerlink" href="#edit-config" title="Permanent link">&para;</a></h3>
+<p>Edit configuration file in default editor and exit</p>
+<h2 id="help-options">Help Options<a class="headerlink" href="#help-options" title="Permanent link">&para;</a></h2>
+<h3 id="help-rhai"><code>--help-rhai</code><a class="headerlink" href="#help-rhai" title="Permanent link">&para;</a></h3>
+<p>Show Rhai scripting guide and exit</p>
+<h3 id="help-functions"><code>--help-functions [&lt;KEYWORD&gt;]</code><a class="headerlink" href="#help-functions" title="Permanent link">&para;</a></h3>
+<p>Show available Rhai functions and exit (optional KEYWORD filters by name/description; smartcase: lowercase matches any case, uppercase is exact)</p>
+<h3 id="help-examples"><code>--help-examples</code><a class="headerlink" href="#help-examples" title="Permanent link">&para;</a></h3>
+<p>Show practical Rhai examples and exit</p>
+<h3 id="help-time"><code>--help-time</code><a class="headerlink" href="#help-time" title="Permanent link">&para;</a></h3>
+<p>Show time format help and exit</p>
+<h3 id="help-multiline"><code>--help-multiline</code><a class="headerlink" href="#help-multiline" title="Permanent link">&para;</a></h3>
+<p>Show multiline strategy help and exit</p>
+<h3 id="help-regex"><code>--help-regex</code><a class="headerlink" href="#help-regex" title="Permanent link">&para;</a></h3>
+<p>Show regex format help and exit</p>
+<h3 id="help-formats"><code>--help-formats</code><a class="headerlink" href="#help-formats" title="Permanent link">&para;</a></h3>
+<p>Show format reference and exit</p>
+<h3 id="completions"><code>--completions &lt;COMPLETIONS&gt;</code><a class="headerlink" href="#completions" title="Permanent link">&para;</a></h3>
+<p>Generate shell completion script and exit</p>
+<p><em>Values:</em> <code>bash, zsh, fish, powershell, elvish</code></p>
+<h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>0    Success — the run did its job. By default Kelora is resilient: malformed
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>     lines in an otherwise-valid stream, and best-effort --exec transform
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>     errors, are reported on stderr and counted but do NOT change the exit code
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>     (use --strict to make the first such error fatal instead).
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>1    Error. Any of:
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>       - a named input file could not be opened
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>       - an --assert condition failed
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>       - a gate stage saw input but never once succeeded (parsing failed on every
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>         line, or a --filter errored on every event)
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>       - a forbidden operation (e.g. mutating `conf` outside --begin)
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>       - with --strict, ANY single parse/filter/exec error (also aborts early)
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>2    Invalid command-line usage (unknown flag, bad value, conflicting options, or a
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>       malformed config file).
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>130  Interrupted (SIGINT / Ctrl-C).
+<a id="__codelineno-30-15" name="__codelineno-30-15" href="#__codelineno-30-15"></a>134  Internal panic (SIGABRT) — a bug; please report it.
+<a id="__codelineno-30-16" name="__codelineno-30-16" href="#__codelineno-30-16"></a>141  Broken pipe (SIGPIPE).
+<a id="__codelineno-30-17" name="__codelineno-30-17" href="#__codelineno-30-17"></a>143  Terminated (SIGTERM).
+</code></pre></div>
+</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../how-it-works/" class="md-footer__link md-footer__link--prev" aria-label="Previous: How It Works">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                How It Works
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../formats/" class="md-footer__link md-footer__link--next" aria-label="Next: Formats">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Formats
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2951 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.2.0/reference/formats/">
+      
+      
+        <link rel="prev" href="../cli-reference/">
+      
+      
+        <link rel="next" href="../multiline/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Formats - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#format-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Formats
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/explore/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../cli-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/security-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#input-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Formats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#json-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#line-and-raw-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Line and Raw Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logfmt-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logfmt Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-tsv-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV / TSV Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syslog-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syslog Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combined Log Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cef-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEF Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cri-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CRI Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Application-Log Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Column Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regex-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regex Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-detection-per-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detection Per File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cascade-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cascade Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#input-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Formats
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#json-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#line-and-raw-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Line and Raw Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logfmt-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logfmt Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-tsv-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV / TSV Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syslog-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syslog Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combined Log Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cef-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEF Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cri-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CRI Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Application-Log Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Column Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regex-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regex Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-detection-per-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detection Per File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cascade-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cascade Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="format-reference">Format Reference<a class="headerlink" href="#format-reference" title="Permanent link">&para;</a></h1>
+<p>Input format: <code>-f, --input-format &lt;format&gt;</code>. Output format: <code>-F, --output-format &lt;format&gt;</code>. <code>kelora --help-formats</code> prints a condensed version of this page.</p>
+<h2 id="input-formats">Input Formats<a class="headerlink" href="#input-formats" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Input</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auto</code></td>
+<td>Default. Detects one format (see <a href="#auto-detection">Auto-Detection</a>)</td>
+<td>depends</td>
+</tr>
+<tr>
+<td><code>json</code> / <code>-j</code></td>
+<td>JSON Lines, one object per line</td>
+<td>all keys, types kept</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td>Plain text</td>
+<td><code>line</code></td>
+</tr>
+<tr>
+<td><code>raw</code></td>
+<td>Plain text</td>
+<td><code>raw</code></td>
+</tr>
+<tr>
+<td><code>logfmt</code></td>
+<td><code>key=value</code> pairs</td>
+<td>all keys</td>
+</tr>
+<tr>
+<td><code>csv</code>, <code>tsv</code>, <code>csvnh</code>, <code>tsvnh</code></td>
+<td>Delimited, with or without header row</td>
+<td>header names or <code>c1</code>, <code>c2</code>, …</td>
+</tr>
+<tr>
+<td><code>syslog</code></td>
+<td>RFC 5424 and RFC 3164</td>
+<td><code>pri</code>, <code>facility</code>, <code>severity</code>, <code>level</code>, <code>ts</code>, <code>host</code>, <code>prog</code>, <code>pid</code>, <code>msg</code>, …</td>
+</tr>
+<tr>
+<td><code>combined</code></td>
+<td>Apache/Nginx access logs</td>
+<td><code>ip</code>, <code>ts</code>, <code>method</code>, <code>path</code>, <code>status</code>, …</td>
+</tr>
+<tr>
+<td><code>cef</code></td>
+<td>ArcSight Common Event Format</td>
+<td>header fields + extensions</td>
+</tr>
+<tr>
+<td><code>cri</code></td>
+<td>Kubernetes CRI/containerd container logs</td>
+<td><code>ts</code>, <code>stream</code>, <code>tag</code>, <code>msg</code></td>
+</tr>
+<tr>
+<td><code>glog</code>, <code>log4j</code>, <code>postgres</code>, …</td>
+<td><a href="#built-in-application-log-formats">Built-in application-log formats</a></td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code> + extras</td>
+</tr>
+<tr>
+<td><code>cols:&lt;spec&gt;</code></td>
+<td>Whitespace- or separator-delimited columns</td>
+<td>named in the spec</td>
+</tr>
+<tr>
+<td><code>regex:&lt;pattern&gt;</code></td>
+<td>Anything a regex with named groups can match</td>
+<td>named groups</td>
+</tr>
+<tr>
+<td><code>auto-per-file</code></td>
+<td>Detects separately for each file</td>
+<td>depends</td>
+</tr>
+<tr>
+<td><code>&lt;fmt1&gt;,&lt;fmt2&gt;,…</code></td>
+<td><a href="#cascade-mode">Cascade</a>: first parser that succeeds wins, per line</td>
+<td>+ <code>_format</code></td>
+</tr>
+</tbody>
+</table>
+<p>A line that a parser rejects is a parse error: it is counted, reported on stderr and skipped. <code>--strict</code> aborts on it instead.</p>
+<h3 id="json-format">JSON Format<a class="headerlink" href="#json-format" title="Permanent link">&para;</a></h3>
+<p>One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error.</p>
+<p>For pretty-printed objects that span several lines, join them first: <code>-j -M 'regex:match=^\{'</code> (each object starts with <code>{</code> in column 1), or <code>-j -M all</code> for a single document. See <a href="../multiline/">multiline.md</a>.</p>
+<h3 id="line-and-raw-formats">Line and Raw Formats<a class="headerlink" href="#line-and-raw-formats" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Field</th>
+<th>Blank lines</th>
+<th>Trimming</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>line</code></td>
+<td><code>line</code></td>
+<td>kept, as <code>line=""</code></td>
+<td>trailing <code>\n</code>/<code>\r</code> removed</td>
+</tr>
+<tr>
+<td><code>raw</code></td>
+<td><code>raw</code></td>
+<td>skipped</td>
+<td>none by the parser</td>
+</tr>
+</tbody>
+</table>
+<p>Leading and trailing spaces, tabs and backslashes are kept by both. <code>line</code> is the <code>auto</code> fallback when nothing else matches. Both accept every line, so in a cascade they must come last.</p>
+<h3 id="logfmt-format">Logfmt Format<a class="headerlink" href="#logfmt-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>timestamp=2024-01-15T10:30:00Z level=ERROR status=500 message="Connection failed"
+</code></pre></div>
+<ul>
+<li>Every pair becomes a top-level field. Keys may contain any non-space characters except <code>=</code> (<code>a.b-c</code>, <code>k:x</code> are fine).</li>
+<li>Unquoted values are typed: <code>500</code> → int, <code>1.5</code> and <code>1e3</code> → float, <code>true</code>/<code>True</code> → bool. <code>007</code> stays a string.</li>
+<li>Quoted values may contain spaces and <code>\"</code>. <code>key=</code> gives an empty string.</li>
+<li>A bare word without <code>=</code> is a parse error.</li>
+</ul>
+<h3 id="csv-tsv-formats">CSV / TSV Formats<a class="headerlink" href="#csv-tsv-formats" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Delimiter</th>
+<th>Header</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>csv</code></td>
+<td><code>,</code></td>
+<td>first row</td>
+</tr>
+<tr>
+<td><code>tsv</code></td>
+<td>tab</td>
+<td>first row</td>
+</tr>
+<tr>
+<td><code>csvnh</code></td>
+<td><code>,</code></td>
+<td>none; fields <code>c1</code>, <code>c2</code>, …</td>
+</tr>
+<tr>
+<td><code>tsvnh</code></td>
+<td>tab</td>
+<td>none; fields <code>c1</code>, <code>c2</code>, …</td>
+</tr>
+</tbody>
+</table>
+<p>Values are strings unless you annotate them (see <a href="#type-annotations">Type Annotations</a>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'csv status:int bytes:int response_time:float'</span><span class="w"> </span>access.csv
+</code></pre></div>
+<ul>
+<li>RFC 4180 quoting: <code>"a, b"</code>, <code>"say ""hi"""</code>, and quoted fields containing newlines (also under <code>-P</code>). An unclosed quote at end of input is an <code>Unterminated quoted field</code> error.</li>
+<li>Ragged rows are kept. Columns beyond the header (or beyond the first row with <code>csvnh</code>/<code>tsvnh</code>) get positional names (<code>c4</code>, <code>c5</code>, … counted from 1). Short rows leave the missing fields absent. A hint reports both counts. <code>--strict</code> makes a ragged row a fatal error.</li>
+</ul>
+<h3 id="syslog-format">Syslog Format<a class="headerlink" href="#syslog-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&lt;165&gt;1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&lt;34&gt;Jan 15 10:30:00 myhost myapp[1234]: Connection failed
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>RFC 5424</th>
+<th>RFC 3164</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pri</code></td>
+<td>int</td>
+<td>✓</td>
+<td>if <code>&lt;N&gt;</code> present</td>
+<td>priority = facility × 8 + severity</td>
+</tr>
+<tr>
+<td><code>facility</code></td>
+<td>int</td>
+<td>✓</td>
+<td>if <code>&lt;N&gt;</code> present</td>
+<td></td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td>int</td>
+<td>✓</td>
+<td>if <code>&lt;N&gt;</code> present</td>
+<td>0–7</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td>string</td>
+<td>✓</td>
+<td>if <code>&lt;N&gt;</code> present</td>
+<td><code>EMERG</code> <code>ALERT</code> <code>CRIT</code> <code>ERROR</code> <code>WARN</code> <code>NOTICE</code> <code>INFO</code> <code>DEBUG</code> (severity 0–7)</td>
+</tr>
+<tr>
+<td><code>ts</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>timestamp as written</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>prog</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pid</code></td>
+<td>int</td>
+<td>✓</td>
+<td>if <code>[pid]</code> present</td>
+<td>RFC 5424: string if not numeric</td>
+</tr>
+<tr>
+<td><code>msgid</code></td>
+<td>string</td>
+<td>✓</td>
+<td>–</td>
+<td></td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>int</td>
+<td>✓</td>
+<td>–</td>
+<td></td>
+</tr>
+<tr>
+<td><code>msg</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>RFC 5424 fields whose value is <code>-</code> are omitted. Structured data is not extracted. RFC 3164 timestamps have no year; see <a href="../time-reference/#year-and-timezone">time-reference.md</a>.</p>
+<h3 id="combined-log-format">Combined Log Format<a class="headerlink" href="#combined-log-format" title="Permanent link">&para;</a></h3>
+<p>Handles Common Log Format, Combined, and Nginx Combined with a trailing request time (quoted or bare, as nginx's <code>$request_time</code>), detected per line:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" 0.123
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Common</th>
+<th>Combined</th>
+<th>Nginx</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ip</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>client address</td>
+</tr>
+<tr>
+<td><code>identity</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>RFC 1413 identity</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>auth user</td>
+</tr>
+<tr>
+<td><code>ts</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>15/Jan/2024:10:30:00 +0000</code></td>
+</tr>
+<tr>
+<td><code>request</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>full request line</td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>from <code>request</code></td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>from <code>request</code></td>
+</tr>
+<tr>
+<td><code>protocol</code></td>
+<td>string</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>from <code>request</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>int</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bytes</code></td>
+<td>int</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>0</code> is kept</td>
+</tr>
+<tr>
+<td><code>referer</code></td>
+<td>string</td>
+<td>–</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_agent</code></td>
+<td>string</td>
+<td>–</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>request_time</code></td>
+<td>float</td>
+<td>–</td>
+<td>–</td>
+<td>✓</td>
+<td>seconds</td>
+</tr>
+</tbody>
+</table>
+<p>Any field whose value is <code>-</code> is omitted.</p>
+<p>A line with anything after <code>user_agent</code> and the optional request time (an nginx <code>log_format</code> with extra fields such as <code>rt=</code> or <code>upstream=</code>) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. <code>unexpected trailing text after user_agent at column 122: 'trace=abc123'</code>; parse such logs with a <code>regex:</code> format that captures the extra fields.</p>
+<h3 id="cef-format">CEF Format<a class="headerlink" href="#cef-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ts</code></td>
+<td>string</td>
+<td>from an optional syslog prefix (<code>Jan 15 10:30:00 host CEF:…</code>)</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td>string</td>
+<td>from the optional syslog prefix</td>
+</tr>
+<tr>
+<td><code>cefver</code></td>
+<td>string</td>
+<td>CEF version</td>
+</tr>
+<tr>
+<td><code>vendor</code></td>
+<td>string</td>
+<td>device vendor</td>
+</tr>
+<tr>
+<td><code>product</code></td>
+<td>string</td>
+<td>device product</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>string</td>
+<td>device version</td>
+</tr>
+<tr>
+<td><code>eventid</code></td>
+<td>string</td>
+<td>signature ID</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>string</td>
+<td>event name</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td>string</td>
+<td><code>0</code>–<code>10</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each extension pair becomes a top-level field. Extension values are typed: <code>1232</code> → int, <code>1.5</code> → float, <code>true</code> → bool. Everything else, including IP addresses, stays a string.</p>
+<h3 id="cri-format">CRI Format<a class="headerlink" href="#cri-format" title="Permanent link">&para;</a></h3>
+<p>The Kubernetes CRI/containerd log layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&gt; &lt;message&gt;</code>: files under <code>/var/log/pods/</code>, and <code>kubectl logs --timestamps</code> output.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ts</code></td>
+<td>string</td>
+<td>runtime timestamp</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>string</td>
+<td><code>stdout</code> or <code>stderr</code></td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td>string</td>
+<td><code>F</code> full line, <code>P</code> partial (the runtime split a long line; the following lines up to the next <code>F</code> continue it)</td>
+</tr>
+<tr>
+<td><code>msg</code></td>
+<td>string</td>
+<td>the container's line, verbatim</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.stream == "stderr"'</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.absorb_json("msg")'</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "error"'</span>
+</code></pre></div>
+<p>Auto-detection tries <code>cri</code> before logfmt and CSV, so a JSON or logfmt payload does not hide it. Docker's <code>json-file</code> driver writes one JSON object per line (<code>log</code>, <code>stream</code>, <code>time</code>); use <code>-f json</code> for that.</p>
+<h3 id="built-in-application-log-formats">Built-in Application-Log Formats<a class="headerlink" href="#built-in-application-log-formats" title="Permanent link">&para;</a></h3>
+<p>Fixed layouts parsed with built-in regexes. Select with <code>-f &lt;name&gt;</code> or in a comma cascade (<code>-f log4j,line</code>). Except for <code>cri</code> (above), auto-detection tries them only after every other format and just before the <code>line</code> fallback. Most definitions are adapted from <a href="https://lnav.org">lnav</a> (BSD-3-Clause).</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Example line</th>
+<th>Fields besides <code>ts</code>, <code>level</code>, <code>msg</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apache-error</code></td>
+<td><code>[Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client 10.0.0.1] File does not exist</code></td>
+<td><code>module</code>, <code>pid</code>, <code>tid</code>, <code>client</code> (each optional)</td>
+</tr>
+<tr>
+<td><code>glog</code></td>
+<td><code>I0102 15:04:05.123456 1 main.go:42] started</code></td>
+<td><code>pid</code>, <code>source</code>; <code>level</code> is <code>I</code>/<code>W</code>/<code>E</code>/<code>F</code></td>
+</tr>
+<tr>
+<td><code>haproxy</code></td>
+<td><code>Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"</code></td>
+<td>see below</td>
+</tr>
+<tr>
+<td><code>iso8601-level</code></td>
+<td><code>2024-01-02T15:04:05Z INFO started</code> (space instead of <code>T</code>, <code>[…]</code> brackets, and <code>,</code> fractions also match)</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>log4j</code></td>
+<td><code>2024-01-02 15:04:05,123 INFO [main] com.example.App - started</code></td>
+<td><code>thread</code>, <code>logger</code></td>
+</tr>
+<tr>
+<td><code>nginx-error</code></td>
+<td><code>2024/01/02 15:04:05 [error] 29#29: open() failed</code></td>
+<td><code>pid</code>, <code>tid</code></td>
+</tr>
+<tr>
+<td><code>postgres</code></td>
+<td><code>2024-01-02 15:04:05.123 UTC [1234] LOG:  ready</code></td>
+<td><code>pid</code>, <code>log_tz</code></td>
+</tr>
+<tr>
+<td><code>python-logging</code></td>
+<td><code>2024-01-02 15:04:05,123 - myapp.db - INFO - connected</code></td>
+<td><code>logger</code></td>
+</tr>
+<tr>
+<td><code>redis</code></td>
+<td><code>12345:M 06 Feb 2024 12:00:00.123 * Ready</code></td>
+<td><code>pid</code>, <code>role</code>; <code>level</code> is the marker <code>.</code> <code>-</code> <code>*</code> <code>#</code></td>
+</tr>
+<tr>
+<td><code>s3</code></td>
+<td>AWS S3 server access log</td>
+<td><code>owner</code>, <code>bucket</code>, <code>client</code>, <code>requester</code>, <code>req_id</code>, <code>op</code>, <code>key</code>, <code>method</code>, <code>uri</code>, <code>query</code>, <code>httpver</code>, <code>status</code>, <code>error_code</code>, <code>bytes_sent</code>, <code>obj_size</code>, <code>total_time</code>, <code>turnaround_time</code>, <code>referer</code>, <code>user_agent</code>, then (newer logs) <code>version_id</code>, <code>host_id</code>, <code>sig_version</code>, <code>cipher_suite</code>, <code>auth_type</code>, <code>host_header</code>, <code>tls_version</code>; no <code>level</code>/<code>msg</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>haproxy</code> fields: <code>host</code>, <code>proc</code>, <code>pid</code>, <code>client_ip</code>, <code>client_port</code>, <code>accept_date</code>, <code>frontend</code>, <code>backend</code>, <code>server</code>, timers <code>tq</code>/<code>tw</code>/<code>tc</code>/<code>tr</code>/<code>tt</code> (HTTP) or <code>tw</code>/<code>tc</code>/<code>tt</code> (TCP), <code>status</code> (HTTP), <code>bytes_read</code>, <code>termination_state</code>, <code>actconn</code>, <code>feconn</code>, <code>beconn</code>, <code>srv_conn</code>, <code>retries</code>, <code>srv_queue</code>, <code>backend_queue</code>, <code>req_headers</code>/<code>resp_headers</code> (when captured), and the request line in <code>msg</code> (HTTP). It has no <code>level</code>. HAProxy lines are syslog lines, so <code>-f auto</code> detects them as <code>syslog</code>: pass <code>-f haproxy</code>.</p>
+<p>Types: fields named <code>pid</code>, <code>tid</code>, <code>client_port</code>, <code>bytes_read</code> and the haproxy connection counters are ints. Everything else is a string, including the <code>s3</code> and <code>haproxy</code> <code>status</code>, sizes and timers. Convert in a script if you need numbers: <code>--exec 'e.status = to_int(e.status)'</code>.</p>
+<p><code>s3</code> and <code>haproxy</code> keep a curated set of columns. The unparsed line is still available as <code>meta.line</code>, so a missing column can be extracted in a script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>s3<span class="w"> </span>access.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.last_col = meta.line.extract_regex("(\\S+)$", 1)'</span>
+</code></pre></div>
+<p>Format notes:</p>
+<ul>
+<li><code>glog</code> timestamps have no year; see <a href="../time-reference/#year-and-timezone">Year and timezone</a>.</li>
+<li><code>postgres</code> matches only the default <code>log_line_prefix = '%m [%p] '</code>. For a custom prefix use <code>-f regex:</code>. Multi-line <code>STATEMENT</code>s (tab-indented continuation lines) need <code>-M indent</code>; without it the continuation lines are parse errors. <code>-f postgres,line</code> keeps them as separate <code>line</code> events instead.</li>
+<li><code>postgres</code> <code>ts</code> is naive. The logged zone abbreviation is kept in <code>log_tz</code> but not applied, because abbreviations like <code>CST</code> or <code>IST</code> are ambiguous. The timestamp is read in <code>--input-tz</code> (default UTC). For a server whose <code>log_timezone</code> is not UTC, pass e.g. <code>--input-tz Europe/Berlin</code>.</li>
+</ul>
+<h3 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h3>
+<p><code>-f 'cols:&lt;spec&gt;'</code> splits on whitespace (runs of spaces count as one separator), or on the string given with <code>--cols-sep</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>one column</td>
+</tr>
+<tr>
+<td><code>name(N)</code></td>
+<td>N columns joined with a space</td>
+</tr>
+<tr>
+<td><code>-</code> / <code>-(N)</code></td>
+<td>skip one / N columns</td>
+</tr>
+<tr>
+<td><code>*name</code></td>
+<td>rest of the line; must be last</td>
+</tr>
+<tr>
+<td><code>name:type</code></td>
+<td>apply a type: <code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># ERROR api "Connection failed"     → level, service, msg='"Connection failed"' (quotes kept)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:level service *msg'</span><span class="w"> </span>app.log
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># 2024-01-15 10:30:00 INFO Started  → ts='2024-01-15 10:30:00' (detected as timestamp)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) level *msg'</span><span class="w"> </span>app.log
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># bob|42|Berlin</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:name age:int city'</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">'|'</span><span class="w"> </span>data.txt
+</code></pre></div>
+<p>A line with too few columns sets the missing fields to <code>()</code>. Extra columns are dropped unless the spec ends in <code>*name</code>. Neither is an error, even under <code>--strict</code>. With <code>--cols-sep</code>, empty columns (<code>a||b</code>) become empty strings.</p>
+<h3 id="regex-format">Regex Format<a class="headerlink" href="#regex-format" title="Permanent link">&para;</a></h3>
+<p><code>-f 'regex:&lt;pattern&gt;'</code>. The pattern is anchored automatically: the whole line must match. Each named group becomes a field.</p>
+<table>
+<thead>
+<tr>
+<th>Syntax</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>(?P&lt;name&gt;…)</code> or <code>(?&lt;name&gt;…)</code></td>
+<td>string field</td>
+</tr>
+<tr>
+<td><code>(?P&lt;name:int&gt;…)</code>, <code>:float</code>, <code>:bool</code></td>
+<td>typed field (lowercase type names only)</td>
+</tr>
+<tr>
+<td><code>(?:…)</code></td>
+<td>non-capturing group</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 404 Not found</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)'</span><span class="w"> </span>app.log
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 2025-01-15T10:00:00Z [ERROR] Database connection failed</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)'</span><span class="w"> </span>app.log
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;ip&gt;\S+) - - \[(?P&lt;ts&gt;[^\]]+)\] "(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+" (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)'</span><span class="w"> </span>access.log
+</code></pre></div>
+<ul>
+<li>A group that captures an empty string is omitted.</li>
+<li>A line that does not match is a parse error.</li>
+<li>Nested named groups and the names <code>original_line</code>, <code>parsed_ts</code> and <code>fields</code> are rejected when the pattern is compiled.</li>
+<li>Single-quote the whole <code>-f</code> argument so the shell leaves <code>\</code>, <code>$</code> and <code>[</code> alone.</li>
+</ul>
+<h3 id="type-annotations">Type Annotations<a class="headerlink" href="#type-annotations" title="Permanent link">&para;</a></h3>
+<p>Used by <code>csv</code>/<code>tsv</code>, <code>cols:</code> and <code>regex:</code>. A value that cannot be converted (<code>abc</code> for <code>:int</code>) becomes <code>()</code>; the rest of the event is kept. With <code>--strict</code> the run aborts instead. To choose a fallback yourself, leave out the annotation and convert in a script: <code>--exec 'e.status = to_int_or(e.status, 0)'</code>.</p>
+<h3 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h3>
+<p><code>-f auto</code> is the default. It picks one format:</p>
+<ul>
+<li><strong>stdin:</strong> from the first non-empty line. A live pipe never waits for more input.</li>
+<li><strong>Files:</strong> from up to the first 64 non-empty lines (max 256 KiB) of the first file that has content. Uncompressed files of 32 KiB or more are also sampled at 1/4, 1/2, 3/4 and the tail. Gzip/zstd files are sampled from the head only.</li>
+</ul>
+<p>Each line is tested in this order, first match wins:</p>
+<ol>
+<li><code>json</code>: the line is a JSON object</li>
+<li><code>cef</code>: parses as CEF, with or without a syslog prefix</li>
+<li><code>syslog</code>: RFC 5424 or RFC 3164</li>
+<li><code>combined</code></li>
+<li><code>cri</code></li>
+<li><code>logfmt</code></li>
+<li><code>csv</code>/<code>tsv</code>: at least two commas or tabs. If the first field contains no letters, <code>csvnh</code>/<code>tsvnh</code>; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit <code>-f csv</code> skips this check.</li>
+<li>built-in application-log formats</li>
+<li><code>line</code></li>
+</ol>
+<p><strong>Mixed files:</strong> if the file sample contains more than one format, kelora parses with <code>&lt;dominant format&gt;,line</code>, exactly like an explicit <a href="#cascade-mode">cascade</a>, and each event gets <code>_format</code>; a hint says so, since the extra field changes the output's shape (<code>--exclude-keys _format</code> drops it, an explicit <code>-f json,line</code> silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become <code>line</code> events and a hint prints the explicit <code>-f</code> (e.g. <code>-f json,syslog,line</code>) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.</p>
+<p><code>-v</code> prints the decision, e.g. <code>Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)</code>.</p>
+<h3 id="auto-detection-per-file">Auto-Detection Per File<a class="headerlink" href="#auto-detection-per-file" title="Permanent link">&para;</a></h3>
+<p><code>-f auto-per-file</code> runs the file detection above separately for each file, so JSON and logfmt files can be read in one run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>-J<span class="w"> </span>logs/api/*.log<span class="w"> </span>logs/workers/*.log
+</code></pre></div>
+<p>On stdin it behaves like <code>auto</code>. It cannot be combined with <code>--parallel</code> or <code>--merge-sorted</code>.</p>
+<h3 id="cascade-mode">Cascade Mode<a class="headerlink" href="#cascade-mode" title="Permanent link">&para;</a></h3>
+<p>Every line is tried against each format in order. The first that parses it wins, and the event gets a <code>_format</code> field naming that format. Typical use: structured logs with interleaved plain text (panics, banners, stack traces), or files that interleave several services.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w">                              </span><span class="c1"># noisy JSON</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,syslog,line<span class="w"> </span>mixed.log
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e._format == "line"'</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>-s<span class="w">                           </span><span class="c1"># adds "Cascade formats: json=9812, line=23"</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Members</th>
+<th>How to list them</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>, <code>combined</code>, built-in application-log formats (incl. <code>cri</code>)</td>
+<td>comma list or repeated <code>-f</code></td>
+</tr>
+<tr>
+<td><code>cols:&lt;spec&gt;</code>, <code>regex:&lt;pattern&gt;</code></td>
+<td>repeated <code>-f</code> only (a pattern may contain commas)</td>
+</tr>
+<tr>
+<td><code>auto</code>, <code>auto-per-file</code>, <code>csv</code>, <code>tsv</code>, <code>csvnh</code>, <code>tsvnh</code></td>
+<td>not allowed</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) level *msg'</span><span class="w"> </span>app.log
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)'</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
+</code></pre></div>
+<p>Repeated <code>-f</code> and comma lists can be mixed; members are tried in the order given.</p>
+<ul>
+<li><strong>Order:</strong> <code>line</code>, <code>raw</code> and <code>cols:</code> accept every line, so they must be last; kelora rejects anything after them. <code>regex:</code> rejects non-matching lines, so it can appear earlier. Put liberal grammars such as <code>logfmt</code> after stricter ones.</li>
+<li><strong><code>_format</code> collisions:</strong> if a record already has its own <code>_format</code> field, it is kept and not tagged; a warning reports how many events this affected.</li>
+<li><strong>Multiline:</strong> <code>-M</code> grouping runs before parsing and follows the first format's strategy.</li>
+<li>Works with <code>-P/--parallel</code>.</li>
+</ul>
+<h2 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Output</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>colored <code>key='value'</code> pairs</td>
+<td></td>
+</tr>
+<tr>
+<td><code>json</code> / <code>-J</code></td>
+<td>JSON Lines</td>
+<td></td>
+</tr>
+<tr>
+<td><code>logfmt</code></td>
+<td><code>key=value</code> pairs</td>
+<td></td>
+</tr>
+<tr>
+<td><code>inspect</code></td>
+<td>one field per line with its type</td>
+<td></td>
+</tr>
+<tr>
+<td><code>levelmap</code></td>
+<td>timeline of one glyph per event (first letter of the level)</td>
+<td>no <code>-P</code></td>
+</tr>
+<tr>
+<td><code>keymap</code></td>
+<td>timeline of the first character of one field; <code>.</code> when missing or empty</td>
+<td><code>-k</code> with exactly one field; no <code>-P</code></td>
+</tr>
+<tr>
+<td><code>tailmap</code></td>
+<td>timeline of one numeric field by percentile: <code>_</code> below p90, <code>1</code> p90–p95, <code>2</code> p95–p99, <code>3</code> above p99, <code>.</code> missing</td>
+<td><code>-k</code> with exactly one numeric field; no <code>-P</code></td>
+</tr>
+<tr>
+<td><code>csv</code>, <code>tsv</code></td>
+<td>delimited, header row</td>
+<td><code>-k</code> (sets the columns)</td>
+</tr>
+<tr>
+<td><code>csvnh</code>, <code>tsvnh</code></td>
+<td>delimited, no header</td>
+<td><code>-k</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>-k<span class="w"> </span>ts,level,msg
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>access.log<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>status
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>kelora<span class="w"> </span>api.log<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time
+</code></pre></div>
+<p><strong>CSV/TSV:</strong> columns appear in <code>-k</code> order; a field missing from an event is an empty cell. Nested maps and arrays are flattened into a single cell, e.g. <code>{"x":[1,2],"y":"q"}</code> becomes <code>x_0:1,x_1:2,y:q</code>. Values with quotes or delimiters are quoted CSV-style (also in TSV).</p>
+<p><strong>Nested values in other formats:</strong> <code>default</code> prints them as JSON, <code>logfmt</code> flattens them like CSV into one quoted value, <code>json</code> and <code>inspect</code> keep the structure.</p>
+<p><strong>Maps</strong> (<code>levelmap</code>, <code>keymap</code>, <code>tailmap</code>):</p>
+<p><img alt="Levelmap output" src="../../screenshots/levelmap.gif" /></p>
+<ul>
+<li>Each row starts with the timestamp of its first event, even if <code>-k</code> does not select the timestamp field. Without a timestamp (none detected, or removed with <code>--exclude-keys</code>) the row starts with <code>line N</code>, the number padded to a fixed width so the glyph columns stay aligned.</li>
+<li>A row holds a fixed number of events, not a fixed span of time: it can cover seconds or hours depending on event density. Compare row labels to see how much time a row covers.</li>
+<li>A one-line legend lists only the glyphs that appeared and the values behind them, e.g. <code>2 = 200,204 | 4 = 404 | 5 = 500,503</code>. <code>tailmap</code> adds a line with count, range and the p90/p95/p99 thresholds. The legend is shown only when stdout is a terminal; <code>--legend</code> forces it, <code>--no-legend</code> hides it.</li>
+</ul>
+<p><code>-q/--quiet</code> suppresses events; <code>-s/--stats</code> and <code>-m/--metrics</code> imply it.</p>
+<p>See also: <a href="../../guide/parse/">guide/parse.md</a>, <a href="../../guide/output/">guide/output.md</a>, <a href="../multiline/">multiline.md</a>, <a href="../time-reference/">time-reference.md</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../cli-reference/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CLI Options">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                CLI Options
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../multiline/" class="md-footer__link md-footer__link--next" aria-label="Next: Multiline">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Multiline
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
