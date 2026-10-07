@@ -681,7 +681,8 @@ pub fn auto_cascade_hint_message(
     config: &KeloraConfig,
     detected: &DetectedFormat,
 ) -> Option<String> {
-    if !config.hints_allowed() || !detected.had_input {
+    // With events suppressed (-q) the extra field never reaches the output.
+    if !config.hints_allowed() || !detected.had_input || config.processing.quiet_events {
         return None;
     }
     // The user already decided which keys reach the output: `_format` is
