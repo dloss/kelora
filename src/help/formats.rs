@@ -29,7 +29,7 @@ cols:<spec>
           field:type  - apply type (int, float, bool, string)
 
 combined
-  Apache/Nginx access logs (CLF, Combined, Nginx+request_time)
+  Apache/Nginx access logs (CLF, Combined, Nginx + request_time quoted or bare)
   Fields: ip, ts, request, method, path, protocol, status
           [identity, user, bytes, referer, user_agent, request_time]
   Note: Fields in brackets are optional (omitted if value is "-")

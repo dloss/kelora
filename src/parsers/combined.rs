@@ -22,8 +22,10 @@ impl CombinedParser {
 
         // Combined Log Format with optional request time (NGINX-specific)
         // Example: 192.168.1.1 - - [25/Dec/1995:10:00:00 +0000] "GET /index.html HTTP/1.0" 200 1234 "http://www.example.com/" "Mozilla/4.08" "0.123"
+        // nginx configs log $request_time quoted or bare (`... "Mozilla/4.08" 0.123`); group 10
+        // captures the quoted form, group 11 the bare number.
         let combined_with_request_time_regex = Regex::new(
-            r#"^(\S+) (\S+) (\S+) \[([^\]]+)\] "([^"]*)" (\d+) (\S+)(?: "([^"]*)" "([^"]*)"(?: "([^"]*)")?)?(?:\r?\n)?$"#
+            r#"^(\S+) (\S+) (\S+) \[([^\]]+)\] "([^"]*)" (\d+) (\S+)(?: "([^"]*)" "([^"]*)"(?: (?:"([^"]*)"|([0-9]+(?:\.[0-9]+)?)))?)?(?:\r?\n)?$"#
         ).context("Failed to compile Combined Log Format with request time regex")?;
 
         // Common Log Format pattern (Apache/NGINX basic format)
@@ -144,7 +146,7 @@ impl CombinedParser {
             }
 
             // Request time (NGINX-specific, optional)
-            if let Some(request_time) = captures.get(10) {
+            if let Some(request_time) = captures.get(10).or_else(|| captures.get(11)) {
                 let time_str = request_time.as_str();
                 if time_str != "-" {
                     if let Some(time_float) = Self::parse_request_time(time_str) {
@@ -631,6 +633,23 @@ mod tests {
                 - 0.050)
                 .abs()
                 < f64::EPSILON
+        );
+    }
+
+    #[test]
+    fn test_nginx_combined_with_unquoted_request_time() {
+        let parser = CombinedParser::new().unwrap();
+        let line = r#"10.1.3.55 - - [06/Sep/2024:10:00:03 +0000] "GET /api/cart HTTP/1.1" 200 8437 "-" "curl/8.0" 0.02"#;
+        let result = parser.parse(line).unwrap();
+        assert_eq!(result.fields.get("path").unwrap().to_string(), "/api/cart");
+        assert_eq!(
+            result
+                .fields
+                .get("request_time")
+                .unwrap()
+                .as_float()
+                .unwrap(),
+            0.02
         );
     }
 }

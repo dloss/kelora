@@ -28,7 +28,18 @@ The parsed value is available to scripts as `meta.parsed_ts`. The field itself
 
 `--ts-format` uses [chrono format codes](../reference/time-reference.md):
 `%Y-%m-%d %H:%M:%S,%3f` for Python logging, `%d/%b/%Y:%H:%M:%S %z` for Apache.
-Quote the format so the shell leaves `%` alone.
+Quote the format so the shell leaves `%` alone. It applies to a field the parser
+produced, so for a plain text file first split the timestamp off with
+[`cols:` or `regex:`](parse.md#4-columns-cols).
+
+A server in Berlin that logs local time without a zone, filtered by Berlin
+time and printed in UTC:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/berlin_local.log -f 'cols:ts(2) *msg' \
+  --ts-format '%d.%m.%Y %H:%M:%S' --input-tz Europe/Berlin \
+  --since '2024-09-05 10:00' --until '2024-09-05 10:30' --normalize-ts
+```
 
 ### Time zones
 
@@ -67,8 +78,10 @@ kelora examples/simple_json.jsonl --since 2024-01-15T10:15:00Z --until since+5m 
 | relative to the other bound | `--until since+30m`, `--since until-1h` | a window of fixed length |
 | Unix epoch | `1735566123` | seconds since 1970 |
 
-`--since` is inclusive (at or after), `--until` too (at or before). Relative
-times count from *now*, so for an archived file use absolute times.
+`--since` is inclusive (at or after), `--until` too (at or before). A date and
+time without a zone is read like the log's timestamps: in `--input-tz`, else
+`TZ`, else UTC. Relative times count from *now*, so for an archived file use
+absolute times.
 
 - The time range is applied **before** every other filter and script, so
   `--freq` and other counts always cover exactly the events in the range.

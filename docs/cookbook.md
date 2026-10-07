@@ -35,7 +35,8 @@ kelora examples/production-errors.jsonl -m -e 'track_freq("pattern", e.message.n
 
 ### When did it start?
 
-Count errors per time window; the first busy window is your start:
+Count errors per time window; the first busy window is your start. For the
+exact first and last error, `-s` prints the output time span.
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/api_latency_incident.jsonl -l error --span 5m --span-summary
@@ -124,6 +125,10 @@ Name the metric after the group to get one set of statistics per value:
 kelora examples/api_latency_incident.jsonl -m \
   -e 'track_percentiles("ms " + e.endpoint, e.response_time_ms, [0.5, 0.99])'
 ```
+
+To rank by one percentile, pipe the TSV through `sort`:
+`… | grep _p99 | sort -t$'\t' -k3 -rn`. Access logs parsed as `combined` call
+the fields `path`, `status`, `bytes`, and (nginx) `request_time`.
 
 ### Browsers and operating systems
 

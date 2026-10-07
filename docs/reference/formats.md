@@ -93,12 +93,13 @@ RFC 5424 fields whose value is `-` are omitted. Structured data is not extracted
 
 ### Combined Log Format
 
-Handles Common Log Format, Combined, and Nginx Combined with a trailing request time, detected per line:
+Handles Common Log Format, Combined, and Nginx Combined with a trailing request time (quoted or bare, as nginx's `$request_time`), detected per line:
 
 ```
 192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
 192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
 192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
+192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" 0.123
 ```
 
 | Field | Type | Common | Combined | Nginx | Description |
