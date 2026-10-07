@@ -8,38 +8,21 @@ Kelora knowing **which field holds the timestamp and how to read it**.
 Kelora looks for common field names — `ts`, `timestamp`, `time`, `@timestamp`,
 `datetime`, `created_at`, `t`, and a few more — and recognizes ISO 8601,
 RFC 3339, syslog, Apache, many application-log layouts, and Unix epochs in
-seconds, milliseconds, or microseconds. `--stats` says what it found:
-
-```bash exec="on" source="above" result="ansi"
-kelora examples/simple_json.jsonl -s | grep Timestamp
-```
+seconds, milliseconds, or microseconds. Checking the result and fixing the
+common problems is part of parsing:
+[Get the timestamp right](parse.md#get-the-timestamp-right). The details are
+below.
 
 The parsed value is available to scripts as `meta.parsed_ts`. The field itself
 (`e.timestamp`) keeps the original text.
 
-## When detection needs help
-
-| Situation | Option |
-|---|---|
-| The field has an unusual name | `--ts-field logged` |
-| The format is unusual | `--ts-format '%d.%m.%Y %H:%M:%S'` |
-| No zone in the timestamp, and the source isn't UTC | `--input-tz Europe/Berlin` (or `local`) |
-| No year in the timestamp (syslog, glog) | `--input-year 2024` |
+### Formats
 
 `--ts-format` uses [chrono format codes](../reference/time-reference.md):
 `%Y-%m-%d %H:%M:%S,%3f` for Python logging, `%d/%b/%Y:%H:%M:%S %z` for Apache.
 Quote the format so the shell leaves `%` alone. It applies to a field the parser
 produced, so for a plain text file first split the timestamp off with
 [`cols:` or `regex:`](parse.md#4-columns-cols).
-
-A server in Berlin that logs local time without a zone, filtered by Berlin
-time and printed in UTC:
-
-```bash exec="on" source="above" result="ansi"
-kelora examples/berlin_local.log -f 'cols:ts(2) *msg' \
-  --ts-format '%d.%m.%Y %H:%M:%S' --input-tz Europe/Berlin \
-  --since '2024-09-05 10:00' --until '2024-09-05 10:30' --normalize-ts
-```
 
 ### Time zones
 
@@ -77,6 +60,14 @@ kelora examples/simple_json.jsonl --since 2024-01-15T10:15:00Z --until since+5m 
 | relative to now | `1h`, `-30m`, `2d`, `now-15m`, `yesterday`, `today` | that far back |
 | relative to the other bound | `--until since+30m`, `--since until-1h` | a window of fixed length |
 | Unix epoch | `1735566123` | seconds since 1970 |
+
+A server in Berlin that logs local time without a zone, filtered by Berlin
+time and printed in UTC:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/berlin_local.log -f 'cols:ts(2) *msg' --input-tz Europe/Berlin \
+  --since '2024-09-05 10:00' --until '2024-09-05 10:30' --normalize-ts
+```
 
 `--since` is inclusive (at or after), `--until` too (at or before). A date and
 time without a zone is read like the log's timestamps: in `--input-tz`, else

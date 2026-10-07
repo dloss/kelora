@@ -66,7 +66,7 @@ fatal.
 | timestamp not found | `--ts-field name`, and `--ts-format` for unusual formats |
 | `--since` drops everything on an old file | use absolute times; relative ones count from now |
 
-See [Work with Time](../guide/time.md).
+See [Get the timestamp right](../guide/parse.md#get-the-timestamp-right) and [Work with Time](../guide/time.md).
 
 ## Output problems
 

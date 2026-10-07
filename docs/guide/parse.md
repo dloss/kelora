@@ -1,8 +1,12 @@
 # Get Logs into Shape
 
-Everything in Kelora — filters, scripts, metrics, output — works on **fields**.
-Parsing turns each line into an event with named fields. Try these approaches
-in order and stop at the first one that gives you the fields you need:
+Parsing has two jobs: split each line into named **fields**, and find a
+correct **timestamp**. Filters, scripts, and output work on fields; time
+ranges, windows, and ordering work on the timestamp — and a wrong timestamp
+fails silently.
+
+For the fields, try these approaches in order and stop at the first one that
+works:
 
 | | Use when | Tool |
 |---|---|---|
@@ -13,9 +17,8 @@ in order and stop at the first one that gives you the fields you need:
 | 5 | Anything with a pattern | `-f 'regex:(?P<ts>\S+) …'` |
 | 6 | Fields are buried inside a text field | `absorb_kv()`, `extract_regex()`, … in `--exec` |
 
-Two adjustments apply to all of them: [join multi-line events](#one-event-spans-several-lines)
-before parsing, and [tell Kelora which field is the timestamp](#make-the-timestamp-work)
-if it can't find it.
+Then [check the timestamp](#get-the-timestamp-right). If one event spans
+several lines, [join them first](#one-event-spans-several-lines).
 
 ## How to tell whether parsing worked
 
@@ -27,7 +30,8 @@ kelora examples/simple_line.log -n 2
 ```
 
 For a field-by-field profile with types and sample values, use `--discover`
-(`-d`). Use `-v` to see which format was detected.
+(`-d`); its last line also names the timestamp field. Use `-v` to see which
+format was detected.
 
 ## 1. Let auto-detection do it
 
@@ -217,6 +221,48 @@ returns a `parse_error` status for them.
 Quick column grabs work too: `e.line.col(2)` returns the third whitespace column,
 and `e.line.split(" ")` an array.
 
+## Get the timestamp right
+
+Time ranges (`--since`), time windows (`--span`), merging files, and the time
+shown in the output all depend on the timestamp. When it is wrong, nothing
+errors: events just fall outside a range, land in the wrong window, or show
+the wrong time. So check it once for every new log source. `--stats` says
+which field Kelora used and how many values it could read:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/cols_fixed.log -f 'cols:ts(2) level service *msg' --stats | grep -E 'Timestamp|Time span'
+```
+
+Kelora looks for common field names (`ts`, `timestamp`, `time`, `@timestamp`,
+…) and recognizes most formats, including Unix epochs. Four things go wrong:
+
+| Symptom in `--stats` | Cause | Fix |
+|---|---|---|
+| `Timestamp: (none found …)` | unusual field name | `--ts-field logged` |
+| `0/… parsed` | unusual format | `--ts-format '%d.%m.%Y %H:%M:%S'` |
+| a time span shifted by whole hours | no zone in the log, and it isn't UTC | `--input-tz Europe/Berlin` |
+| a guessed year (syslog-style dates) | the log has no year | `--input-year 2024` |
+
+A field Kelora doesn't recognize by name:
+
+```bash exec="on" source="above" result="ansi"
+echo '{"logged":"2024-09-05 10:02:00","msg":"disk check ok"}' | kelora -j --stats | grep Timestamp
+echo '{"logged":"2024-09-05 10:02:00","msg":"disk check ok"}' | kelora -j --ts-field logged --stats | grep Timestamp
+```
+
+The quiet one is the time zone. This server logs Berlin local time without a
+zone. Read as UTC (the default), every timestamp is two hours off — 09:55 UTC
+instead of 07:55:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/berlin_local.log -f 'cols:ts(2) *msg' --stats | grep 'Time span'
+kelora examples/berlin_local.log -f 'cols:ts(2) *msg' --input-tz Europe/Berlin --stats | grep 'Time span'
+```
+
+Kelora prints a hint when a time filter or window relies on the UTC
+assumption. [Work with Time](time.md) covers zones, years, and format codes in
+detail. The parsed timestamp is available to scripts as `meta.parsed_ts`.
+
 ## One event spans several lines
 
 Stack traces, wrapped messages, and pretty-printed payloads occupy several
@@ -254,22 +300,6 @@ kelora examples/prefix_docker.log --extract-prefix container \
 ```
 
 The separator defaults to `|`; change it with `--prefix-sep`.
-
-## Make the timestamp work
-
-Time filters (`--since`), time windows (`--span`), and time display all need
-to know which field is the timestamp and how to read it. Kelora looks for
-common names (`ts`, `timestamp`, `time`, `@timestamp`, …) and common formats.
-`--stats` reports what it found:
-
-```bash exec="on" source="above" result="ansi"
-kelora examples/cols_fixed.log -f 'cols:ts(2) level service *msg' --stats | grep Timestamp
-```
-
-If it found nothing or the wrong field, `--ts-field`, `--ts-format`,
-`--input-tz`, and `--input-year` fix it — see
-[Work with Time](time.md#when-detection-needs-help). The parsed timestamp is
-available to scripts as `meta.parsed_ts`.
 
 ## When lines don't parse
 
