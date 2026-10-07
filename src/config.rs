@@ -2186,7 +2186,32 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
         }));
     }
 
-    if let Ok(duration) = humantime::parse_duration(span_spec) {
+    // A spec that starts with a digit can never be a field name, so it is a
+    // duration or a mistake — report it as a duration either way (#415).
+    let looks_like_duration = span_spec.starts_with(|c: char| c.is_ascii_digit());
+    if looks_like_duration {
+        if let Some(unit) = calendar_span_unit(span_spec) {
+            return Err(anyhow::anyhow!(
+                "--span does not accept the calendar unit '{}' (in '{}'): windows are fixed-length \
+                 and epoch-aligned in UTC, so calendar weeks, months and years are not supported. \
+                 Use a fixed length instead, e.g. --span 7d for a 7-day window.",
+                unit,
+                span_spec
+            ));
+        }
+    }
+
+    let parsed_duration = humantime::parse_duration(span_spec);
+    if looks_like_duration && parsed_duration.is_err() {
+        return Err(anyhow::anyhow!(
+            "Unrecognised --span duration '{}': accepted units are {} (e.g. 30s, 5m, 1h, 1d), or \
+             a plain integer N for count spans.",
+            span_spec,
+            SPAN_DURATION_UNITS
+        ));
+    }
+
+    if let Ok(duration) = parsed_duration {
         if duration.is_zero() {
             return Err(anyhow::anyhow!("--span duration must be greater than zero"));
         }
@@ -2227,6 +2252,24 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
         close_script: cli.span_close.clone(),
         summary: resolve_span_summary(cli),
     }))
+}
+
+/// Duration units `--span` accepts, for error messages.
+const SPAN_DURATION_UNITS: &str = "ms, s, m, h, d";
+
+/// The first calendar unit (week/month/year, in any humantime spelling) in a
+/// `--span` duration, if there is one.
+///
+/// humantime accepts these as fixed lengths (a 365.25-day year, a 30.44-day
+/// month), and epoch-modulo alignment then starts weeks on Thursday and lets
+/// months and years drift off the calendar. Rejecting them is more honest than
+/// answering a different question than the one asked.
+fn calendar_span_unit(spec: &str) -> Option<&str> {
+    const CALENDAR_UNITS: &[&str] = &[
+        "w", "week", "weeks", "M", "month", "months", "y", "year", "years",
+    ];
+    spec.split(|c: char| !c.is_ascii_alphabetic())
+        .find(|unit| CALENDAR_UNITS.contains(unit))
 }
 
 /// Point out the three ways a span mode ends up producing nothing useful.

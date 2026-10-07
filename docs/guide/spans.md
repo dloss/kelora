@@ -23,6 +23,12 @@ Time spans and idle spans need timestamps ([Work with Time](time.md)). Only
 events that pass your filters are counted in a span, so
 `-l error --span 5m --span-summary` gives errors per five minutes.
 
+Durations take `ms`, `s`, `m`, `h`, and `d`, alone or combined (`1h30m`).
+Windows have a fixed length and are aligned to the Unix epoch in UTC:
+`--span 1d` is a UTC day, and `--span 7d` runs Thursday to Wednesday, because
+1970-01-01 was a Thursday. Calendar weeks, months, and years (`w`, `M`, `y`)
+are rejected.
+
 `--span FIELD` closes whenever the value changes, so interleaved values
 (`a, b, a`) produce several spans for `a`. Sort the input first, or use
 `--freq FIELD` if you only need totals.
