@@ -4,11 +4,17 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [2.2.0] - 2026-10-07
+
+Headline change: rewritten documentation, with every example executed at build time. The code changes are fixes found while verifying it — read **Breaking** if you use `absorb_regex()`.
+
+### Breaking
+
+- **`absorb_regex()` keeps the source field when the pattern doesn't match** - It used to delete the field on every non-matching line, so `-e 'e.absorb_regex("msg", …)'` erased the message of each line the pattern was not written for. Now, like the other `absorb_*` functions, it leaves the field untouched and returns `status: "empty"`. Output can change shape: non-matching events keep a field they used to lose. If you relied on the deletion, remove the field when `status` is `"empty"`: `if e.absorb_regex("msg", re).status == "empty" { e.msg = () }`.
 
 ### Changed
 
-- **Documentation rewritten** - The site at kelora.dev is reorganized into a guide (one page per job: explore, parse, filter, scripts, summarize, time, spans, cross-event logic, output, big files, configuration), a cookbook of runnable recipes, a "How it works" page, and reference pages. Every example is executed at build time and the build fails on a broken example or link. The CLI reference is now generated from `kelora --help`. Old URLs redirect to their new pages.
+- **Documentation rewritten** - The site at kelora.dev is reorganized into a guide (one page per job: explore, parse, filter, scripts, summarize, time, spans, cross-event logic, output, big files, configuration), a cookbook of runnable recipes, a "How it works" page, and reference pages. Every example is executed at build time and the build fails on a broken example or link. The CLI reference is now generated from `kelora --help`. Old URLs redirect to their new pages; the "What's New in 2.0" page now points to the 2.0.0 section of this changelog.
 
 ### Fixed
 
@@ -19,8 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`--since`/`--until` no longer create empty `--span` windows outside the range** - Events the time range dropped still opened time spans, so `--since 10:00 --until 12:00 --span 15m --span-summary` printed `events=0` rows for 09:30 or 12:15. Those events now leave the spans alone; counts inside the range are unchanged.
 
 - **`map.flatten_field(name)` can be called** - It was registered in a way Rhai couldn't match, so every call failed with "Function not found".
-
-- **`absorb_regex()` keeps the source field when the pattern doesn't match** - It used to delete the field on every non-matching line, so `-e 'e.absorb_regex("msg", …)'` erased the message of each line the pattern was not written for. Now, like the other `absorb_*` functions, it leaves the field untouched and returns `status: "empty"`. If you relied on the deletion, remove the field yourself when `status` is `"empty"`.
 
 - **`to_datetime(text, format, tz)` honours the zone hint and offsets in the text** - A timestamp without an offset was read as UTC and only then converted to `tz`, so `to_datetime("15.01.2024 09:00", "%d.%m.%Y %H:%M", "Europe/Berlin")` gave 09:00 UTC instead of 08:00 UTC; the zone now says where the wall-clock time was recorded, as documented and as `--input-tz` does. Separately, a format with `%z` parsed the offset but then ignored it: `"10:30:00+05:00"` came out as 10:30 UTC instead of 05:30 UTC. If you relied on the old zone-hint result, drop the zone argument and convert with `.to_timezone(tz)`.
 
@@ -1047,7 +1051,8 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/dloss/kelora/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/dloss/kelora/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/dloss/kelora/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/dloss/kelora/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/dloss/kelora/compare/v2.0.0...v2.0.1
