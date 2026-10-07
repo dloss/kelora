@@ -4,6 +4,39 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Breaking
+
+- **`--span` rejects calendar units** - `1w`, `1M` and `1y` were silently aligned to the Unix epoch: weeks ran Thursday to Wednesday, and months and years drifted off the calendar. They are now a usage error (exit 2) that suggests a fixed length such as `--span 7d`. A spec that starts with a digit but isn't a duration (`1mo`) now lists the accepted units (ms, s, m, h, d) instead of giving a field-name error. (#415)
+- **`span.metric()` returns `()` for metrics with no per-window value** - It returned `0` for omitted non-additive metrics such as percentiles, so `p95=0` read as data. Additive metrics with no delta still return `0`. (#419)
+- **Idle span ids use `Z`** - `--span-idle` ids wrote UTC as `+00:00` while time span ids used `Z`. Both now use `Z`. (#421)
+
+### Added
+
+- **`span.first_ts` / `span.last_ts`** - These give the timestamps of a span's first and last events in every mode, so count and field spans now have a time range too. `--span-summary=json` rows carry them. (#383)
+- **Per-window min/max** - `track_min`/`track_max` (and `--describe`'s min/max) were left out of `--span-summary` rows and `span.metrics`. Each window now reports its own extremes. Percentiles, cardinality and top-N are still run-wide only. (#380)
+- **`--card`, `--freq`, `--describe` accept comma lists** - `--card a,n` was read as one field named `a,n` and reported as a typo. All three now split comma lists like `-k`. (#366)
+- **Warning when `--multiline` joins far too many lines** - A start rule that matches only some records silently collapsed thousands of lines into a few events. kelora now warns at end of run when events average 3+ lines over 50+ lines and most of the joined lines start at column 0. Indented stack traces don't trigger it. (#361)
+- **Hint when an auto-detected cascade adds `_format`** - With `-f auto` on a mixed file, every event gained a `_format` field, and kelora only said so under `-v`. A hint now names the cascade and the field. (#407)
+
+### Fixed
+
+- **Sub-millisecond `--span` no longer aborts** - `--span 500us` divided by zero and crashed. It is now a usage error. (#414)
+- **Hint for a `--span` field no event has** - A misspelled `--span FIELD` silently put every event into one `(unset)` span. A hint now names the field and suggests the nearest real one. (#416)
+- **Late-event warning covers `--span-close`** - Out-of-order events were reported as missing only for `--span-summary`. The warning now fires for any span consumer. (#417)
+- **No internal metric names in span output** - `--card` leaked `__kelora_cardn_<field>` into `--span-summary` rows and `span.metrics`. (#418)
+- **No-format hint suggests the right `cols:ts(N)`** - The hint always suggested `ts(2)`, which mis-split syslog-style `Jan 15 10:00:00` lines. It now counts the timestamp tokens in the sampled lines. (#420)
+- **`-k` explains nested paths for any number of keys** - With two or more dotted keys, the hint said `http.status` was "never present". Nested paths are now explained separately from typos, and the hint suggests `e.flattened()`. (#371)
+- **Unseen-field hint ignores method names** - `--filter 'e.has("nope")'` reported an unseen field `has`. The hint now names `nope`. (#365)
+- **Unknown-variable hint lists `state` and `metrics`** - The fallback hint pointed at the read-only `conf` map. The conf read-only error now points to `state["key"]`. (#360)
+- **`-h` lists `-a/--alias`; `--save-alias` echoes what it stored** - The confirmation now shows the stored options, so a stray `-n 1` is visible. (#359)
+- **Regex-format parse errors print the pattern once** - Every failing line used to repeat the full pattern. (#374)
+- **`-f combined` errors say where the line went wrong** - For example, `unexpected trailing text after user_agent at column 122: 'trace=abc123'`. Parsing stays strict. (#362)
+- **Map rows stay aligned without timestamps** - In `levelmap`/`keymap`/`tailmap`, `line N` labels are now padded to a fixed width. (#375)
+- **Parallel multiline messages lost a run of spaces mid-sentence.**
+- **Documentation** - The docs now state what each `parse_*` function returns on unparseable input (#363), and that `-l` can undercount parse errors on json/logfmt (#401).
+
 ## [2.2.0] - 2026-10-07
 
 Headline change: rewritten documentation, with every example executed at build time. The code changes are fixes found while verifying it — read **Breaking** if you use `absorb_regex()`.

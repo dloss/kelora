@@ -32,7 +32,7 @@ fn build_chunker_runtime(
     let idle_hint = if !multiline_config.idle_timeout_explicit && config.hints_allowed() {
         multiline_config.idle_timeout.map(|t| {
             config.format_hint_message(&format!(
-                "multiline: flushed a buffered event after {}ms of input inactivity; if events                  from a slow writer appear split, raise --multiline-timeout (0 = never flush early)",
+                "multiline: flushed a buffered event after {}ms of input inactivity; if events from a slow writer appear split, raise --multiline-timeout (0 = never flush early)",
                 t.as_millis()
             ))
         })
@@ -41,7 +41,7 @@ fn build_chunker_runtime(
     };
     let cap_warning = if config.warnings_allowed() {
         Some(config.format_warning_message(&format!(
-            "multiline: an event exceeded {} lines and was split; raise --multiline-max-lines              (0 = unlimited) if your events are really that large",
+            "multiline: an event exceeded {} lines and was split; raise --multiline-max-lines (0 = unlimited) if your events are really that large",
             multiline_config.max_lines
         )))
     } else {
