@@ -178,7 +178,7 @@ fn span_summary_json_carries_window_bounds_and_nested_metrics() {
     let first = stdout.lines().next().expect("a row");
     assert_eq!(
         first,
-        r#"{"span":"2024-01-15T10:00:00Z/1m","start":"2024-01-15T10:00:00Z","end":"2024-01-15T10:01:00Z","events":3,"metrics":{"level":{"DEBUG":1,"INFO":2}}}"#
+        r#"{"span":"2024-01-15T10:00:00Z/1m","start":"2024-01-15T10:00:00Z","end":"2024-01-15T10:01:00Z","first_ts":"2024-01-15T10:00:00Z","last_ts":"2024-01-15T10:00:45Z","events":3,"metrics":{"level":{"DEBUG":1,"INFO":2}}}"#
     );
 }
 
@@ -793,6 +793,57 @@ fn span_metric_returns_unit_for_an_omitted_non_additive_metric() {
         Some("3 () () 0"),
         "{stdout}"
     );
+}
+
+#[test]
+fn first_ts_and_last_ts_are_observed_bounds_in_every_mode() {
+    // #383: count and field spans have no window grid, but their events do
+    // have timestamps.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "2",
+            "--span-close",
+            r#"print(`${span.id} ${span.first_ts.to_iso()} ${span.last_ts.to_iso()} ${type_of(span.start)}`)"#,
+        ],
+        SUMMARY_INPUT,
+    );
+    assert_eq!(exit_code, 0);
+    let first = stdout.trim_end().lines().next().unwrap_or_default();
+    assert!(first.starts_with("#0 2024-01-15T10:00:00"), "{stdout}");
+    assert!(first.contains(" 2024-01-15T10:00:30"), "{stdout}");
+    assert!(first.ends_with(" ()"), "{stdout}");
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "2", "--span-summary=json"],
+        SUMMARY_INPUT,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.starts_with(
+            r##"{"span":"#0","first_ts":"2024-01-15T10:00:00Z","last_ts":"2024-01-15T10:00:30Z","events":2"##
+        ),
+        "{stdout}"
+    );
+
+    // No timestamps at all: () in the hook, keys absent from the row.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "2",
+            "--span-close",
+            "print(type_of(span.first_ts))",
+        ],
+        "{\"a\":1}\n{\"a\":2}",
+    );
+    assert_eq!(exit_code, 0);
+    assert_eq!(stdout.trim_end(), "()");
 }
 
 #[test]

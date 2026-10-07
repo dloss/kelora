@@ -1646,6 +1646,12 @@ print(span.label + ": " + span.size + " events");
 if span.start != () { print(`${span.start} → ${span.end}`) }
 ```
 
+`span.first_ts` and `span.last_ts` are the parsed timestamps of the first and last events in the span, in arrival order, for every span mode; `()` when no event in the span had a timestamp. They say when a count or field span actually ran, and when events actually arrived inside a time window.
+
+```rhai
+print(`${span.label}: ${span.first_ts} → ${span.last_ts}`)
+```
+
 ### Span Size and Events
 
 `span.size` is the number of events that passed the filters and entered the span. `span.events` holds them in arrival order, each with `line`, `line_num`, `filename`, `span_id`, `span_start`, `span_end` and `span_status` added.

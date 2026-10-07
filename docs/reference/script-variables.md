@@ -108,6 +108,7 @@ Only in `--span-close`, which runs once when a span (`--span`, `--span-idle`) cl
 | `span.id` | string | `#0`, `#1`, … for count spans; `2024-01-15T10:00:00Z/5m` for time spans; the field value for field spans; `idle-#0-<start>` for idle spans |
 | `span.label` | string | the window start for time and idle spans, otherwise `span.id` (what `--span-summary` prints) |
 | `span.start`, `span.end` | datetime or `()` | window bounds; `()` for count and field spans |
+| `span.first_ts`, `span.last_ts` | datetime or `()` | timestamps of the first and last events in the span, any mode; `()` if none had one |
 | `span.size` | int | number of events that passed the filters and entered the span |
 | `span.events` | array of maps | those events, each with `line`, `line_num`, `filename`, `span_id`, `span_start`, `span_end`, `span_status` added as fields |
 | `span.metrics` | map | what `track_*()` recorded while the span was open; zero values are omitted |

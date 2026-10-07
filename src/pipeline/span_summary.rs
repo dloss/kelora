@@ -89,17 +89,27 @@ fn leaves(value: &Dynamic) -> Vec<(String, String)> {
 /// Build one row for a closed span. Never returns an empty string, so callers
 /// can push it straight into the output stream.
 #[allow(clippy::too_many_arguments)]
+/// A closed span's time bounds: the window grid (`start`/`end`, time and idle
+/// spans only) and the observed timestamps of its first and last included
+/// events (`first_ts`/`last_ts`, any mode).
+#[derive(Clone, Copy, Default)]
+pub struct SpanTimes {
+    pub start: Option<DateTime<Utc>>,
+    pub end: Option<DateTime<Utc>>,
+    pub first_ts: Option<DateTime<Utc>>,
+    pub last_ts: Option<DateTime<Utc>>,
+}
+
 pub fn format_row(
     format: &SpanSummaryFormat,
     label: &str,
-    span_start: Option<DateTime<Utc>>,
-    span_end: Option<DateTime<Utc>>,
     span_id: &str,
+    times: &SpanTimes,
     events: i64,
     metrics: &Map,
 ) -> String {
     match format {
-        SpanSummaryFormat::Json => format_json(span_id, span_start, span_end, events, metrics),
+        SpanSummaryFormat::Json => format_json(span_id, times, events, metrics),
         SpanSummaryFormat::Tsv => format_tsv(label, events, metrics),
         // Auto is resolved at config-construction time; treat any leftover as
         // the human shape rather than panicking on a row mid-stream.
@@ -139,29 +149,33 @@ fn format_tsv(label: &str, events: i64, metrics: &Map) -> String {
     lines.join("\n")
 }
 
-fn format_json(
-    span_id: &str,
-    span_start: Option<DateTime<Utc>>,
-    span_end: Option<DateTime<Utc>>,
-    events: i64,
-    metrics: &Map,
-) -> String {
+fn format_json(span_id: &str, times: &SpanTimes, events: i64, metrics: &Map) -> String {
     let mut obj = serde_json::Map::new();
     obj.insert(
         "span".to_string(),
         serde_json::Value::String(span_id.into()),
     );
-    if let Some(start) = span_start {
+    if let Some(start) = times.start {
         obj.insert(
             "start".to_string(),
             serde_json::Value::String(start.to_rfc3339_opts(SecondsFormat::Secs, true)),
         );
     }
-    if let Some(end) = span_end {
+    if let Some(end) = times.end {
         obj.insert(
             "end".to_string(),
             serde_json::Value::String(end.to_rfc3339_opts(SecondsFormat::Secs, true)),
         );
+    }
+    // Observed event times keep their sub-second precision: unlike the window
+    // grid, they are not whole seconds by construction.
+    for (key, value) in [("first_ts", times.first_ts), ("last_ts", times.last_ts)] {
+        if let Some(ts) = value {
+            obj.insert(
+                key.to_string(),
+                serde_json::Value::String(ts.to_rfc3339_opts(SecondsFormat::AutoSi, true)),
+            );
+        }
     }
     obj.insert(EVENTS_KEY.to_string(), serde_json::Value::from(events));
 
@@ -227,22 +241,22 @@ mod tests {
 
     #[test]
     fn json_keeps_metrics_nested() {
-        let row = format_json(
-            "2024-01-15T10:00:00Z/1m",
-            Some(ts(1_705_312_800)),
-            Some(ts(1_705_312_860)),
-            3,
-            &freq_metrics(),
-        );
+        let times = SpanTimes {
+            start: Some(ts(1_705_312_800)),
+            end: Some(ts(1_705_312_860)),
+            first_ts: Some(ts(1_705_312_805)),
+            last_ts: Some(ts(1_705_312_850)),
+        };
+        let row = format_json("2024-01-15T10:00:00Z/1m", &times, 3, &freq_metrics());
         assert_eq!(
             row,
-            r#"{"span":"2024-01-15T10:00:00Z/1m","start":"2024-01-15T10:00:00Z","end":"2024-01-15T10:01:00Z","events":3,"metrics":{"level":{"DEBUG":1,"INFO":2}}}"#
+            r#"{"span":"2024-01-15T10:00:00Z/1m","start":"2024-01-15T10:00:00Z","end":"2024-01-15T10:01:00Z","first_ts":"2024-01-15T10:00:05Z","last_ts":"2024-01-15T10:00:50Z","events":3,"metrics":{"level":{"DEBUG":1,"INFO":2}}}"#
         );
     }
 
     #[test]
     fn json_omits_start_and_end_when_absent() {
-        let row = format_json("#0", None, None, 5, &Map::new());
+        let row = format_json("#0", &SpanTimes::default(), 5, &Map::new());
         assert_eq!(row, r##"{"span":"#0","events":5,"metrics":{}}"##);
     }
 

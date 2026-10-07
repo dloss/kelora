@@ -346,6 +346,9 @@ SPAN CONTEXT (available inside --span-close):
 span.id                              Span identifier ('#index' for count, 'ISO/DURATION' for time)
 span.start                           Span start as DateTime (time spans) or () for count spans
 span.end                             Span end as DateTime (time spans) or () for count spans
+span.first_ts                        Parsed timestamp of the first event in the span, any span mode;
+                                     () if no event had one. Observed, unlike span.start.
+span.last_ts                         Parsed timestamp of the last event in the span; () if none
 span.label                           span.start as RFC3339 seconds when present, else span.id — the
                                      label --span-summary uses, so a hook need not branch on the
                                      span mode.

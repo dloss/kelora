@@ -18,6 +18,8 @@ pub struct SpanBinding {
     /// aggregators omitted from `metrics`). `span.metric()` returns `()` for
     /// these rather than a `0` that would read as data.
     unavailable: HashSet<String>,
+    first_ts: Option<DateTime<Utc>>,
+    last_ts: Option<DateTime<Utc>>,
 }
 
 impl SpanBinding {
@@ -48,7 +50,20 @@ impl SpanBinding {
             metrics,
             size,
             unavailable,
+            first_ts: None,
+            last_ts: None,
         }
+    }
+
+    /// Attach the parsed timestamps of the first and last included events.
+    pub fn with_observed_bounds(
+        mut self,
+        first_ts: Option<DateTime<Utc>>,
+        last_ts: Option<DateTime<Utc>>,
+    ) -> Self {
+        self.first_ts = first_ts;
+        self.last_ts = last_ts;
+        self
     }
 
     pub fn get_id(&mut self) -> String {
@@ -64,6 +79,24 @@ impl SpanBinding {
 
     pub fn get_end(&mut self) -> Dynamic {
         match self.span_end {
+            Some(dt) => Dynamic::from(DateTimeWrapper::from_utc(dt)),
+            None => Dynamic::UNIT,
+        }
+    }
+
+    /// Parsed timestamp of the first included event that had one, in every
+    /// span mode; `()` if none did. Observed data, unlike `span.start`, which is
+    /// the window grid and `()` for count and field spans.
+    pub fn get_first_ts(&mut self) -> Dynamic {
+        match self.first_ts {
+            Some(dt) => Dynamic::from(DateTimeWrapper::from_utc(dt)),
+            None => Dynamic::UNIT,
+        }
+    }
+
+    /// Parsed timestamp of the last included event that had one; `()` if none.
+    pub fn get_last_ts(&mut self) -> Dynamic {
+        match self.last_ts {
             Some(dt) => Dynamic::from(DateTimeWrapper::from_utc(dt)),
             None => Dynamic::UNIT,
         }
@@ -132,6 +165,8 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_get("id", SpanBinding::get_id);
     engine.register_get("start", SpanBinding::get_start);
     engine.register_get("end", SpanBinding::get_end);
+    engine.register_get("first_ts", SpanBinding::get_first_ts);
+    engine.register_get("last_ts", SpanBinding::get_last_ts);
     engine.register_get("size", SpanBinding::get_size);
     engine.register_get("label", SpanBinding::get_label);
     engine.register_get("events", SpanBinding::get_events);

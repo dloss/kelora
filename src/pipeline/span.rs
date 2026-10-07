@@ -100,6 +100,11 @@ struct ActiveSpan {
     span_start: Option<DateTime<Utc>>,
     span_end: Option<DateTime<Utc>>,
     last_event_timestamp: Option<DateTime<Utc>>,
+    /// Parsed timestamps of the first and last included events that had one
+    /// (`span.first_ts`/`span.last_ts`, #383). Observed, unlike the window
+    /// grid in `span_start`/`span_end`, so they exist in every mode.
+    first_ts: Option<DateTime<Utc>>,
+    last_ts: Option<DateTime<Utc>>,
     events: Vec<Event>,
     events_seen: usize,
     included_count: usize,
@@ -147,6 +152,8 @@ impl ActiveSpan {
             span_start: None,
             span_end: None,
             last_event_timestamp: None,
+            first_ts: None,
+            last_ts: None,
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
@@ -179,6 +186,8 @@ impl ActiveSpan {
             span_start: Some(start),
             span_end: Some(end),
             last_event_timestamp: None,
+            first_ts: None,
+            last_ts: None,
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
@@ -203,6 +212,8 @@ impl ActiveSpan {
             span_start: None,
             span_end: None,
             last_event_timestamp: None,
+            first_ts: None,
+            last_ts: None,
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
@@ -232,6 +243,8 @@ impl ActiveSpan {
             span_start: Some(start_ts),
             span_end: Some(start_ts),
             last_event_timestamp: Some(start_ts),
+            first_ts: None,
+            last_ts: None,
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
@@ -249,6 +262,10 @@ impl ActiveSpan {
     }
 
     fn add_event(&mut self, event: &Event) {
+        if let Some(ts) = event.parsed_ts {
+            self.first_ts.get_or_insert(ts);
+            self.last_ts = Some(ts);
+        }
         if self.detail.collect_events {
             self.events.push(event.clone());
         }
@@ -707,7 +724,8 @@ impl SpanProcessor {
                 span.included_count as i64,
                 metrics_delta.clone(),
                 non_additive.iter().map(|(key, _)| key.clone()).collect(),
-            );
+            )
+            .with_observed_bounds(span.first_ts, span.last_ts);
 
             ctx.rhai.execute_compiled_span_close(
                 &compiled,
@@ -734,12 +752,17 @@ impl SpanProcessor {
             let label = summary::span_label(&span.span_id, span.span_start);
             self.warn_repeated_label(&label, ctx);
             self.warn_shadowed_events_column(&metrics_delta, &format, ctx);
+            let times = summary::SpanTimes {
+                start: span.span_start,
+                end: span.span_end,
+                first_ts: span.first_ts,
+                last_ts: span.last_ts,
+            };
             ctx.pending_span_rows.push(summary::format_row(
                 &format,
                 &label,
-                span.span_start,
-                span.span_end,
                 &span.span_id,
+                &times,
                 span.included_count as i64,
                 &metrics_delta,
             ));

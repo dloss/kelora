@@ -47,7 +47,7 @@ kelora examples/worker_bursts.jsonl --span-idle 5m --freq job --span-summary
 |---|---|
 | `--span-summary` | text in a terminal, TSV when piped |
 | `--span-summary=tsv` | long-format rows: label, metric, key, value (key empty for plain counts such as `events`) — for DuckDB, pandas, gnuplot |
-| `--span-summary=json` | one JSON object per span, nested metrics intact |
+| `--span-summary=json` | one JSON object per span, nested metrics intact; `start`/`end` for time and idle spans, `first_ts`/`last_ts` (first and last event) in every mode |
 
 A window that received no input produces no row, so a time series from
 `--span-summary` has gaps where nothing was logged — fill them downstream if
@@ -81,6 +81,7 @@ kelora examples/api_latency_incident.jsonl -q --span 10m \
 |---|---|
 | `span.label` | the start time (time and idle spans), the field value (`--span FIELD`), or `#0`, `#1`, … (count spans) |
 | `span.start`, `span.end` | window boundaries as datetimes; empty for count and field spans |
+| `span.first_ts`, `span.last_ts` | timestamps of the span's first and last events, in every mode |
 | `span.size` | number of events |
 | `span.metric("name")` | this span's value of a metric, `0` if the span had none (`()` for a minimum, maximum, percentile, or top-N, which have no per-span value) |
 | `span.metrics` | all per-span metric values as a map |
