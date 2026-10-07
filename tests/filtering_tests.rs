@@ -443,6 +443,42 @@ fn test_keys_nested_map_path_points_to_get_path() {
 }
 
 #[test]
+fn test_unseen_field_hint_skips_method_names() {
+    // #365: `e.has("nope")` used to report an unseen field `has`. The method
+    // name is not a field; its string argument is.
+    let input = r#"{"a":"x","n":1}"#;
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "--filter", r#"e.has("nope")"#], input);
+    assert!(
+        stderr.contains("unseen field: nope") && !stderr.contains("has"),
+        "hint should name the tested field, not the method: {stderr}"
+    );
+
+    // Other method calls are skipped entirely; the real field still counts.
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            r#"e.a.starts_with("zz") || e.typo > 1"#,
+        ],
+        input,
+    );
+    assert!(
+        stderr.contains("unseen field: typo") && !stderr.contains("starts_with"),
+        "{stderr}"
+    );
+
+    // A nested path under a present parent is not called unseen.
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &["-f", "json", "--filter", r#"e.get_path("a.b") == 1"#],
+        input,
+    );
+    assert!(!stderr.contains("unseen field"), "{stderr}");
+}
+
+#[test]
 fn test_keys_several_nested_paths_keep_the_explanation() {
     // #371: with more than one nested key the hint used to drop the nested
     // explanation and claim the fields were "never present in the input".

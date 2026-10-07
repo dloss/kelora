@@ -785,18 +785,44 @@ fn resolve_multiline_idle_timeout(
 
 fn collect_filter_field_references(config: &KeloraConfig) -> BTreeSet<String> {
     let mut fields = BTreeSet::new();
-    let re = regex::Regex::new(r"\be\.([A-Za-z_][A-Za-z0-9_]*)").expect("valid filter regex");
 
     for stage in &config.processing.stages {
         if let ScriptStageType::Filter { script, .. } = stage {
-            for captures in re.captures_iter(script) {
-                if let Some(field) = captures.get(1) {
-                    fields.insert(field.as_str().to_string());
+            fields.extend(filter_field_references(script));
+        }
+    }
+
+    fields
+}
+
+/// Field names a filter script refers to via `e.name`.
+///
+/// `e.name(` is a method call, not a field (#365: `e.has("nope")` used to
+/// report an unseen field `has`). For the field-testing methods
+/// `has`/`contains`/`get_path`/`has_path`, the string literal argument *is* the field
+/// under test, so that becomes the candidate instead.
+fn filter_field_references(script: &str) -> Vec<String> {
+    let re =
+        regex::Regex::new(r#"\be\.([A-Za-z_][A-Za-z0-9_]*)(\s*\(\s*(?:"((?:[^"\\]|\\.)*)")?)?"#)
+            .expect("valid filter regex");
+
+    let mut fields = Vec::new();
+    for captures in re.captures_iter(script) {
+        let Some(name) = captures.get(1) else {
+            continue;
+        };
+        if captures.get(2).is_none() {
+            fields.push(name.as_str().to_string());
+            continue;
+        }
+        if matches!(name.as_str(), "has" | "contains" | "get_path" | "has_path") {
+            if let Some(literal) = captures.get(3) {
+                if !literal.as_str().is_empty() {
+                    fields.push(literal.as_str().to_string());
                 }
             }
         }
     }
-
     fields
 }
 
@@ -1200,9 +1226,15 @@ fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
         return None;
     }
 
+    // A path such as `http.status` (from `e.get_path("http.status")`) counts
+    // as seen when its top-level parent was: nested values aren't tracked as
+    // discovered keys, so the parent is the best evidence available.
     let unseen_fields: Vec<String> = referenced_fields
         .into_iter()
-        .filter(|field| !stats.discovered_keys.contains(field))
+        .filter(|field| {
+            let head = field.split(['.', '[']).next().unwrap_or(field);
+            !stats.discovered_keys.contains(field) && !stats.discovered_keys.contains(head)
+        })
         .collect();
     if unseen_fields.is_empty() {
         return None;
