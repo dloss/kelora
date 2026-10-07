@@ -85,7 +85,7 @@ The site (kelora.dev) is built with MkDocs from `docs/`. Its structure is settle
 | Where | What belongs there |
 |---|---|
 | `guide/*.md` | one page per job (explore, parse, filter, scripting, summarize, time, spans, state, output, files, config); ordered loosely along the pipeline: read → select lines → group → parse → time range → stages → summarize → present |
-| `cookbook.md` | short task recipes ("Which services fail most?"), each a runnable command plus one link into the guide |
+| `cookbook/*.md` | short task recipes, one page per topic (the overview lists them automatically) ("Which services fail most?"), each a runnable command plus one link into the guide |
 | `how-it-works.md` | the pipeline model, processing order, error model, what Kelora prints |
 | `reference/` | lookup material; `cli-reference.md` is **generated** from `kelora --help` (edit `src/cli.rs`, not the page) |
 

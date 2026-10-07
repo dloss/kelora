@@ -1212,7 +1212,7 @@ e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZC
 e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-Related: `hash()` (one-way digest), `mask_ip()`, `normalized()`. Recipes: [Cookbook → Privacy](../cookbook.md#privacy).
+Related: `hash()` (one-way digest), `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
 
 #### `read_file(path)` / `read_lines(path)`
 File contents as one string, or as an array of lines. **Only allowed in `--begin`**; keep the result in `state` for later stages.

@@ -57,25 +57,25 @@ plugins:
         tutorials/parsing-custom-formats.md: guide/parse.md
         tutorials/span-aggregation.md: guide/spans.md
         tutorials/configuration-and-reusability.md: guide/config.md
-        tutorials/composed-pipelines.md: cookbook.md
-        how-to/index.md: cookbook.md
-        how-to/incident-response-playbooks.md: cookbook.md
+        tutorials/composed-pipelines.md: cookbook/index.md
+        how-to/index.md: cookbook/index.md
+        how-to/incident-response-playbooks.md: cookbook/errors.md
         how-to/debug-issues.md: reference/troubleshooting.md
-        how-to/find-errors-in-logs.md: cookbook.md
-        how-to/analyze-web-traffic.md: cookbook.md
-        how-to/monitor-application-health.md: cookbook.md
-        how-to/parse-syslog-files.md: cookbook.md
+        how-to/find-errors-in-logs.md: cookbook/errors.md
+        how-to/analyze-web-traffic.md: cookbook/web.md
+        how-to/monitor-application-health.md: cookbook/monitoring.md
+        how-to/parse-syslog-files.md: cookbook/parsing.md
         how-to/handle-multiline-stacktraces.md: reference/multiline.md
-        how-to/extract-and-mask-sensitive-data.md: cookbook.md
-        how-to/pseudonymize-identifiers-for-analytics.md: cookbook.md
-        how-to/process-csv-data.md: cookbook.md
+        how-to/extract-and-mask-sensitive-data.md: cookbook/security-privacy.md
+        how-to/pseudonymize-identifiers-for-analytics.md: cookbook/security-privacy.md
+        how-to/process-csv-data.md: cookbook/exports.md
         how-to/fan-out-nested-structures.md: guide/scripting.md
-        how-to/build-streaming-alerts.md: cookbook.md
+        how-to/build-streaming-alerts.md: cookbook/monitoring.md
         how-to/batch-process-archives.md: guide/files.md
         how-to/merge-timestamp-sorted-files.md: guide/files.md
         how-to/span-aggregation-cookbook.md: guide/spans.md
         how-to/integrate-external-tools.md: guide/output.md
-        how-to/power-user-techniques.md: cookbook.md
+        how-to/power-user-techniques.md: cookbook/index.md
         how-to/stateful-processing.md: guide/state.md
         concepts/index.md: how-it-works.md
         concepts/pipeline-model.md: how-it-works.md
@@ -135,7 +135,14 @@ nav:
       - Output and Integration: guide/output.md
       - Big Files, Many Files: guide/files.md
       - Configuration and Aliases: guide/config.md
-  - Cookbook: cookbook.md
+  - Cookbook:
+      - Overview: cookbook/index.md
+      - Errors and Incidents: cookbook/errors.md
+      - Web and API Traffic: cookbook/web.md
+      - Security and Privacy: cookbook/security-privacy.md
+      - Parsing: cookbook/parsing.md
+      - Exports and Samples: cookbook/exports.md
+      - Monitoring and Time: cookbook/monitoring.md
   - How It Works: how-it-works.md
   - Reference:
       - CLI Options: reference/cli-reference.md

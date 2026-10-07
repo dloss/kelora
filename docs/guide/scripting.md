@@ -192,7 +192,7 @@ give the same alias, so you can still count and join on it. Keep the secret
 stable and private — without it, Kelora uses a random key and the aliases change
 on every run. `hash()` gives a
 plain SHA-256 digest, and `normalized()` replaces IPs, emails, UUIDs and the
-like inside free text. The [cookbook](../cookbook.md#privacy) has complete recipes.
+like inside free text. The [cookbook](../cookbook/security-privacy.md) has complete recipes.
 
 ## Reuse scripts
 

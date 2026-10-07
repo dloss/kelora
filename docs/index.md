@@ -76,7 +76,7 @@ platform" — the tool for the throwaway Python script you'd otherwise write.
 | [Cross-event logic](guide/state.md) | deduplication, pairing requests with responses, gap detection |
 | [Big files](guide/files.md) | gzip/zstd, many files, merging by time, parallel processing |
 
-The [Cookbook](cookbook.md) has ready-made commands for common questions.
+The [Cookbook](cookbook/index.md) has ready-made commands for common questions.
 
 ## About
 
