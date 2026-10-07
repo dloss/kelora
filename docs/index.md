@@ -80,8 +80,8 @@ The [Cookbook](cookbook.md) has ready-made commands for common questions.
 
 ## About
 
-Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE)
-(bundled grok code: Apache-2.0).
+Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE);
+a few included third-party files are under Apache-2.0.
 It runs locally: no networking, no telemetry, enforced by a CI check.
 
 Kelora is an experiment in agentic AI development: AI agents write all

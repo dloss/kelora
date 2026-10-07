@@ -1235,7 +1235,7 @@ Options:
 - `depth` (int, default 2) — leading tokens used as clustering keys. This is the count itself, not the Drain paper's `depth` (whose 4 means one keyed token). Never more than one below a message's token count.
 - `max_children` (int, default 100) — distinct keys per tree node before further values share a wildcard branch.
 - `similarity` (float, default 0.8) — fraction of positions that must match for a line to join a template.
-- `filters` (CSV string or array of grok patterns) — replaces the default masking set; an explicit list masks exactly those patterns, without the multi-token collapses below.
+- `filters` (CSV string or array of patterns like `%{IPV4:ip}`, Logstash grok syntax) — replaces the default masking set; an explicit list masks exactly those patterns, without the multi-token collapses below.
 - `line_num` (int) — record line numbers.
 
 The defaults were measured on the 16 [loghub](https://github.com/logpai/loghub) `_2k` datasets (`just drain-accuracy`, baseline in `dev/drain-accuracy-baseline.json`). Prefer changing the mined field (or pre-masking with `normalized()`) over tuning them.
