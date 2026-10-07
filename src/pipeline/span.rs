@@ -966,6 +966,13 @@ fn compute_span_metrics(
     let mut non_additive: Vec<(String, String)> = Vec::new();
 
     for (key, value) in current_user {
+        // Bookkeeping such as the cardinality companion count
+        // (`__kelora_cardn_*`) is tracked with an additive op, so without this
+        // it would surface as a user metric in span.metrics and every
+        // --span-summary row (#418).
+        if crate::rhai_functions::tracking::is_internal_metric_key(key) {
+            continue;
+        }
         let op_key = format!("__op_{}", key);
         let operation = current_internal
             .get(&op_key)

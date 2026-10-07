@@ -759,6 +759,15 @@ pub(crate) fn metric_top_n(metrics: &HashMap<String, Dynamic>, key: &str) -> Opt
 /// can never drift apart. Filtered from all metric output by `__kelora_`.
 pub(crate) const CARD_COUNT_PREFIX: &str = "__kelora_cardn_";
 
+/// Whether a tracking-map key is internal bookkeeping rather than a user
+/// metric: operation metadata (`__op_*`) or anything under the reserved
+/// `__kelora_` prefix ([`TOPN_PREFIX`], [`CARD_COUNT_PREFIX`], stats, error and
+/// gate counters, skip tallies). Defined here, beside the prefixes, so a new
+/// internal key is hidden from every consumer that uses it (#418).
+pub(crate) fn is_internal_metric_key(key: &str) -> bool {
+    key.starts_with("__op_") || key.starts_with("__kelora_")
+}
+
 /// Key under which a cardinality metric's values-seen count is stored.
 pub(crate) fn card_count_key(key: &str) -> String {
     format!("{}{}", CARD_COUNT_PREFIX, key)

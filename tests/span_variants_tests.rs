@@ -443,6 +443,38 @@ fn span_summary_warns_that_late_events_are_in_no_row() {
 }
 
 #[test]
+fn internal_metric_keys_never_reach_span_rows_or_span_metrics() {
+    // #418: --card's internal values-seen counter leaked as a user metric.
+    for format in ["text", "tsv", "json"] {
+        let summary = format!("--span-summary={format}");
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(
+            &["-f", "json", "--span", "2", "--card", "level", &summary],
+            SUMMARY_INPUT,
+        );
+        assert_eq!(exit_code, 0);
+        assert!(!stdout.contains("__kelora"), "{format}: {stdout}");
+        assert!(stdout.contains("events"), "{format}: {stdout}");
+    }
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "2",
+            "--exec",
+            r#"track_cardinality("lv", e.level)"#,
+            "--span-close",
+            "print(span.metrics.keys())",
+        ],
+        SUMMARY_INPUT,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(!stdout.contains("__kelora"), "{stdout}");
+}
+
+#[test]
 fn span_close_warns_that_late_events_reached_no_span() {
     // #417: the hook loses late events exactly like the summary does.
     let input = r#"{"ts":"2024-01-15T10:00:00Z","n":1}
