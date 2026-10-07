@@ -1373,6 +1373,49 @@ fn test_level_prefilter_cannot_mask_a_wrong_format_run() {
     }
 }
 
+/// The residual, documented half of #401: on a run where the parser *does*
+/// succeed, lines dropped by the pre-filter are never parsed, so their parse
+/// errors go uncounted. That may only lower the reported count — stdout and the
+/// exit code must still match the un-optimized run — and `-s` must restore the
+/// full count (it disables the pre-filter).
+#[test]
+fn test_level_prefilter_may_only_undercount_parse_errors() {
+    let input = "{\"level\":\"error\",\"msg\":\"real\"}\n\
+                 BROKEN containing error\n\
+                 BROKEN nothing matching\n\
+                 ALSO broken here";
+
+    for (args, armed_errors) in [
+        (vec!["-f", "json", "-l", "error"], Some(1)),
+        (vec!["-f", "json", "-l", "warn"], None),
+        (vec!["-f", "json", "-l", "error", "-P"], Some(1)),
+    ] {
+        let ((on_out, on_err, on_code), (off_out, off_err, off_code)) =
+            run_with_and_without_level_prefilter(&args, input);
+
+        assert_eq!(on_out, off_out, "stdout diverges for {args:?}");
+        assert_eq!(on_code, off_code, "exit code diverges for {args:?}");
+        assert!(
+            off_err.contains("Parse errors: 3 total"),
+            "un-optimized run counts all three for {args:?}: {off_err}"
+        );
+        match armed_errors {
+            Some(n) => assert!(
+                on_err.contains(&format!("Parse errors: {n} total")),
+                "{args:?}: {on_err}"
+            ),
+            None => assert!(!on_err.contains("Parse errors"), "{args:?}: {on_err}"),
+        }
+    }
+
+    let ((on_out, _, _), _) =
+        run_with_and_without_level_prefilter(&["-f", "json", "-l", "error", "-s"], input);
+    assert!(
+        on_out.contains("3 errors"),
+        "-s disables the pre-filter and counts every error: {on_out}"
+    );
+}
+
 /// `--strict` promises to abort on the first parse error, so it cannot skip
 /// parses: the pre-filter is disabled outright when it is set (#401).
 ///

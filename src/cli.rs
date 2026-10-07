@@ -520,7 +520,7 @@ pub struct Cli {
         short = 'l',
         long = "levels",
         help_heading = "Filtering Options",
-        help = "Include only events with these log levels (comma-separated, case-insensitive).\n\nUse comma-separated values for OR logic: --levels ERROR,WARN\nMultiple flags create sequential AND filters (advanced)."
+        help = "Include only events with these log levels (comma-separated, case-insensitive).\n\nUse comma-separated values for OR logic: --levels ERROR,WARN\nMultiple flags create sequential AND filters (advanced).\n\nOn json and logfmt input, lines whose text contains none of the levels are\nskipped before parsing, so their parse errors go uncounted: the parse-error\nsummary can report fewer errors than a run without -l. A run in which no line\nparses still fails with exit 1. Run without -l, or with -s/--stats, to count\nevery parse error."
     )]
     pub levels: Vec<String>,
 

@@ -57,6 +57,11 @@ causes: a format that doesn't fit every line (use a cascade such as
 `regex:` that must match the whole line. `--strict` makes the first failure
 fatal.
 
+With `-l` on json or logfmt input, lines that don't contain the level text are
+skipped before parsing, so the parse-error count covers only the rest
+([`--levels`](cli-reference.md#levels)). A run where nothing parses still
+exits 1; `-s` counts every error.
+
 ## Wrong times
 
 | Symptom | Fix |
