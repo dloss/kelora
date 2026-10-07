@@ -82,7 +82,7 @@ kelora examples/api_latency_incident.jsonl -q --span 10m \
 | `span.label` | the start time (time and idle spans), the field value (`--span FIELD`), or `#0`, `#1`, … (count spans) |
 | `span.start`, `span.end` | window boundaries as datetimes; empty for count and field spans |
 | `span.size` | number of events |
-| `span.metric("name")` | this span's value of a metric, `0` if the span had none |
+| `span.metric("name")` | this span's value of a metric, `0` if the span had none (`()` for a minimum, maximum, percentile, or top-N, which have no per-span value) |
 | `span.metrics` | all per-span metric values as a map |
 | `span.events` | the events themselves, as an array of maps |
 | `metrics` | running totals since the start |

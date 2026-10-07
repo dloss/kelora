@@ -770,6 +770,32 @@ fn span_metric_returns_zero_for_a_window_with_no_delta() {
 }
 
 #[test]
+fn span_metric_returns_unit_for_an_omitted_non_additive_metric() {
+    // #419: a structurally unavailable metric must not read as a 0.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "1m",
+            "--exec",
+            r#"track_percentiles("p", e.ts.len()); track_cardinality("c", e.level); track_inc("n")"#,
+            "--span-close",
+            r#"print(`${span.metric("n")} ${type_of(span.metric("p_p95"))} ${type_of(span.metric("c"))} ${span.metric("absent")}`)"#,
+        ],
+        SUMMARY_INPUT,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(
+        stdout.trim_end().lines().next(),
+        Some("3 () () 0"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn span_label_falls_back_to_the_id_when_there_is_no_start() {
     let (stdout, _stderr, exit_code) = run_kelora_with_input(
         &[

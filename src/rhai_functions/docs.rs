@@ -361,7 +361,8 @@ span.metric(name)                    One metric's per-window value, or 0 when th
                                      none. Takes a dotted path: span.metric("level.ERROR"). Prefer
                                      this over span.metrics.get_path(name, 0) — zero deltas are
                                      omitted from the map, so a bare lookup returns () and
-                                     arithmetic on it fails.
+                                     arithmetic on it fails. Returns () for a non-additive metric
+                                     omitted from span.metrics, since it has no per-window value.
 
 EVENT METADATA (the `meta` map, available in --filter/--exec):
 meta.parsed_ts                       Parsed timestamp of the event as a UTC datetime, or () if the

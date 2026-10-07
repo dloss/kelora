@@ -701,6 +701,7 @@ impl SpanProcessor {
                 &span.events,
                 span.included_count as i64,
                 metrics_delta.clone(),
+                non_additive.iter().map(|(key, _)| key.clone()).collect(),
             );
 
             ctx.rhai.execute_compiled_span_close(

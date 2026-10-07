@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 use rhai::{Array, Dynamic, Engine, Map};
 
@@ -12,6 +14,10 @@ pub struct SpanBinding {
     events: Array,
     size: i64,
     metrics: Map,
+    /// Metrics that have no per-window value by construction (non-additive
+    /// aggregators omitted from `metrics`). `span.metric()` returns `()` for
+    /// these rather than a `0` that would read as data.
+    unavailable: HashSet<String>,
 }
 
 impl SpanBinding {
@@ -26,6 +32,7 @@ impl SpanBinding {
         events: &[Event],
         size: i64,
         metrics: Map,
+        unavailable: HashSet<String>,
     ) -> Self {
         let event_maps = events
             .iter()
@@ -40,6 +47,7 @@ impl SpanBinding {
             events: event_maps,
             metrics,
             size,
+            unavailable,
         }
     }
 
@@ -89,7 +97,19 @@ impl SpanBinding {
     /// `span.metrics` omits zero deltas, so a bare lookup yields `()` and any
     /// arithmetic on it fails. Accepts a dotted path so nested `track_freq`
     /// values are reachable directly: `span.metric("level.ERROR")`.
+    ///
+    /// A metric with no per-window value at all (a non-additive aggregator
+    /// such as `track_percentiles`) returns `()` instead: `0` would be a
+    /// plausible-looking wrong answer, while `()` fails at the point of use
+    /// (#419).
     pub fn get_metric(&mut self, name: &str) -> Dynamic {
+        if self.unavailable.contains(name)
+            || name
+                .split_once('.')
+                .is_some_and(|(head, _)| self.unavailable.contains(head))
+        {
+            return Dynamic::UNIT;
+        }
         let mut current = Dynamic::from(self.metrics.clone());
         for segment in name.split('.') {
             let Some(map) = current.clone().try_cast::<Map>() else {

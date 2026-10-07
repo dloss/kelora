@@ -1661,7 +1661,7 @@ let max_rt = if rts.is_empty() { () } else { rts.max() };
 
 #### `span.metric(name)`
 
-Returns one per-span metric value, or `0` when the span recorded none; dotted names reach into `track_freq` tables (`span.metric("level.ERROR")`). Prefer it over indexing `span.metrics`, which yields `()` for an omitted zero and breaks arithmetic.
+Returns one per-span metric value, or `0` when the span recorded none; dotted names reach into `track_freq` tables (`span.metric("level.ERROR")`). Prefer it over indexing `span.metrics`, which yields `()` for an omitted zero and breaks arithmetic. For a non-additive metric (see below) it returns `()`, not `0`: such a metric has no per-span value, and `0` would read as data.
 
 ```rhai
 // -e 'track_inc("events"); if e.status >= 500 { track_inc("failures") }'
@@ -1674,7 +1674,7 @@ print(`${span.label}: ${ratio}% failures`);
     `track_min`, `track_max`, `track_percentiles`, `track_cardinality`,
     `track_top`/`track_bottom` and `track_top_by`/`track_bottom_by` (and those
     parts of `track_stats`) have no per-window value. They are left out of
-    `span.metrics` with a one-time warning, and `span.metric()` returns `0` for
+    `span.metrics` with a one-time warning, and `span.metric()` returns `()` for
     them. Compute them from `span.events`, as in the example above.
 
 ---
