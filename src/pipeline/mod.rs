@@ -878,10 +878,9 @@ impl Pipeline {
                         crate::stats::stats_add_line_error();
                         crate::stats::stats_record_parse_error_sample(&chunk);
                         ctx.internal_stats.lines_errors += 1;
-                        crate::rhai_functions::tracking::track_error(
-                            "parse",
+                        crate::rhai_functions::tracking::track_parse_error(
                             ctx.meta.line_num,
-                            &err.to_string(),
+                            &err,
                             Some(&chunk),
                             ctx.meta.filename.as_deref(),
                             ctx.config.verbose,
@@ -944,10 +943,9 @@ impl Pipeline {
                 ctx.internal_stats.lines_errors += 1;
 
                 // Use unified error tracking system
-                crate::rhai_functions::tracking::track_error(
-                    "parse",
+                crate::rhai_functions::tracking::track_parse_error(
                     ctx.meta.line_num,
-                    &err.to_string(),
+                    &err,
                     Some(&chunk),
                     ctx.meta.filename.as_deref(),
                     ctx.config.verbose,

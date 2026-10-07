@@ -730,3 +730,63 @@ fn test_missing_input_file_fails_in_parallel() {
         "a file that cannot be opened must fail the run in parallel mode too"
     );
 }
+
+/// #374: a regex-format mismatch prints its pattern once, as a header naming the
+/// format, and each failing line as a short `location: line` entry — not the
+/// whole pattern again inside every entry.
+#[test]
+fn test_regex_parse_errors_print_pattern_once() {
+    let input = "2026-07-26 14:05:01 INFO ok\nbad line one\nbad line two\nbad line three\n";
+    let (_stdout, stderr, _exit) = run_kelora_with_input(&["-f", "iso8601-level"], input);
+
+    assert_eq!(
+        stderr.matches("(?P<ts>").count(),
+        1,
+        "pattern must appear exactly once in the summary:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("format iso8601-level expects pattern: ^"),
+        "header names the format:\n{stderr}"
+    );
+    for (n, text) in [
+        (2, "bad line one"),
+        (3, "bad line two"),
+        (4, "bad line three"),
+    ] {
+        assert!(
+            stderr.contains(&format!("\n  line {n}: {text}\n")),
+            "short per-line entry for line {n}:\n{stderr}"
+        );
+    }
+}
+
+/// #374: under -v each error is printed as it happens; the pattern header (and
+/// the generic mixed-format advice) are printed once, not per failing line.
+#[test]
+fn test_regex_parse_errors_verbose_print_pattern_once() {
+    let input = "bad line one\nbad line two\nbad line three\n";
+    let (_stdout, stderr, _exit) =
+        run_kelora_with_input(&["-f", "regex:^(?P<n:int>\\d+) (?P<w>\\w+)$", "-v"], input);
+
+    // Once from the per-error stream, once in the end-of-run summary.
+    assert_eq!(
+        stderr.matches("pattern: ^(?P<n:int>").count(),
+        2,
+        "pattern printed once while streaming and once in the summary:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("Line does not match the regex pattern: bad line two"),
+        "per-error line stays short and shows the failing text:\n{stderr}"
+    );
+    assert!(stderr.matches("Input may contain mixed formats").count() <= 1);
+}
+
+/// #374: a multi-pattern format lists every pattern it tried, not just the last.
+#[test]
+fn test_multi_pattern_format_lists_all_patterns() {
+    let (_stdout, stderr, _exit) = run_kelora_with_input(&["-f", "s3"], "not an s3 line\n");
+    assert!(
+        stderr.contains("format s3 expects one of 2 patterns:"),
+        "{stderr}"
+    );
+}

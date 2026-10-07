@@ -11,7 +11,45 @@ pub struct RegexParser {
     regex: Regex,
     type_map: TypeMap,
     strict: bool,
+    /// The pattern as written (type annotations included, no added anchors),
+    /// reported when a line does not match.
+    source_pattern: String,
 }
+
+/// Parse error for a line that matched none of a regex format's patterns.
+///
+/// Typed (rather than a formatted `anyhow!` string) so the error tracker can
+/// report the pattern once per distinct pattern instead of embedding it in
+/// every failing line's message (#374). `Display` keeps the self-contained
+/// one-line form for callers that only see the error text (e.g. `--strict`).
+#[derive(Debug, Clone)]
+pub struct PatternMismatch {
+    /// The patterns that were tried, in order (one for `RegexParser`, several
+    /// for `MultiRegexParser`).
+    pub patterns: Vec<String>,
+    pub line: String,
+}
+
+impl std::fmt::Display for PatternMismatch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.patterns.as_slice() {
+            [single] => write!(
+                f,
+                "Line does not match regex pattern '{}': {}",
+                single, self.line
+            ),
+            many => write!(
+                f,
+                "Line matches none of {} regex patterns ('{}'): {}",
+                many.len(),
+                many.join("', '"),
+                self.line
+            ),
+        }
+    }
+}
+
+impl std::error::Error for PatternMismatch {}
 
 impl RegexParser {
     /// Create a new RegexParser from a pattern string with optional type annotations
@@ -55,6 +93,18 @@ impl RegexParser {
             regex,
             type_map,
             strict: false,
+            // Shown anchored, since that is how it is matched; avoid doubling
+            // anchors a pattern already carries.
+            source_pattern: format!(
+                "{}{}{}",
+                if pattern.starts_with('^') { "" } else { "^" },
+                pattern,
+                if pattern.ends_with('$') && !pattern.ends_with("\\$") {
+                    ""
+                } else {
+                    "$"
+                }
+            ),
         })
     }
 
@@ -242,11 +292,10 @@ impl EventParser for RegexParser {
         let captures = match self.regex.captures(line) {
             Some(caps) => caps,
             None => {
-                return Err(anyhow::anyhow!(
-                    "Line does not match regex pattern '{}': {}",
-                    self.regex.as_str(),
-                    line
-                ));
+                return Err(anyhow::Error::new(PatternMismatch {
+                    patterns: vec![self.source_pattern.clone()],
+                    line: line.to_string(),
+                }));
             }
         };
 
@@ -313,11 +362,28 @@ impl MultiRegexParser {
 impl EventParser for MultiRegexParser {
     fn parse(&self, line: &str) -> Result<Event> {
         let mut last_err = None;
+        let mut all_mismatched = true;
         for parser in &self.parsers {
             match parser.parse(line) {
                 Ok(event) => return Ok(event),
-                Err(e) => last_err = Some(e),
+                Err(e) => {
+                    all_mismatched &= e.downcast_ref::<PatternMismatch>().is_some();
+                    last_err = Some(e);
+                }
             }
+        }
+        // When no pattern matched at all, report every pattern tried rather than
+        // only the last one, which would suggest the line was checked against it
+        // alone. A type-conversion failure (strict mode) is reported as is.
+        if all_mismatched && self.parsers.len() > 1 {
+            return Err(anyhow::Error::new(PatternMismatch {
+                patterns: self
+                    .parsers
+                    .iter()
+                    .map(|p| p.source_pattern.clone())
+                    .collect(),
+                line: line.to_string(),
+            }));
         }
         Err(last_err.unwrap_or_else(|| anyhow::anyhow!("no regex patterns configured")))
     }

@@ -1,6 +1,6 @@
 use crate::stats::ProcessingStats;
 use rhai::Dynamic;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
@@ -19,6 +19,12 @@ thread_local! {
     // reused thread).
     static PARSE_SUCCESS_SEEN: Cell<bool> = const { Cell::new(false) };
     static FILTER_STAGE_SUCCESS_BITS: Cell<u64> = const { Cell::new(0) };
+    // `-v` per-error output: regex patterns already printed as a header, and
+    // whether the generic mixed-format advice was shown, so neither repeats on
+    // every failing line (#374). Per thread, so a parallel run may repeat them
+    // once per worker.
+    static VERBOSE_PATTERNS_SHOWN: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+    static MIXED_FORMAT_HINT_SHOWN: Cell<bool> = const { Cell::new(false) };
 }
 
 /// Clear the per-run "success seen" flags. Called once at the start of each run
@@ -26,6 +32,8 @@ thread_local! {
 pub fn reset_stage_success_flags() {
     PARSE_SUCCESS_SEEN.with(|c| c.set(false));
     FILTER_STAGE_SUCCESS_BITS.with(|c| c.set(0));
+    VERBOSE_PATTERNS_SHOWN.with(|s| s.borrow_mut().clear());
+    MIXED_FORMAT_HINT_SHOWN.with(|c| c.set(false));
 }
 
 // Gate counters live in the always-on internal tracker, so the exit-code signal
@@ -277,6 +285,97 @@ fn format_sample_location(sample: &rhai::Map) -> String {
         .unwrap_or_else(|| format!("line {}", line))
 }
 
+/// Header naming a regex format's pattern(s), printed once per distinct
+/// pattern instead of inside every failing line's message (#374).
+///
+/// `patterns` is newline-joined (several for a multi-pattern format). The
+/// format is named so the user has something to look up in `--help-formats`,
+/// except for a user-supplied `regex:` format, whose name is the pattern itself.
+fn pattern_header(format_name: Option<&str>, patterns: &str) -> String {
+    let label = match format_name {
+        Some(fmt) if !fmt.starts_with("regex") && !fmt.is_empty() => {
+            format!("format {fmt} expects ")
+        }
+        _ => String::new(),
+    };
+    let list: Vec<&str> = patterns.split('\n').collect();
+    if list.len() == 1 {
+        format!("{label}pattern: {}", list[0])
+    } else {
+        let mut out = format!("{label}one of {} patterns:", list.len());
+        for p in list {
+            out.push_str("\n    ");
+            out.push_str(p);
+        }
+        out
+    }
+}
+
+/// Shorten a failing line for the one-line-per-error report: newlines from a
+/// multiline-assembled record are shown escaped, and very long records are cut
+/// (on a char boundary) so the location stays readable.
+fn display_failing_line(line: &str) -> String {
+    const MAX_CHARS: usize = 200;
+    let escaped = line.replace('\r', "\\r").replace('\n', "\\n");
+    if escaped.chars().count() > MAX_CHARS {
+        let cut: String = escaped.chars().take(MAX_CHARS - 3).collect();
+        format!("{cut}...")
+    } else {
+        escaped
+    }
+}
+
+/// Track a parse error. Same as `track_error("parse", ...)`, except that a
+/// regex-format mismatch ([`crate::parsers::PatternMismatch`]) is recorded with
+/// a short message plus its pattern, so the summary (and `-v`) can print the
+/// pattern once per distinct pattern instead of on every failing line (#374).
+#[allow(clippy::too_many_arguments)]
+pub fn track_parse_error(
+    line_num: Option<usize>,
+    err: &anyhow::Error,
+    original_line: Option<&str>,
+    filename: Option<&str>,
+    verbose: u8,
+    quiet_level: u8,
+    config: Option<&crate::pipeline::PipelineConfig>,
+    format_name: Option<&str>,
+) {
+    if let Some(mismatch) = err.downcast_ref::<crate::parsers::PatternMismatch>() {
+        let patterns = mismatch.patterns.join("\n");
+        let message = match format_name {
+            Some(fmt) if !fmt.starts_with("regex") && !fmt.is_empty() => {
+                format!("Line does not match the {fmt} pattern")
+            }
+            _ => "Line does not match the regex pattern".to_string(),
+        };
+        track_error_inner(
+            "parse",
+            line_num,
+            &message,
+            original_line.or(Some(mismatch.line.as_str())),
+            filename,
+            verbose,
+            quiet_level,
+            config,
+            format_name,
+            Some(&patterns),
+        );
+    } else {
+        track_error_inner(
+            "parse",
+            line_num,
+            &err.to_string(),
+            original_line,
+            filename,
+            verbose,
+            quiet_level,
+            config,
+            format_name,
+            None,
+        );
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn track_error(
     error_type: &str,
@@ -288,6 +387,33 @@ pub fn track_error(
     quiet_level: u8,
     config: Option<&crate::pipeline::PipelineConfig>,
     format_name: Option<&str>,
+) {
+    track_error_inner(
+        error_type,
+        line_num,
+        message,
+        original_line,
+        filename,
+        verbose,
+        quiet_level,
+        config,
+        format_name,
+        None,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn track_error_inner(
+    error_type: &str,
+    line_num: Option<usize>,
+    message: &str,
+    original_line: Option<&str>,
+    filename: Option<&str>,
+    verbose: u8,
+    quiet_level: u8,
+    config: Option<&crate::pipeline::PipelineConfig>,
+    format_name: Option<&str>,
+    pattern: Option<&str>,
 ) {
     with_internal_tracking(|state| {
         let count_key = format!("__kelora_error_count_{}", error_type);
@@ -316,10 +442,30 @@ pub fn track_error(
                     String::new()
                 };
 
-                if !location.is_empty() && location != "unknown" {
+                // A pattern mismatch carries a short message; the failing line
+                // goes on the same line, and the pattern itself is printed once
+                // per distinct pattern (per thread) as a header above it.
+                let message = match (pattern, original_line) {
+                    (Some(_), Some(line)) => {
+                        format!("{}: {}", message, display_failing_line(line))
+                    }
+                    _ => message.to_string(),
+                };
+                let error_line = if !location.is_empty() && location != "unknown" {
                     format!("{}{}{}: {}", prefix, location, format_info, message)
                 } else {
                     format!("{}{}{}", prefix, format_info.trim_start(), message)
+                };
+                match pattern {
+                    Some(p) if VERBOSE_PATTERNS_SHOWN.with(|s| s.borrow_mut().insert(p.into())) => {
+                        format!(
+                            "{}{}\n{}",
+                            prefix,
+                            pattern_header(format_name, p),
+                            error_line
+                        )
+                    }
+                    _ => error_line,
                 }
             } else if !location.is_empty() && location != "unknown" {
                 format!("{}{}: {} - {}", prefix, location, error_type, message)
@@ -327,7 +473,13 @@ pub fn track_error(
                 format!("{}{} - {}", prefix, error_type, message)
             };
 
-            if error_type == "parse" && format_name.is_some() && verbose > 0 {
+            // Generic advice, so once per run (per thread) is enough — repeating
+            // it under every failing line buried the lines themselves (#374).
+            if error_type == "parse"
+                && format_name.is_some()
+                && verbose > 0
+                && !MIXED_FORMAT_HINT_SHOWN.with(|c| c.replace(true))
+            {
                 let hint = "\n  Hint: Input may contain mixed formats. Consider preprocessing:\n    - Split by format: grep '^{' input.log | kelora -f json\n    - Use multiline detection: kelora -M 'regex:match=^{' -f json";
                 formatted_error.push_str(hint);
             }
@@ -409,6 +561,12 @@ pub fn track_error(
                 }
                 if let Some(filename) = filename {
                     sample_obj.insert("filename".into(), Dynamic::from(filename.to_string()));
+                }
+                if let Some(pattern) = pattern {
+                    sample_obj.insert("pattern".into(), Dynamic::from(pattern.to_string()));
+                    if let Some(fmt) = format_name {
+                        sample_obj.insert("format".into(), Dynamic::from(fmt.to_string()));
+                    }
                 }
 
                 arr.push(Dynamic::from(sample_obj));
@@ -611,11 +769,54 @@ pub fn extract_error_summary_from_tracking(
         }
     }
 
-    let mut shown_samples = 0;
-    for sample_obj in &sample_objects {
-        if shown_samples >= 3 {
-            break;
+    // Regex-format mismatches carry their pattern separately: print it once per
+    // distinct pattern as a header, followed by that pattern's failing lines as
+    // short `location: line` entries (#374). Other samples keep their message.
+    let sample_objects: Vec<&rhai::Map> = sample_objects.iter().take(3).collect();
+    let pattern_of = |s: &rhai::Map| s.get("pattern").and_then(|v| v.clone().into_string().ok());
+    let mut ordered: Vec<&rhai::Map> = Vec::with_capacity(sample_objects.len());
+    let mut patterns_seen: Vec<String> = Vec::new();
+    for s in &sample_objects {
+        match pattern_of(s) {
+            Some(p) if !patterns_seen.contains(&p) => {
+                // Pull every sample of this pattern together, in order.
+                ordered.extend(
+                    sample_objects
+                        .iter()
+                        .filter(|o| pattern_of(o).as_deref() == Some(p.as_str())),
+                );
+                patterns_seen.push(p);
+            }
+            Some(_) => {}
+            None => ordered.push(s),
         }
+    }
+
+    let mut shown_samples = 0;
+    let mut last_pattern: Option<String> = None;
+    for sample_obj in ordered {
+        if let Some(pattern) = pattern_of(sample_obj) {
+            if last_pattern.as_deref() != Some(pattern.as_str()) {
+                let format = sample_obj
+                    .get("format")
+                    .and_then(|v| v.clone().into_string().ok());
+                summary.push_str("\n  ");
+                summary.push_str(&pattern_header(format.as_deref(), &pattern));
+                last_pattern = Some(pattern);
+            }
+            let line = sample_obj
+                .get("original_line")
+                .and_then(|v| v.clone().into_string().ok())
+                .unwrap_or_default();
+            summary.push_str(&format!(
+                "\n  {}: {}",
+                format_sample_location(sample_obj),
+                display_failing_line(&line)
+            ));
+            shown_samples += 1;
+            continue;
+        }
+        last_pattern = None;
 
         let message = sample_obj
             .get("message")
