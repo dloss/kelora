@@ -143,6 +143,12 @@ pub fn to_datetime(
 
     // Try explicit format first
     if let Some(fmt) = format {
+        // An offset in the text (%z, %:z) wins. Try the offset-aware parse
+        // first: NaiveDateTime::parse_from_str also accepts such a format but
+        // silently discards the offset.
+        if let Ok(dt) = DateTime::parse_from_str(s, fmt) {
+            return Ok(DateTimeWrapper::new(dt.with_timezone(&default_tz)));
+        }
         if let Ok(naive_dt) = NaiveDateTime::parse_from_str(s, fmt) {
             // A timestamp without an offset is wall-clock time in the given zone
             // (UTC by default). For a DST gap, where that wall-clock time does
@@ -152,10 +158,6 @@ pub fn to_datetime(
                 .earliest()
                 .unwrap_or_else(|| default_tz.from_utc_datetime(&naive_dt));
             return Ok(DateTimeWrapper::new(dt));
-        }
-        // Also try with timezone-aware parsing for explicit format
-        if let Ok(dt) = DateTime::parse_from_str(s, fmt) {
-            return Ok(DateTimeWrapper::new(dt.with_timezone(&default_tz)));
         }
 
         // If explicit format was provided but failed, return error immediately
@@ -864,6 +866,25 @@ mod tests {
             dt.inner.with_timezone(&Utc).to_rfc3339(),
             "2024-01-15T09:00:00+00:00"
         );
+    }
+
+    #[test]
+    fn test_to_datetime_explicit_format_keeps_offset_in_text() {
+        // With %:z in the format, the offset in the text is used — with or
+        // without a zone hint, which then only sets the zone of the result.
+        for tz in [None, Some("Europe/Berlin")] {
+            let dt = to_datetime(
+                "2024-01-15T10:30:00+05:00",
+                Some("%Y-%m-%dT%H:%M:%S%:z"),
+                tz,
+            )
+            .unwrap();
+            assert_eq!(
+                dt.inner.with_timezone(&Utc).to_rfc3339(),
+                "2024-01-15T05:30:00+00:00",
+                "tz hint {tz:?}"
+            );
+        }
     }
 
     #[test]
