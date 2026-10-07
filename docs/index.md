@@ -1,77 +1,78 @@
 # Kelora
 
-**One command for messy logs.** Parse, filter, transform, and summarize logs in
-JSON, logfmt, syslog, CSV, Apache/Nginx, Kubernetes, plain text, and your own
-formats — with an embedded scripting language for everything the options don't
-cover.
+Kelora is a command-line tool for reading log files. It recognizes common
+formats on its own — application logs, syslog, web server logs, JSON, CSV —
+splits each line into named fields, and lets you filter, count, and summarize
+them with short options. For logic the options can't express, it has a small
+scripting language.
 
 [Install Kelora](installation.md){ .md-button } [Explore a log file](guide/explore.md){ .md-button }
 
-## A quick tour
+## What using it looks like
 
-**Find out what's in a file.** Kelora decompresses it, recognizes the format,
-and profiles every field:
+Checkout is failing. This is the shop's application log, plain text (it's in
+the repository's [`examples/`](https://github.com/dloss/kelora/tree/main/examples)
+folder, like every file in these docs):
 
-```bash exec="on" source="above" result="ansi"
-kelora examples/web_access_large.log.gz --discover
+```bash exec="on" result="ansi"
+head -3 examples/shop.log
 ```
 
-**Handle mixed formats.** A cascade tries parsers in order on each line, so
-JSON and plain text can share a file. Keep the JSON, drop the noise, write CSV:
+**Errors only, with the fields you want.** Kelora recognized the format, so
+fields have names:
 
-=== "Command/Output"
+```bash exec="on" source="above" result="ansi"
+kelora examples/shop.log -l error -k ts,logger,msg -n 3
+```
 
-    ```bash exec="on" source="above" result="ansi"
-    kelora -f json,line examples/mixed_format.log \
-      --filter 'e._format == "json"' -k timestamp,level,msg -F csv
-    ```
+**Which component fails?**
 
-=== "Input"
+```bash exec="on" source="above" result="ansi"
+kelora examples/shop.log -l error --freq logger
+```
 
-    ```bash exec="on" result="ansi"
-    cat examples/mixed_format.log
-    ```
+**What do the errors say?** `--drain` groups messages that differ only in IDs
+and numbers:
 
-**See what's actually breaking.** `--drain` groups messages that differ only
-in hostnames, IDs, or durations — here, 742 lines become four patterns:
+```bash exec="on" source="above" result="ansi"
+kelora examples/shop.log -l error --drain -k msg
+```
 
-=== "Command/Output"
+**When did it start?** One letter per event, one row per stretch of time:
 
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/syslog_errors.log --drain -k msg
-    ```
+```bash exec="on" source="above" result="ansi"
+kelora examples/shop.log -F levelmap
+```
 
-=== "Input (first 6 of 742 lines)"
+The payment provider has been timing out since about 14:20. The
+[guide](guide/explore.md) starts from here.
 
-    ```bash exec="on" result="ansi"
-    head -6 examples/syslog_errors.log
-    ```
+## In short
 
-Hack the Clown's [5-minute video](https://www.youtube.com/watch?v=IwkicmS3RYo)
-shows more.
-
-## When to reach for it
-
-Kelora is the middle ground between "grep is enough" and "I need a log
-platform" — the tool for the throwaway Python script you'd otherwise write.
-
-- **One command instead of a pipe chain.** `grep | awk | jq | script.py`
-  becomes one pass, with state kept across events.
-- **Messy input is normal.** Mixed formats, `key=value` pairs inside messages,
-  JSON inside text, stack traces across lines.
-- **No script for simple jobs.** `-l error`, `--since 1h`, `--freq status`.
-  For stateful logic — sessions, request/response pairs, error rates per
-  window — there's a scripting language.
-- **Composes.** `rg` in front; `jq`, DuckDB, or a spreadsheet behind.
+- **Install:** `brew install dloss/kelora/kelora`, or one binary for Linux,
+  macOS, and Windows ([all options](installation.md)).
+- **Input:** files, `.gz` and `.zst`, globs, or stdin:
+  `tail -F app.log | kelora -l error`.
+- **Speed:** filtering 100 000 JSON lines by level takes about 0.14 s (jq:
+  0.95 s); `--parallel` spreads big batch jobs over all cores
+  ([benchmarks](reference/benchmarks.md)).
+- **Scripting:** [Rhai](https://rhai.rs), for what the options can't express:
+  `--filter 'e.status >= 500 && e.path.starts_with("/api")'`.
+- **Video:** a [5-minute introduction](https://www.youtube.com/watch?v=IwkicmS3RYo)
+  by the YouTube channel Hack the Clown.
+- **Compared with grep, awk, and jq:** grep finds lines and jq queries JSON.
+  Kelora knows the log format, so you work with named fields, and counting,
+  grouping, and time windows are built in. For plain text search, `rg` is
+  faster — pipe it in front.
 
 ## What it does
 
 | Topic | Covers |
 |---|---|
-| [Get logs into shape](guide/parse.md) | 20+ formats, auto-detection, cascades, columns, regex, multiline events |
-| [Filter](guide/filter.md) | raw lines, file sections, time ranges, levels, expressions, context lines |
-| [Transform](guide/scripting.md) | computed fields, extraction from text, fan-out of arrays, masking and pseudonyms |
-| [Summarize](guide/summarize.md) | counts, percentiles, top-N, distinct values, message templates, before/after diffs |
+| [Get logs into shape](guide/parse.md) | [20+ formats](reference/formats.md) detected automatically; your own via columns or a regex; stack traces and other multi-line events |
+| [Filter](guide/filter.md) | by text, file section, time range, level, or any field; with surrounding lines like `grep -C` |
+| [Transform](guide/scripting.md) | computed fields, values pulled out of messages, one row per array element, masking and pseudonyms |
+| [Summarize](guide/summarize.md) | counts, percentiles, top values, distinct values, message patterns, comparing two logs |
 | [Group into spans](guide/spans.md) | per-minute rollups, batches, sessions |
 | [Cross-event logic](guide/state.md) | deduplication, pairing requests with responses, gap detection |
 | [Big files](guide/files.md) | gzip/zstd, many files, merging by time, parallel processing |

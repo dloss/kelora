@@ -287,6 +287,7 @@ Production-like log files for testing realistic use cases:
 - `rpc_pairs.jsonl` - request/response pairs, one request without a response (`state`)
 - `worker_bursts.jsonl` - job bursts separated by idle gaps (`--span-idle`, `--window`)
 - `merge_api.jsonl`, `merge_worker.jsonl` - two time-sorted files that interleave (`--merge-sorted`)
+- `shop.log` - Java/log4j application log with a payment-provider outage (home page demo)
 - `berlin_local.log` - naive local timestamps in `dd.mm.yyyy` (`--ts-format`, `--input-tz`)
 - `ufw_firewall.log` - Ubuntu UFW firewall log (syslog with `KEY=VALUE` pairs)
 - And many more...
