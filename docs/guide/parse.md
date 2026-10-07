@@ -159,23 +159,45 @@ kelora examples/incident_story.log \
   -e 'if e.absorb_logfmt("msg").status != "applied" { e.absorb_kv("msg") }'
 ```
 
-Functions for pulling fields out of text — here `msg` stands for whichever
-field holds it:
+There are two kinds of functions for this.
 
-| Function | Pulls out |
+**`absorb_*` take a field's name, in quotes,** and do the whole job: parse the
+text in that field, add what they find to the event as new fields, and remove
+the source field once it is fully used. Here the `key=value` pairs in `msg`
+become fields of their own:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/quickstart.log -f 'cols:ts(3) level *msg' -l error -n 2 \
+  -e 'e.absorb_kv("msg")'
+```
+
+| Function | Parses the named field as |
 |---|---|
-| `e.absorb_kv("msg")` | `key=value` tokens; leftover text stays in `msg` (not quote-aware) |
-| `e.absorb_logfmt("msg")` | a field that is entirely logfmt (quote-aware, typed) |
+| `e.absorb_kv("msg")` | `key=value` tokens; leftover text stays in the field (not quote-aware) |
+| `e.absorb_logfmt("msg")` | logfmt — the whole field (quote-aware, typed) |
 | `e.absorb_json("msg")` | a JSON object stored as a string |
-| `e.absorb_regex("msg", pattern)` | named groups from a regex |
+| `e.absorb_regex("msg", pattern)` | a regex; named groups become fields |
+
+They return a status (`"applied"`, `"parse_error"`, …) you can branch on, as the
+`incident_story.log` example does.
+
+**The other functions work on a field's value** and return one result, which
+you assign to a field yourself:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/quickstart.log -f 'cols:ts(3) level *msg' -l error -n 2 \
+  -e 'e.order = e.msg.extract_regex("order=(\\d+)", 1).or_empty()' -k msg,order
+```
+
+| Function | Returns |
+|---|---|
 | `e.msg.extract_regex(pattern, 1)` | one capture group |
 | `e.msg.between("[", "]")`, `.after(":")`, `.before(" ")` | text around delimiters |
-| `e.msg.extract_json()`, `.extract_ip()`, `.extract_url()` | the first JSON / IP / URL in free text |
-| `e.url.parse_url()`, `e.agent.parse_user_agent()`, `e.token.parse_jwt()` | structured values into maps |
+| `e.msg.extract_json()`, `.extract_ip()`, `.extract_url()` | the first JSON / IP / URL in the text |
+| `e.url.parse_url()`, `e.agent.parse_user_agent()`, `e.token.parse_jwt()` | a map of parts |
 
-`absorb_*` functions merge the extracted fields into the event, remove the source
-field when it is fully consumed, and return a status (`"applied"`,
-`"parse_error"`, …) you can branch on, as above. The full list is in the
+They return `""` when they find nothing; `.or_empty()` turns that into "no
+field", as on the second line above. The full list is in the
 [function reference](../reference/functions.md#parsing-functions).
 
 The field doesn't have to come from a parser: on a file Kelora couldn't
