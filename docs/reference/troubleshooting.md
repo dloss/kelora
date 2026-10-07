@@ -43,9 +43,9 @@ summary name the line and the problem; `-v` prints all of them.
 | `Missing field during expression evaluation` | arithmetic or a method on a missing field: guard with `e.has("f")` or use `e.get("f", default)` — see [missing fields](../guide/scripting.md#missing-fields) |
 | `Function not found: hour (… String)` | a datetime method on a string; the event timestamp is already parsed as `meta.parsed_ts` |
 | `Function not found` for your own function | load it with `-I file.rhai` before *each* stage that uses it |
-| `Variable not found` | `let` variables don't carry over to the next `--exec`; combine the statements, or store the value on `e` |
+| `Variable not found` | `let` variables don't carry over to the next `--exec`; combine the statements, store the value on `e`, or keep running values in `state["key"]` |
 | `e.y = e.x.trim()` leaves `y` unset | built-in `trim()` and `replace()` return nothing; use `strip()` and `replace_regex()` |
-| `conf map is read-only outside --begin` | set `conf` values in `--begin` |
+| `conf map is read-only outside --begin` | set `conf` values in `--begin`; for values that change across events use `state["key"]` |
 | `'state' is not available in --parallel mode` | drop `--parallel`, or use `track_*()` |
 | a division gives `0` | integer division: write `e.ms / 1000.0` |
 

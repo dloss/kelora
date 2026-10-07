@@ -19,6 +19,12 @@ thread_local! {
 /// genuinely different failures; the cap only bounds a pathological script.
 const FUNCTION_HINT_CACHE_LIMIT: usize = 64;
 
+/// Fallback for "Variable not found" when no name is close: every built-in
+/// variable with the scope note that matters. `state` and `metrics` are what
+/// someone reaching for cross-event counters needs; `conf` is read-only after
+/// --begin, so it is no help there (#360).
+const AVAILABLE_VARIABLES_HINT: &str = "Available variables: e (event), meta (metadata), line (raw line), state (mutable map kept across events and stages; sequential mode only), metrics (track_* results; read in --end), conf (read-only after --begin). `let` variables don't survive into other stages; keep running values in state[\"key\"].";
+
 #[derive(Debug, Clone)]
 pub struct DebugConfig {
     pub verbosity: u8,
@@ -198,7 +204,7 @@ impl ErrorEnhancer {
                     } else if var_name.starts_with("e.") {
                         Some("Try using bracket notation for special characters: e[\"field-name\"] or e[\"field.with.dots\"]".to_string())
                     } else {
-                        Some("Available variables: e (event), meta (metadata), conf (initialization data), line (raw line)".to_string())
+                        Some(AVAILABLE_VARIABLES_HINT.to_string())
                     }
                 }
             }
@@ -562,10 +568,17 @@ impl ErrorEnhancer {
             let name_lower = name.to_lowercase();
             let similarity = self.calculate_similarity(&target_lower, &name_lower);
 
-            if similarity > 0.6
-                || name_lower.contains(&target_lower)
-                || target_lower.contains(&name_lower)
-                || self.has_common_prefix(&target_lower, &name_lower)
+            // Minimum-similarity floor (#360): containment and shared
+            // prefixes only count between names of 3+ characters, so `t` no
+            // longer "resembles" every variable with a t in it and `counters`
+            // no longer suggests `conf, e`. Below the floor the caller lists
+            // every variable instead, which is more useful than a bad guess.
+            let short = target_lower.chars().count().min(name_lower.chars().count());
+            if similarity >= 0.5
+                || (short >= 3
+                    && (name_lower.contains(&target_lower)
+                        || target_lower.contains(&name_lower)
+                        || self.has_common_prefix(&target_lower, &name_lower)))
             {
                 suggestions.push(name.to_string());
             }
@@ -684,11 +697,12 @@ impl ErrorEnhancer {
     }
 
     fn has_common_prefix(&self, s1: &str, s2: &str) -> bool {
-        if s1.len() < 2 || s2.len() < 2 {
-            return false;
-        }
-        let prefix_len = 2.min(s1.len()).min(s2.len());
-        s1[..prefix_len] == s2[..prefix_len]
+        // Three characters: a two-letter overlap (`co`unters / `co`nf) is
+        // coincidence more often than a typo.
+        const PREFIX_LEN: usize = 3;
+        let p1: Vec<char> = s1.chars().take(PREFIX_LEN).collect();
+        let p2: Vec<char> = s2.chars().take(PREFIX_LEN).collect();
+        p1.len() == PREFIX_LEN && p1 == p2
     }
 
     fn get_stage_help(&self, stage: &str, error: &EvalAltResult) -> String {

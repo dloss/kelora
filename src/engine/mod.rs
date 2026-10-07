@@ -31,7 +31,7 @@ impl std::fmt::Display for ConfMutationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "conf map is read-only outside --begin; modifications are not allowed"
+            "conf map is read-only outside --begin; modifications are not allowed. For mutable cross-event state use state[\"key\"] (sequential mode only)"
         )
     }
 }
@@ -3171,6 +3171,39 @@ mod tests {
             out.contains("Available variables"),
             "unknown identifier should fall back to the variable listing; got: {out}"
         );
+    }
+
+    #[test]
+    fn unknown_variable_fallback_names_state_and_metrics() {
+        // #360: the fallback list omitted state/metrics, and weak matches
+        // (`counters` -> `conf, e`) beat the full list.
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let mut scope = Scope::new();
+        for name in ["e", "meta", "conf", "line", "state", "metrics"] {
+            scope.push(name, Map::new());
+        }
+        for var in ["t", "tot", "counters", "hourly_totals"] {
+            let err = EvalAltResult::ErrorVariableNotFound(var.into(), rhai::Position::NONE);
+            let hint = enhancer
+                .generate_suggestions(&err, &scope, None)
+                .expect("a hint");
+            assert!(
+                hint.starts_with("Available variables")
+                    && hint.contains("state (")
+                    && hint.contains("metrics (")
+                    && hint.contains("state[\"key\"]"),
+                "{var}: {hint}"
+            );
+        }
+        // Real near-misses still get "Did you mean".
+        let err = EvalAltResult::ErrorVariableNotFound("stat".into(), rhai::Position::NONE);
+        let hint = enhancer.generate_suggestions(&err, &scope, None).unwrap();
+        assert!(hint.contains("Did you mean: state"), "{hint}");
+    }
+
+    #[test]
+    fn conf_mutation_error_points_at_state() {
+        assert!(ConfMutationError.to_string().contains("state[\"key\"]"));
     }
 
     #[test]
