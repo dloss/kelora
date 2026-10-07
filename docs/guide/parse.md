@@ -234,7 +234,7 @@ kelora examples/cols_fixed.log -f 'cols:ts(2) level service *msg' --stats | grep
 ```
 
 Kelora looks for common field names (`ts`, `timestamp`, `time`, `@timestamp`,
-…) and recognizes most formats, including Unix epochs. Four things go wrong:
+…) and recognizes most formats, including Unix epochs. Four things can go wrong:
 
 | Symptom in `--stats` | Cause | Fix |
 |---|---|---|
