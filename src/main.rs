@@ -1283,11 +1283,17 @@ fn maybe_print_key_typo_hint(
         .collect();
 
     let messages = [
-        key_typo_message("-k/--keys", "field", "", &config.output.keys, &known_keys),
+        key_typo_message(
+            "-k/--keys",
+            "field",
+            ("", ""),
+            &config.output.keys,
+            &known_keys,
+        ),
         key_typo_message(
             "--exclude-keys",
             "field",
-            ", so it was not removed",
+            (", so it was not removed", ", so they were not removed"),
             &config.output.exclude_keys,
             &known_keys,
         ),
@@ -1326,12 +1332,19 @@ fn span_field_typo_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -
 }
 
 /// Build the typo hint for one key flag, or `None` when every requested key was
-/// seen at least once. `consequence` is appended after the field name to explain
-/// the effect (empty for `-k`, where empty output already speaks for itself).
+/// seen at least once. `consequence` completes the sentence to explain the
+/// effect, as (singular, plural) forms (empty for `-k`, where empty output
+/// already speaks for itself).
+///
+/// Unseen keys are classified first (#371): a dotted path whose top-level
+/// parent *is* present (`http.status` with `http` seen) is a nested value -k
+/// can't reach, not a missing field, so it is never described as "never
+/// present in the input". Nested keys keep the explanation however many there
+/// are; genuinely absent keys get the typo treatment.
 fn key_typo_message(
     flag: &str,
     label: &str,
-    consequence: &str,
+    consequence: (&str, &str),
     requested: &[String],
     discovered: &BTreeSet<String>,
 ) -> Option<String> {
@@ -1339,26 +1352,82 @@ fn key_typo_message(
         return None;
     }
 
-    let unseen: Vec<&String> = requested
+    let (nested, absent): (Vec<&String>, Vec<&String>) = requested
         .iter()
         .filter(|key| !discovered.contains(*key))
-        .collect();
+        .partition(|key| nested_parent(key, discovered).is_some());
 
-    match unseen.as_slice() {
+    let absent_text = match absent.as_slice() {
         [] => None,
         [key] => Some(format!(
-            "{flag} names {label} '{key}', which was never present in the input{consequence}. {}",
+            "{flag} names {label} '{key}', which was never present in the input{}. {}",
+            consequence.0,
             unseen_key_suggestion(key, discovered)
         )),
         keys => {
             let names: Vec<&str> = keys.iter().map(|k| k.as_str()).collect();
             Some(format!(
-                "{flag} names {label}s never present in the input{consequence}: {}. {}",
+                "{flag} names {label}s never present in the input{}: {}. {}",
+                consequence.1,
                 names.join(", "),
                 present_fields_hint(discovered)
             ))
         }
+    };
+
+    let nested_text = match nested.as_slice() {
+        [] => None,
+        // One nested key: the single-field get_path idiom is the smallest fix.
+        [key] => Some(format!(
+            "{flag} names nested {label} '{key}'{}. {}",
+            consequence.0,
+            unseen_key_suggestion(key, discovered)
+        )),
+        // Several: flattening once turns every nested value into a dotted
+        // top-level field, so the user's original list then works verbatim.
+        keys => {
+            let names: Vec<&str> = keys.iter().map(|k| k.as_str()).collect();
+            let mut parents: Vec<&str> = Vec::new();
+            for key in keys {
+                if let Some(parent) = nested_parent(key, discovered) {
+                    if !parents.contains(&parent) {
+                        parents.push(parent);
+                    }
+                }
+            }
+            let quoted: Vec<String> = parents.iter().map(|p| format!("'{p}'")).collect();
+            let (verb, parents_text) = match quoted.split_last() {
+                Some((last, rest)) if !rest.is_empty() => {
+                    ("are", format!("{} and {last}", rest.join(", ")))
+                }
+                _ => ("is", quoted.join("")),
+            };
+            let short_flag = flag.split('/').next().unwrap_or(flag);
+            Some(format!(
+                "{flag} can't reach nested values{}: {}. {parents_text} {verb} present, but -k/--keys and --exclude-keys act on whole top-level fields. Flatten first, e.g. --exec 'e = e.flattened()' then {short_flag} {}.",
+                consequence.1,
+                names.join(", "),
+                names.join(","),
+            ))
+        }
+    };
+
+    match (nested_text, absent_text) {
+        (None, None) => None,
+        (Some(text), None) | (None, Some(text)) => Some(text),
+        (Some(nested), Some(absent)) => Some(format!("{nested} {absent}")),
     }
+}
+
+/// The present top-level parent of a nested path such as `http.status` or
+/// `a.b[]`, or `None` when `key` isn't a path into a present field. A bare
+/// `field[]` (discover's notation for an array's elements) doesn't count: the
+/// array itself is the top-level field, so it is handled as a near-miss name.
+fn nested_parent<'a>(key: &'a str, discovered: &BTreeSet<String>) -> Option<&'a str> {
+    let head_end = key.find(['.', '['])?;
+    let head = &key[..head_end];
+    let container = key.strip_suffix("[]").unwrap_or(key);
+    (!head.is_empty() && container != head && discovered.contains(head)).then_some(head)
 }
 
 /// Inline "did you mean" for a single unseen key. Prefers the nearest discovered
@@ -1440,6 +1509,11 @@ fn dead_mined_field_message(
     if known.contains(field) {
         format!(
             "{flag}: -k/--keys names field '{field}', which was empty on all {excluded} event(s), so there is nothing to {consequence}."
+        )
+    } else if nested_parent(field, &known).is_some() {
+        format!(
+            "{flag}: -k/--keys names nested field '{field}', so all {excluded} event(s) were excluded and there is nothing to {consequence}. {}",
+            unseen_key_suggestion(field, &known)
         )
     } else {
         format!(

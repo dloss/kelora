@@ -443,6 +443,66 @@ fn test_keys_nested_map_path_points_to_get_path() {
 }
 
 #[test]
+fn test_keys_several_nested_paths_keep_the_explanation() {
+    // #371: with more than one nested key the hint used to drop the nested
+    // explanation and claim the fields were "never present in the input".
+    let input = r#"{"svc":"auth","http":{"status":200},"user":{"tier":"free"}}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "http.status,user.tier"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("can't reach nested values: http.status, user.tier")
+            && stderr.contains("'http' and 'user' are present")
+            && stderr.contains("--exec 'e = e.flattened()' then -k http.status,user.tier")
+            && !stderr.contains("never present"),
+        "several nested paths should get the flatten advice: {stderr}"
+    );
+}
+
+#[test]
+fn test_keys_nested_path_and_typo_are_reported_separately() {
+    let input = r#"{"svc":"auth","http":{"status":200}}"#;
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "-k", "http.status,zzz"], input);
+
+    assert!(
+        stderr.contains("nested field 'http.status'")
+            && stderr.contains("'zzz', which was never present in the input")
+            && !stderr.contains("'http.status', which was never present"),
+        "nested key and typo should be classified separately: {stderr}"
+    );
+}
+
+#[test]
+fn test_keys_flattened_makes_dotted_names_selectable() {
+    // The suggested fix must actually work: flattened() yields dotted
+    // top-level names that -k then accepts without any hint.
+    let input = r#"{"svc":"auth","http":{"status":200},"user":{"tier":"free"}}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e = e.flattened()",
+            "-k",
+            "http.status,user.tier",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        stdout.contains("http.status=200") && stdout.contains("user.tier='free'"),
+        "{stdout}"
+    );
+    assert!(!stderr.contains("hint"), "{stderr}");
+}
+
+#[test]
 fn test_keys_array_element_path_points_to_whole_field() {
     // `field[]` is discover's notation for array elements; the array itself is a
     // selectable top-level field, so the hint should suggest `-k tags`.
