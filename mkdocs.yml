@@ -147,15 +147,15 @@ nav:
   - How It Works: how-it-works.md
   - Reference:
       - CLI Options: reference/cli-reference.md
-      - Functions: reference/functions.md
       - Formats: reference/formats.md
       - Multiline: reference/multiline.md
       - Time Formats: reference/time-reference.md
+      - Functions: reference/functions.md
       - Rhai Cheatsheet: reference/rhai-cheatsheet.md
       - Script Variables: reference/script-variables.md
       - Exit Codes: reference/exit-codes.md
-      - Glossary: glossary.md
       - Benchmarks: reference/benchmarks.md
+      - Glossary: glossary.md
   - Help:
       - Troubleshooting: reference/troubleshooting.md
       - FAQ: faq.md
