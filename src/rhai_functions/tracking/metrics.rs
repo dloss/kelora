@@ -2,6 +2,7 @@ use super::merge::{
     compress_tdigest, deserialize_hll, deserialize_tdigest, ensure_operation_metadata,
     merge_numeric, new_hll, new_hll_with_error, serialize_hll, serialize_tdigest,
 };
+use super::state::record_window_extreme;
 use super::with_user_tracking;
 use rhai::Dynamic;
 use std::collections::HashSet;
@@ -72,6 +73,7 @@ fn track_extreme_impl(
         f64::NEG_INFINITY
     };
 
+    record_window_extreme(key, stored.clone(), value_f64, is_min);
     with_user_tracking(|state| {
         let current = state.get(key).cloned().unwrap_or(default);
         let current_val = dynamic_to_cmp_f64(&current, default_int, default_float);
@@ -271,6 +273,7 @@ pub(super) fn track_stats_impl(
 
     let min_key = format!("{}_min", key);
     ensure_operation_metadata(&min_key, "min")?;
+    record_window_extreme(&min_key, Dynamic::from(value), value, true);
     with_user_tracking(|state| {
         let current = state
             .get(&min_key)
@@ -288,6 +291,7 @@ pub(super) fn track_stats_impl(
 
     let max_key = format!("{}_max", key);
     ensure_operation_metadata(&max_key, "max")?;
+    record_window_extreme(&max_key, Dynamic::from(value), value, false);
     with_user_tracking(|state| {
         let current = state
             .get(&max_key)

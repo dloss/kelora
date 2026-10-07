@@ -38,9 +38,9 @@ use rank::{
     track_unique_string_impl,
 };
 pub use state::{
-    get_thread_internal_state, get_thread_snapshot, get_thread_tracking_state,
-    set_thread_internal_state, set_thread_tracking_state, with_internal_tracking,
-    with_user_tracking, TrackingSnapshot,
+    begin_window_extremes, get_thread_internal_state, get_thread_snapshot,
+    get_thread_tracking_state, set_thread_internal_state, set_thread_tracking_state,
+    take_window_extremes, with_internal_tracking, with_user_tracking, TrackingSnapshot,
 };
 
 /// Default N for track_top / track_bottom / track_top_by / track_bottom_by.

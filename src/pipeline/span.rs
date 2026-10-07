@@ -109,6 +109,9 @@ struct ActiveSpan {
     events_seen: usize,
     included_count: usize,
     baseline_user: HashMap<String, Dynamic>,
+    /// Per-window `min`/`max` values, collected while the span was open and
+    /// filled in when it closes (#380).
+    extremes: HashMap<String, Dynamic>,
     detail: SpanDetail,
 }
 
@@ -157,11 +160,8 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if detail.need_baseline {
-                ctx.tracker.clone()
-            } else {
-                HashMap::new()
-            },
+            baseline_user: open_baseline(ctx, detail),
+            extremes: HashMap::new(),
             detail,
         }
     }
@@ -191,11 +191,8 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if detail.need_baseline {
-                ctx.tracker.clone()
-            } else {
-                HashMap::new()
-            },
+            baseline_user: open_baseline(ctx, detail),
+            extremes: HashMap::new(),
             detail,
         }
     }
@@ -217,11 +214,8 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if detail.need_baseline {
-                ctx.tracker.clone()
-            } else {
-                HashMap::new()
-            },
+            baseline_user: open_baseline(ctx, detail),
+            extremes: HashMap::new(),
             detail,
         }
     }
@@ -248,11 +242,8 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if detail.need_baseline {
-                ctx.tracker.clone()
-            } else {
-                HashMap::new()
-            },
+            baseline_user: open_baseline(ctx, detail),
+            extremes: HashMap::new(),
             detail,
         }
     }
@@ -414,6 +405,9 @@ impl SpanProcessor {
         if self.active_span.is_some() {
             self.close_current_span(ctx)?;
         }
+        // Normally already taken by the close above; this covers a run that
+        // never opened a span after the last close.
+        let _ = crate::rhai_functions::tracking::take_window_extremes();
         self.warn_late_events(ctx);
         self.warn_unassigned_events(ctx);
         Ok(())
@@ -694,6 +688,10 @@ impl SpanProcessor {
 
     fn close_current_span(&mut self, ctx: &mut PipelineContext) -> Result<()> {
         if let Some(mut span) = self.active_span.take() {
+            // Taken before the hook runs, so track_min/track_max calls the hook
+            // makes belong to no window — the same rule the baseline diff
+            // applies to additive metrics.
+            span.extremes = crate::rhai_functions::tracking::take_window_extremes();
             if span.span_end.is_none() {
                 span.span_end = span.last_event_timestamp;
             }
@@ -711,8 +709,11 @@ impl SpanProcessor {
             return Ok(());
         }
 
-        let (metrics_delta, non_additive) =
-            compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
+        let SpanMetrics {
+            values: metrics_delta,
+            non_additive,
+            unavailable,
+        } = compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
         self.warn_non_additive(&non_additive, ctx);
 
         if let Some(compiled) = self.compiled_close.clone() {
@@ -723,7 +724,7 @@ impl SpanProcessor {
                 &span.events,
                 span.included_count as i64,
                 metrics_delta.clone(),
-                non_additive.iter().map(|(key, _)| key.clone()).collect(),
+                unavailable,
             )
             .with_observed_bounds(span.first_ts, span.last_ts);
 
@@ -914,10 +915,10 @@ impl SpanProcessor {
             let mut keys: Vec<&str> = dropped.iter().map(|(key, _)| key.as_str()).collect();
             keys.sort_unstable();
             let message = crate::config::format_warning_message_auto(&format!(
-                "--span-summary omits {} non-additive metric(s) ({}): min/max/percentiles/\
-                 cardinality/ranking have no per-window value, so each row carries only the \
-                 additive ones (count, sum, avg, unique, bucket). Add -m for the cumulative \
-                 table, or --span-close with a span.events loop for per-window extremes.",
+                "--span-summary omits {} non-additive metric(s) ({}): percentiles, \
+                 cardinality and rankings have no per-window value, so each row carries only \
+                 count, sum, avg, unique, bucket, min and max. Add -m for the cumulative table, \
+                 or --span-close with a span.events loop for per-window percentiles.",
                 keys.len(),
                 keys.join(", ")
             ));
@@ -932,7 +933,7 @@ impl SpanProcessor {
             let func = crate::rhai_functions::tracking::op_display_name(op);
             let message = crate::config::format_warning_message_auto(&format!(
                 "span.metrics omits '{}' ({}): non-additive aggregators have no per-window \
-                 value; iterate span.events to compute per-window min/max/percentiles/etc.",
+                 value; iterate span.events to compute per-window percentiles/cardinality/etc.",
                 key, func
             ));
             let _ = SafeStderr::new().writeln(&message);
@@ -980,19 +981,22 @@ fn format_duration(duration_ms: i64) -> String {
 ///   - `unique`       -> set of values first seen in this window
 ///   - `bucket`       -> per-bucket count delta
 ///
-/// Non-additive aggregators (`min`, `max`, `percentiles`, `cardinality`,
-/// `top`, `bottom`) cannot be recovered from cumulative global state: a global
-/// max can't be "un-merged" back to a window max, and a t-digest/HLL has no
-/// subtraction. These are collected into the returned list so the caller can
-/// emit a diagnostic instead of silently dropping them (or, for min/max,
-/// reporting a misleading global extreme).
+///   - `min`/`max`    -> the window's own extreme, recorded separately while
+///     the span was open (a global extreme can't be un-merged)
+///
+/// The remaining non-additive aggregators (`percentiles`, `cardinality`,
+/// `top`, `bottom`) cannot be recovered from cumulative global state: a
+/// t-digest/HLL has no subtraction and a ranking over cumulative counts has no
+/// per-window form. These are collected into `non_additive` so the caller can
+/// emit a diagnostic instead of silently dropping them.
 fn compute_span_metrics(
     span: &ActiveSpan,
     current_user: &HashMap<String, Dynamic>,
     current_internal: &HashMap<String, Dynamic>,
-) -> (rhai::Map, Vec<(String, String)>) {
+) -> SpanMetrics {
     let mut result = rhai::Map::new();
     let mut non_additive: Vec<(String, String)> = Vec::new();
+    let mut unavailable: HashSet<String> = HashSet::new();
 
     for (key, value) in current_user {
         // Bookkeeping such as the cardinality companion count
@@ -1035,8 +1039,18 @@ fn compute_span_metrics(
                         }
                     }
                 }
-                "min" | "max" | "percentiles" | "cardinality" | "top" | "bottom" | "top_by"
-                | "bottom_by" => {
+                "min" | "max" => match span.extremes.get(key) {
+                    Some(extreme) => {
+                        result.insert(key.clone().into(), extreme.clone());
+                    }
+                    // Nothing recorded in this window: there is no extreme,
+                    // and a 0 from span.metric() would read as one.
+                    None => {
+                        unavailable.insert(key.clone());
+                    }
+                },
+                "percentiles" | "cardinality" | "top" | "bottom" | "top_by" | "bottom_by" => {
+                    unavailable.insert(key.clone());
                     non_additive.push((key.clone(), op.to_string()));
                 }
                 _ => {}
@@ -1044,7 +1058,33 @@ fn compute_span_metrics(
         }
     }
 
-    (result, non_additive)
+    SpanMetrics {
+        values: result,
+        non_additive,
+        unavailable,
+    }
+}
+
+/// What a closing span reports about its metrics.
+struct SpanMetrics {
+    /// `span.metrics` / the summary row.
+    values: rhai::Map,
+    /// `(key, op)` for aggregators with no per-window form, for the warning.
+    non_additive: Vec<(String, String)>,
+    /// Keys for which `span.metric()` returns `()` rather than `0`: the
+    /// non-additive ones, plus min/max with no value in this window.
+    unavailable: HashSet<String>,
+}
+
+/// Snapshot the tracker for a newly opened span's per-window diff, and start
+/// recording its per-window extremes. Both only when something reports on
+/// the span; otherwise an empty baseline and no recording.
+fn open_baseline(ctx: &PipelineContext, detail: SpanDetail) -> HashMap<String, Dynamic> {
+    if !detail.need_baseline {
+        return HashMap::new();
+    }
+    crate::rhai_functions::tracking::begin_window_extremes();
+    ctx.tracker.clone()
 }
 
 /// Extract the cumulative `(sum, count)` stored by `track_avg`.

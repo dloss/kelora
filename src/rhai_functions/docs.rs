@@ -355,17 +355,18 @@ span.label                           span.start as RFC3339 seconds when present,
 span.size                            Number of events that survived the span
 span.events                          Array of event maps for the span in arrival order
 span.metrics                         Per-window metrics from additive track_* calls: track_freq,
-                                     track_sum, track_inc, track_avg, track_unique (read-only map).
-                                     Non-additive aggregators (min, max, percentiles, cardinality,
-                                     top/bottom, top_by/bottom_by) have no per-window value and are
-                                     omitted with a warning; iterate span.events to compute them
-                                     per window.
+                                     track_sum, track_inc, track_avg, track_unique, plus the
+                                     window's own track_min/track_max (read-only map).
+                                     Percentiles, cardinality, top/bottom and top_by/bottom_by have
+                                     no per-window value and are omitted with a warning; iterate
+                                     span.events to compute them per window.
 span.metric(name)                    One metric's per-window value, or 0 when the window produced
                                      none. Takes a dotted path: span.metric("level.ERROR"). Prefer
                                      this over span.metrics.get_path(name, 0) — zero deltas are
                                      omitted from the map, so a bare lookup returns () and
                                      arithmetic on it fails. Returns () for a non-additive metric
-                                     omitted from span.metrics, since it has no per-window value.
+                                     omitted from span.metrics, and for a min/max this window never
+                                     recorded, since neither has a per-window value.
 
 EVENT METADATA (the `meta` map, available in --filter/--exec):
 meta.parsed_ts                       Parsed timestamp of the event as a UTC datetime, or () if the

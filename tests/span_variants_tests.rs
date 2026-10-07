@@ -847,6 +847,61 @@ fn first_ts_and_last_ts_are_observed_bounds_in_every_mode() {
 }
 
 #[test]
+fn min_and_max_are_per_window_values() {
+    // #380: each window reports its own extremes, not the run's, while -m
+    // still reports the run's.
+    let input = r#"{"ts":"2024-01-15T10:00:00Z","v":50}
+{"ts":"2024-01-15T10:00:10Z","v":7}
+{"ts":"2024-01-15T10:01:00Z","v":3}
+{"ts":"2024-01-15T10:01:10Z","v":9}
+{"ts":"2024-01-15T10:02:00Z"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--span",
+            "1m",
+            "--exec",
+            r#"if e.has("v") { track_max("hi", e.v); track_min("lo", e.v) }"#,
+            "--span-summary=text",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(!stderr.contains("non-additive"), "{stderr}");
+    assert_eq!(
+        stdout.trim_end().lines().collect::<Vec<_>>(),
+        vec![
+            "2024-01-15T10:00:00Z  events=2  hi=50  lo=7",
+            "2024-01-15T10:01:00Z  events=2  hi=9  lo=3",
+            "2024-01-15T10:02:00Z  events=1",
+        ]
+    );
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "1m",
+            "--exec",
+            r#"if e.has("v") { track_max("hi", e.v) }"#,
+            "--span-close",
+            r#"print(`${span.metric("hi")} ${type_of(span.metric("hi"))}`)"#,
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    // The last window recorded no value: (), not 0.
+    assert_eq!(
+        stdout.trim_end().lines().collect::<Vec<_>>(),
+        vec!["50 i64", "9 i64", " ()"]
+    );
+}
+
+#[test]
 fn idle_span_ids_use_z_like_time_span_ids() {
     // #421: idle ids used `+00:00` where time ids and labels use `Z`.
     let (stdout, _stderr, exit_code) = run_kelora_with_input(

@@ -55,15 +55,15 @@ you need a dense series. A window whose events were all removed by `--filter`
 or `-l` still gets a row, with `events=0`; windows outside `--since`/`--until`
 don't appear at all.
 
-Only counts, sums, averages, and distinct values are tracked per span.
-Minimum, maximum, percentiles, and top-N are tracked for the whole run only;
-Kelora says so and leaves them out of the rows:
+Counts, sums, averages, distinct values, minimums, and maximums are tracked
+per span. Percentiles, cardinality, and top-N are tracked for the whole run
+only; Kelora says so and leaves them out of the rows:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/worker_bursts.jsonl --span-idle 5m --describe ms --span-summary
 ```
 
-For per-span extremes, use a `--span-close` script with `span.events`.
+For per-span percentiles, use a `--span-close` script with `span.events`.
 
 ## Your own report per span: `--span-close`
 
@@ -83,7 +83,7 @@ kelora examples/api_latency_incident.jsonl -q --span 10m \
 | `span.start`, `span.end` | window boundaries as datetimes; empty for count and field spans |
 | `span.first_ts`, `span.last_ts` | timestamps of the span's first and last events, in every mode |
 | `span.size` | number of events |
-| `span.metric("name")` | this span's value of a metric, `0` if the span had none (`()` for a minimum, maximum, percentile, or top-N, which have no per-span value) |
+| `span.metric("name")` | this span's value of a metric, `0` if the span had none (`()` for a percentile, cardinality, or top-N, which have no per-span value, and for a minimum or maximum the span never recorded) |
 | `span.metrics` | all per-span metric values as a map |
 | `span.events` | the events themselves, as an array of maps |
 | `metrics` | running totals since the start |

@@ -1186,9 +1186,9 @@ fn test_span_metrics_track_avg_per_window() {
 
 #[test]
 fn test_span_metrics_non_additive_warns_and_omits() {
-    // Non-additive aggregators (max, percentiles) cannot be reduced to a single
-    // window. They must be omitted from span.metrics *and* trigger a warning,
-    // rather than being silently dropped or reporting a global extreme.
+    // Percentiles cannot be reduced to a single window: they must be omitted
+    // from span.metrics *and* trigger a warning. track_max is tracked per window
+    // (#380), so it carries the window's own extreme, not the global one.
     let input = r#"{"t":"2025-01-01T00:00:00Z","rt":1.0}
 {"t":"2025-01-01T00:00:30Z","rt":9.0}
 {"t":"2025-01-01T00:01:10Z","rt":2.0}
@@ -1213,20 +1213,16 @@ fn test_span_metrics_non_additive_warns_and_omits() {
         "non-additive span metrics should not be fatal"
     );
 
-    // The misleading global max must not leak into span.metrics for any window.
-    assert!(
-        !stdout.contains("rt_max") && !stdout.contains("rt_p"),
-        "non-additive metrics must be omitted from span.metrics, got: {}",
-        stdout
-    );
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(lines.len(), 2, "{stdout}");
+    assert!(lines[0].contains("\"rt_max\": 9.0"), "{stdout}");
+    // The second window's own max, not the run's 9.0.
+    assert!(lines[1].contains("\"rt_max\": 3.0"), "{stdout}");
+    assert!(!stdout.contains("rt_p"), "{stdout}");
+    assert!(!stderr.contains("'rt_max'"), "{stderr}");
 
     // A loud, once-per-key warning must explain the omission and point to the
     // span.events workaround.
-    assert!(
-        stderr.contains("span.metrics omits 'rt_max'") && stderr.contains("track_max"),
-        "expected a warning naming the omitted max metric, got: {}",
-        stderr
-    );
     assert!(
         stderr.contains("track_percentiles"),
         "expected a warning for omitted percentiles, got: {}",
@@ -1240,9 +1236,9 @@ fn test_span_metrics_non_additive_warns_and_omits() {
 
     // The warning fires once per key, not once per span window.
     assert_eq!(
-        stderr.matches("span.metrics omits 'rt_max'").count(),
+        stderr.matches("span.metrics omits 'rt_p95'").count(),
         1,
-        "max warning should be emitted only once across spans, got: {}",
+        "percentile warning should be emitted only once across spans, got: {}",
         stderr
     );
 }

@@ -112,7 +112,7 @@ Only in `--span-close`, which runs once when a span (`--span`, `--span-idle`) cl
 | `span.size` | int | number of events that passed the filters and entered the span |
 | `span.events` | array of maps | those events, each with `line`, `line_num`, `filename`, `span_id`, `span_start`, `span_end`, `span_status` added as fields |
 | `span.metrics` | map | what `track_*()` recorded while the span was open; zero values are omitted |
-| `span.metric(name)` | value | one entry of `span.metrics`, `0` if absent, `()` for an omitted non-additive tracker; dotted names reach into `track_freq` maps: `span.metric("level.ERROR")` |
+| `span.metric(name)` | value | one entry of `span.metrics`, `0` if absent, `()` for an omitted non-additive tracker or an unrecorded min/max; dotted names reach into `track_freq` maps: `span.metric("level.ERROR")` |
 
 ```bash
 kelora -j app.log --span 5m -q \
@@ -120,7 +120,7 @@ kelora -j app.log --span 5m -q \
   --span-close 'print(`${span.label} ${span.metric("errors")}/${span.size}`)'
 ```
 
-`span.metrics` contains only additive trackers: `track_freq`, `track_sum`, `track_inc`, `track_avg`, `track_unique`. Trackers that cannot be split per window (`track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`/`track_bottom`, `track_top_by`/`track_bottom_by`, and the min/max/percentile parts of `track_stats`) are omitted with a one-time warning, and `span.metric()` returns `()` for them. Compute those from `span.events`:
+`span.metrics` contains the additive trackers (`track_freq`, `track_sum`, `track_inc`, `track_avg`, `track_unique`) and the span's own `track_min`/`track_max` extremes. Trackers that cannot be split per window (`track_percentiles`, `track_cardinality`, `track_top`/`track_bottom`, `track_top_by`/`track_bottom_by`, and the percentile parts of `track_stats`) are omitted with a one-time warning, and `span.metric()` returns `()` for them, as for a min/max the span never recorded. Compute those from `span.events`:
 
 ```rhai
 let rts = span.events.pluck_as_nums("rt");

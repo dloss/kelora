@@ -1663,7 +1663,7 @@ let max_rt = if rts.is_empty() { () } else { rts.max() };
 
 ### Metrics Snapshot
 
-`span.metrics` maps metric names to what `track_*()` recorded while this span was open. Only additive trackers appear: `track_freq`, `track_sum`, `track_inc`, `track_avg` and `track_unique` (for `track_unique`, the values first seen in this span), plus the count/sum/avg parts of `track_stats`. Zero values are omitted.
+`span.metrics` maps metric names to what `track_*()` recorded while this span was open. Additive trackers appear: `track_freq`, `track_sum`, `track_inc`, `track_avg` and `track_unique` (for `track_unique`, the values first seen in this span), plus `track_min`/`track_max` as this span's own extremes, and the count/sum/avg/min/max parts of `track_stats`. Zero values are omitted, as is a minimum or maximum the span never recorded.
 
 #### `span.metric(name)`
 
@@ -1677,11 +1677,12 @@ print(`${span.label}: ${ratio}% failures`);
 ```
 
 !!! warning "Non-additive trackers are omitted"
-    `track_min`, `track_max`, `track_percentiles`, `track_cardinality`,
-    `track_top`/`track_bottom` and `track_top_by`/`track_bottom_by` (and those
-    parts of `track_stats`) have no per-window value. They are left out of
+    `track_percentiles`, `track_cardinality`, `track_top`/`track_bottom` and
+    `track_top_by`/`track_bottom_by` (and the percentile parts of
+    `track_stats`) have no per-window value. They are left out of
     `span.metrics` with a one-time warning, and `span.metric()` returns `()` for
-    them. Compute them from `span.events`, as in the example above.
+    them (and for a `track_min`/`track_max` the span never recorded). Compute
+    them from `span.events`, as in the example above.
 
 ---
 
