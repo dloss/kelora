@@ -2,9 +2,10 @@
 
 Kelora is a command-line tool for reading log files. It recognizes common
 formats on its own — application logs, syslog, web server logs, JSON, CSV —
-splits each line into named fields, and lets you filter, count, and summarize
-them with short options. For logic the options can't express, it has a small
-scripting language.
+and for any other format you describe the layout in one option. It splits each
+line into named fields and lets you filter, count, and summarize them with
+short options. For logic the options can't express, it has a small scripting
+language.
 
 [Install Kelora](installation.md){ .md-button } [Explore a log file](guide/explore.md){ .md-button }
 
@@ -47,23 +48,43 @@ kelora examples/shop.log -F levelmap
 The payment provider has been timing out since about 14:20. The
 [guide](guide/explore.md) starts from here.
 
+## Logs in your own format
+
+Most shops have a log format no tool knows. Kelora keeps such lines whole and
+says so; describe the layout once — here with named regex groups — and you get
+fields like any other:
+
+```bash exec="on" result="ansi"
+head -2 examples/jobs.log
+```
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/jobs.log -n 2 \
+  -f 'regex:\[(?P<ts>[^\]]+)\] \((?P<worker>[^)]+)\) (?P<level>\w+) :: (?P<msg>.*)'
+```
+
+Everything above — `-l`, `--freq worker`, `--drain` — then works the same.
+Whitespace-separated columns are even simpler (`-f 'cols:ts(2) level *msg'`),
+and fields buried in free text, such as `key=value` pairs, can be pulled out
+with a script. [Get Logs into Shape](guide/parse.md) covers all of it.
+
 ## In short
 
 - **Install:** `brew install dloss/kelora/kelora`, or one binary for Linux,
   macOS, and Windows ([all options](installation.md)).
 - **Input:** files, `.gz` and `.zst`, globs, or stdin:
   `tail -F app.log | kelora -l error`.
-- **Speed:** filtering 100 000 JSON lines by level takes about 0.14 s (jq:
-  0.95 s); `--parallel` spreads big batch jobs over all cores
-  ([benchmarks](reference/benchmarks.md)).
+- **Speed:** simple filters and summaries handle multi-gigabyte files
+  comfortably; scripts that run on every event are slower. For big jobs, filter
+  with `rg` first or add `--parallel` ([benchmarks](reference/benchmarks.md)).
 - **Scripting:** [Rhai](https://rhai.rs), for what the options can't express:
   `--filter 'e.status >= 500 && e.path.starts_with("/api")'`.
 - **Video:** a [5-minute introduction](https://www.youtube.com/watch?v=IwkicmS3RYo)
   by the YouTube channel Hack the Clown.
-- **Compared with grep, awk, and jq:** grep finds lines and jq queries JSON.
-  Kelora knows the log format, so you work with named fields, and counting,
-  grouping, and time windows are built in. For plain text search, `rg` is
-  faster — pipe it in front.
+- **Compared with grep, awk, and jq:** they are faster at what they do — grep
+  and `rg` at finding lines, jq at reshaping JSON. Kelora's strength is reading
+  a log as fields, whatever its format, with counting, grouping, and time
+  windows built in. They combine well.
 
 ## What it does
 

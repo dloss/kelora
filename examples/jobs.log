@@ -1,0 +1,20 @@
+[2024-09-05 08:00:06] (worker-4) INFO :: processed batch 750
+[2024-09-05 08:00:22] (worker-2) ERROR :: lost connection to broker
+[2024-09-05 08:00:39] (worker-2) INFO :: processed batch 341
+[2024-09-05 08:00:40] (worker-1) INFO :: processed batch 699
+[2024-09-05 08:00:43] (worker-2) WARN :: queue depth 972 > 500
+[2024-09-05 08:00:51] (worker-1) INFO :: processed batch 856
+[2024-09-05 08:01:20] (worker-4) INFO :: processed batch 134
+[2024-09-05 08:01:31] (worker-4) INFO :: processed batch 764
+[2024-09-05 08:01:43] (worker-1) INFO :: processed batch 937
+[2024-09-05 08:01:47] (worker-1) INFO :: processed batch 665
+[2024-09-05 08:01:58] (worker-4) INFO :: processed batch 291
+[2024-09-05 08:02:00] (worker-4) WARN :: queue depth 539 > 500
+[2024-09-05 08:02:25] (worker-2) INFO :: processed batch 922
+[2024-09-05 08:02:47] (worker-1) INFO :: processed batch 587
+[2024-09-05 08:03:14] (worker-4) INFO :: processed batch 249
+[2024-09-05 08:03:32] (worker-4) INFO :: processed batch 562
+[2024-09-05 08:03:45] (worker-3) ERROR :: lost connection to broker
+[2024-09-05 08:03:46] (worker-1) INFO :: processed batch 833
+[2024-09-05 08:03:47] (worker-4) INFO :: processed batch 713
+[2024-09-05 08:04:04] (worker-2) INFO :: processed batch 426

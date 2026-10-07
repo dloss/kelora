@@ -1,15 +1,15 @@
 # Benchmarks
 
-How Kelora compares with specialized tools on common log tasks. The short
-version: on JSON, Kelora is comparable to `jq` — faster on simple filters,
-slower when a script runs on every event; on plain text and CSV, dedicated tools
-are faster. Use whichever fits, and combine them — `rg` in front of Kelora,
-`qsv` behind it.
+How Kelora compares with specialized tools on common log tasks. Single-purpose
+tools are usually faster at their one job; Kelora's numbers vary with the task —
+built-in options are quick, scripts that run on every event are slower. These
+are single runs on one machine, so read them as rough orders of magnitude, and
+combine tools: `rg` in front of Kelora, `jq` or `qsv` behind it.
 
 | Your main job | Fastest tool | Kelora is worth it when |
 |---|---|---|
 | finding text | `rg`, `grep` | you need fields, scripts, or counts in the same run |
-| filtering JSON | Kelora, `jq` | — |
+| filtering JSON | `jq`, Kelora | you also need counts, windows, or non-JSON input |
 | reshaping JSON | `jq` | the logic is multi-step, or you need counts, windows, or mixed formats |
 | CSV analytics | `qsv`, `mlr` | the input isn't CSV, or you need Rhai logic |
 

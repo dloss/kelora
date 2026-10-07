@@ -72,10 +72,10 @@ it refuses the combination. `state` raises a script error on every event — the
 
 ## How fast is it?
 
-On JSON, Kelora is comparable to `jq`: faster on simple filters, a little
-slower when a script runs on every event. Options like `-l`, `--keep-lines`, and
-`--freq` run at several hundred thousand lines per second, per-event scripts at
-roughly 100 000–200 000 per core; `--parallel` gave about 3× on six cores. Plain-text
-search (`rg`) and CSV analytics (`qsv`, `mlr`) are faster in their niche —
-combine them with Kelora rather than choosing. [Benchmarks](../reference/benchmarks.md)
+Fast enough for most log work, and slower than tools built for one job.
+Options like `-l`, `--keep-lines`, and `--freq` run at several hundred thousand
+lines per second; scripts that run on every event at roughly 100 000–200 000
+per core; `--parallel` gave about 3× on six cores. Plain-text search (`rg`),
+JSON reshaping (`jq`), and CSV analytics (`qsv`, `mlr`) are faster in their
+niche — combine them with Kelora rather than choosing. [Benchmarks](../reference/benchmarks.md)
 has the measurements.
