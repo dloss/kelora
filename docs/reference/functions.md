@@ -196,7 +196,23 @@ let n = ["a", "b"].parse_cols("x y z");          // #{x: "a", y: "b", z: ()}
 
 ### Parsing Functions
 
-Each `parse_*` returns a map you can index or merge into the event (`e += text.parse_logfmt()`). On input they cannot parse they return an empty map — except `parse_json()`, which raises an error. To parse a field and merge it into the event in one step, with a status report, see the [`absorb_*` functions](#event-manipulation).
+Each `parse_*` returns a map you can index or merge into the event (`e += text.parse_logfmt()`). Most fail silently: on input they cannot parse they return an empty map `#{}` with no error, no warning and exit code 0, so merging the result merges nothing.
+
+| On input it cannot parse | Functions |
+|---|---|
+| returns `#{}` (all or nothing: one bad part empties the whole map) | `parse_logfmt`, `parse_syslog`, `parse_combined`, `parse_cef`, `parse_url`, `parse_email`, `parse_user_agent`, `parse_jwt`, `parse_media_type`, `parse_content_disposition` |
+| returns what it could find, possibly `#{}` | `parse_kv`, `parse_query_params`, `parse_path` |
+| missing columns become `()` | `parse_cols` |
+| raises a runtime error | `parse_json` |
+
+Test for the empty map before you rely on the fields:
+
+```rhai
+let a = e.line.parse_combined();
+if a.len() == 0 { e.parse_failed = true } else { e += a }
+```
+
+To parse a field and merge it into the event in one step, with a status report, see the [`absorb_*` functions](#event-manipulation).
 
 #### `text.parse_json()`
 Parse a JSON string into a map or array. Invalid JSON is a runtime error.
@@ -224,7 +240,7 @@ e.message = s["msg"];
 ```
 
 #### `text.parse_combined()`
-Parse an Apache/Nginx combined log line. Keys: `ip`, `user`, `ts`, `request`, `method`, `path`, `protocol`, `status` (int), `bytes` (int), `referer`, `user_agent`.
+Parse an Apache/Nginx combined or common log line. Keys: `ip`, `identity`, `user`, `ts`, `request`, `method`, `path`, `protocol`, `status` (int), `bytes` (int), `referer`, `user_agent`, `request_time` (float). A line with extra fields after `user_agent` (other than a request time) returns `#{}`; check `.len() == 0`. `-f combined` reports the same line as a parse error that names the unexpected text.
 
 ```rhai
 let a = e.line.parse_combined();

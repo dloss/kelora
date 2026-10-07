@@ -64,21 +64,22 @@ text.normalized([patterns])          Replace patterns with placeholders (<ipv4>,
                                      PII patterns (credit_card, ssn, phone) are NOT in the default set;
                                      pass them explicitly to redact, e.g. normalized(["credit_card","ssn","phone"])
 text.or_empty()                      Convert empty string/array/map to () for removal/filtering                                  
-text.parse_cef()                     Parse Common Event Format line into fields
-text.parse_cols(spec [,sep])         Parse columns according to spec
-text.parse_combined()                Parse Apache/Nginx combined log line
-text.parse_content_disposition()     Parse Content-Disposition header parameters
-text.parse_email()                   Parse email address into parts
-text.parse_json()                    Parse JSON string into map/array
-text.parse_jwt()                     Parse JWT into header/claims (+ exp/iat/nbf as datetimes) without verification
+text.parse_cef()                     Parse Common Event Format line into fields (#{} if unparseable)
+text.parse_cols(spec [,sep])         Parse columns according to spec (missing columns become ())
+text.parse_combined()                Parse Apache/Nginx combined log line (#{} if unparseable, incl. extra
+                                     trailing fields; no error — check with: if m.len() == 0 { ... })
+text.parse_content_disposition()     Parse Content-Disposition header parameters (#{} if unparseable)
+text.parse_email()                   Parse email address into parts (#{} if unparseable)
+text.parse_json()                    Parse JSON string into map/array (invalid JSON raises an error)
+text.parse_jwt()                     Parse JWT into header/claims (+ exp/iat/nbf as datetimes) without verification (#{} if unparseable)
 text.parse_kv([sep [,kv_sep]])       Split key-value pairs from text (skips tokens without separator; NOT quote-aware — use parse_logfmt for quoted/typed values)
-text.parse_logfmt()                  Parse logfmt line into structured fields
-text.parse_media_type()              Parse media type tokens and parameters
+text.parse_logfmt()                  Parse logfmt line into structured fields (#{} if any token is malformed)
+text.parse_media_type()              Parse media type tokens and parameters (#{} if unparseable)
 text.parse_path()                    Parse filesystem path into components
 text.parse_query_params()            Parse URL query string into map
-text.parse_syslog()                  Parse syslog line into structured fields
-text.parse_url()                     Parse URL into structured components
-text.parse_user_agent()              Parse common user-agent strings into components
+text.parse_syslog()                  Parse syslog line into structured fields (#{} if unparseable)
+text.parse_url()                     Parse URL into structured components (#{} if unparseable)
+text.parse_user_agent()              Parse common user-agent strings into components (#{} if unrecognized)
 text.rclip()                         Remove trailing non-alphanumeric characters (right side only)
 text.replace(pattern, replacement)   Replace in place; returns () (builtin; use replace_regex() for a value)
 text.replace_regex(pattern, replacement) Replace all regex matches
