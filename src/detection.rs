@@ -653,6 +653,54 @@ fn leading_ts_tokens<'a>(lines: impl IntoIterator<Item = &'a str>) -> Option<usi
     }
 }
 
+/// The members of an auto-detected cascade as an `-f` comma list
+/// (`json,line`), or `None` when detection picked a single format.
+fn auto_cascade_members(detected: &DetectedFormat) -> Option<String> {
+    match &detected.format {
+        config::InputFormat::Cascade(formats) => Some(
+            formats
+                .iter()
+                .map(|f| f.to_display_string())
+                .collect::<Vec<_>>()
+                .join(","),
+        ),
+        _ => None,
+    }
+}
+
+/// Build the advisory hint (💡) for an auto-built cascade.
+///
+/// An auto-detected cascade changes the output schema: every event gains a
+/// `_format` field the input didn't have, depending on what the sample
+/// happened to contain. That surprises anything downstream, so it is a hint
+/// rather than `-v` status (#407). Explicit cascades never come through
+/// detection, so they stay quiet — typing the cascade is consent. Standard
+/// hint gating applies: data-only modes hush it, including `--discover`,
+/// whose table and footer already show `_format` and the cascade.
+pub fn auto_cascade_hint_message(
+    config: &KeloraConfig,
+    detected: &DetectedFormat,
+) -> Option<String> {
+    if !config.hints_allowed() || !detected.had_input {
+        return None;
+    }
+    // The user already decided which keys reach the output: `_format` is
+    // either excluded or not in the -k selection.
+    let keys = &config.output.keys;
+    if config.output.exclude_keys.iter().any(|k| k == "_format")
+        || (!keys.is_empty() && !keys.iter().any(|k| k == "_format"))
+    {
+        return None;
+    }
+    let members = auto_cascade_members(detected)?;
+    Some(config.format_hint_message(&format!(
+        "Input mixes formats; parsing as cascade({members}), which adds a _format field (the parser that matched) to every event. Drop it with --exclude-keys _format; pass -f {members} to choose the cascade explicitly."
+    )))
+}
+
+/// Tracks whether the auto-cascade `_format` hint already went out this run.
+static AUTO_CASCADE_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
+
 /// Tracks whether the "no input format detected" hint already went out this run.
 ///
 /// Detection is per-file in `auto-per-file` mode, so a run over N unstructured
@@ -764,6 +812,12 @@ pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFor
             return;
         }
         eprintln!("{}", message);
+    }
+    if let Some(message) = auto_cascade_hint_message(config, detected) {
+        // Once per run: auto-per-file would repeat it for every mixed file.
+        if !AUTO_CASCADE_HINT_EMITTED.swap(true, Ordering::Relaxed) {
+            eprintln!("{}", message);
+        }
     }
     eprint_unparsed_formats_hint(config, detected);
     eprint_multiline_hint(config, detected);
@@ -1230,6 +1284,42 @@ mod tests {
             message.contains("cascade(json,line)") && message.contains("first 42 lines"),
             "message was {message}"
         );
+    }
+
+    #[test]
+    fn auto_cascade_hint_names_format_field_and_respects_hint_gating() {
+        let detected = DetectedFormat {
+            format: config::InputFormat::Cascade(vec![
+                config::InputFormat::Json,
+                config::InputFormat::Line,
+            ]),
+            had_input: true,
+            saw_content: true,
+            sample_lines: 3,
+            probe_lines: 0,
+            multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
+            leading_ts_tokens: None,
+        };
+        let cfg = base_config();
+        let message = auto_cascade_hint_message(&cfg, &detected).expect("hint expected");
+        assert!(
+            message.contains("cascade(json,line)")
+                && message.contains("_format")
+                && message.contains("-f json,line"),
+            "message was {message}"
+        );
+
+        let mut hushed = base_config();
+        hushed.processing.suppress_hints = true;
+        assert!(auto_cascade_hint_message(&hushed, &detected).is_none());
+
+        let single = DetectedFormat {
+            format: config::InputFormat::Json,
+            ..detected
+        };
+        assert!(auto_cascade_hint_message(&cfg, &single).is_none());
     }
 
     #[test]

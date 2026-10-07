@@ -1090,3 +1090,30 @@ fn test_fallback_hint_derives_cols_ts_token_count() {
         stderr
     );
 }
+
+/// An auto-built cascade adds `_format` to every event, so it says so at the
+/// default verbosity (#407); data-only modes and an explicit cascade stay quiet.
+#[test]
+fn test_auto_cascade_hints_about_format_field() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(&dir, "m.log", "{\"a\":1}\nplain line\n{\"a\":2}\n");
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["--hints"], &[&mixed]);
+    assert_eq!(exit_code, 0, "{}", stderr);
+    assert!(stdout.contains("_format="), "{}", stdout);
+    assert!(
+        stderr.contains("cascade(json,line)") && stderr.contains("_format"),
+        "auto-cascade should hint about _format: {}",
+        stderr
+    );
+
+    let (_stdout, stderr, _) = run_kelora_with_files(&["-f", "json,line"], &[&mixed]);
+    assert!(!stderr.contains("_format"), "explicit cascade: {}", stderr);
+
+    let (_stdout, stderr, _) = run_kelora_with_files(&["--discover"], &[&mixed]);
+    assert!(!stderr.contains("hint"), "--discover hushes it: {}", stderr);
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_files(&["--hints", "--exclude-keys", "_format"], &[&mixed]);
+    assert!(!stderr.contains("_format"), "already excluded: {}", stderr);
+}

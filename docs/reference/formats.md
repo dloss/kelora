@@ -270,7 +270,7 @@ Each line is tested in this order, first match wins:
 8. built-in application-log formats
 9. `line`
 
-**Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`. A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
+**Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`; a hint says so, since the extra field changes the output's shape (`--exclude-keys _format` drops it, an explicit `-f json,line` silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
 
 `-v` prints the decision, e.g. `Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)`.
 
