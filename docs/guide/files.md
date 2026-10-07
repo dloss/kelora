@@ -73,9 +73,9 @@ it refuses the combination. `state` raises a script error on every event — the
 ## How fast is it?
 
 Fast enough for most log work, and slower than tools built for one job.
-Options like `-l`, `--keep-lines`, and `--freq` run at several hundred thousand
-lines per second; scripts that run on every event at roughly 100 000–200 000
-per core; `--parallel` gave about 3× on six cores. Plain-text search (`rg`),
+Built-in options like `-l`, `--keep-lines`, and `--freq` are several times
+faster than scripts that run on every event; `--parallel` gave about 3× on six
+cores. Plain-text search (`rg`),
 JSON reshaping (`jq`), and CSV analytics (`qsv`, `mlr`) are faster in their
 niche — combine them with Kelora rather than choosing. [Benchmarks](../reference/benchmarks.md)
 has the measurements.

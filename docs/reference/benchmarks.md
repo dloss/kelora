@@ -17,8 +17,9 @@ combine tools: `rg` in front of Kelora, `jq` or `qsv` behind it.
 
 Single runs, wall-clock time, 100 000 lines unless noted. Lower is better.
 
-Machine: Intel Core i5-8500B (6 cores), 16 GB RAM, macOS 15.7, Kelora 2.1.1
-(`c5d80e2b5`), October 2026. Tools: ripgrep 15.1.0, ugrep 7.8.4 (as `grep`),
+Machine: a 2018 Mac mini (Intel Core i5-8500B, 6 cores, 16 GB RAM), macOS 15.7,
+Kelora 2.1.1 (`c5d80e2b5`), October 2026. Current hardware is considerably
+faster, so compare rows with each other rather than reading the absolute times. Tools: ripgrep 15.1.0, ugrep 7.8.4 (as `grep`),
 jq 1.6, mlr 6.15.0, qsv 8.1.1, angle-grinder 0.19.5, klp 0.77.0.
 
 | Task | Kelora | Others |
@@ -31,10 +32,9 @@ jq 1.6, mlr 6.15.0, qsv 8.1.1, angle-grinder 0.19.5, klp 0.77.0.
 | 500 000 JSON lines, filter and count | 2.60 s; `--parallel` 0.81 s | jq 3.95 s, angle-grinder 1.01 s, klp 29.3 s |
 | filter CSV, select columns | 2.22 s | qsv 0.19 s, mlr 0.34 s |
 
-As a rule of thumb: options like `-l`, `--keep-lines`, and `--freq` run at
-several hundred thousand lines per second; per-event Rhai scripts at roughly
-100 000–200 000 lines per second per core; `--parallel` gave about 3× on six
-cores. [Big Files, Many Files](../guide/files.md#make-it-faster)
+As a rule of thumb: built-in options like `-l`, `--keep-lines`, and `--freq` are
+several times faster than Rhai scripts that run on every event, and `--parallel`
+gave about 3× on six cores. [Big Files, Many Files](../guide/files.md#make-it-faster)
 lists what makes a run faster.
 
 ## Run them yourself
