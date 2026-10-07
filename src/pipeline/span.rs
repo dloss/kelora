@@ -284,6 +284,9 @@ pub struct SpanProcessor {
     /// timestamp. They belong to no span, so a run where every event lands here
     /// produces no rows at all — silence that needs explaining.
     unassigned_events: usize,
+    /// Set when an unplaceable event carries a field named exactly like the
+    /// `--span` duration, which the duration reading shadows.
+    duration_shadows_field: bool,
 }
 
 impl SpanProcessor {
@@ -308,6 +311,7 @@ impl SpanProcessor {
             warned_repeated_label: false,
             warned_shadowed_events: false,
             unassigned_events: 0,
+            duration_shadows_field: false,
         }
     }
 
@@ -316,7 +320,9 @@ impl SpanProcessor {
 
         match self.mode.clone() {
             SpanMode::Count { events_per_span: _ } => self.prepare_count_event(event, ctx),
-            SpanMode::Time { duration_ms } => self.prepare_time_event(event, ctx, duration_ms),
+            SpanMode::Time { duration_ms, spec } => {
+                self.prepare_time_event(event, ctx, duration_ms, &spec)
+            }
             SpanMode::Field { field_name } => self.prepare_field_event(event, ctx, &field_name),
             SpanMode::Idle { timeout_ms } => self.prepare_idle_event(event, ctx, timeout_ms),
         }
@@ -412,6 +418,7 @@ impl SpanProcessor {
         event: &mut Event,
         ctx: &mut PipelineContext,
         duration_ms: i64,
+        spec: &str,
     ) -> Result<()> {
         if event.parsed_ts.is_none() {
             event.extract_timestamp();
@@ -428,6 +435,12 @@ impl SpanProcessor {
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
                 self.unassigned_events += 1;
+                // `--span 5m` is read as a duration before a field name, so a
+                // field literally called `5m` is unreachable. Noted so the
+                // warning can point at the precedence rule, not the timestamps.
+                if !self.duration_shadows_field && event.fields.contains_key(spec) {
+                    self.duration_shadows_field = true;
+                }
                 return Ok(());
             }
         };
@@ -807,12 +820,19 @@ impl SpanProcessor {
             SpanMode::Idle { .. } => "--span-idle",
             _ => "--span",
         };
+        let shadowing = match &self.mode {
+            SpanMode::Time { spec, .. } if self.duration_shadows_field => format!(
+                " Note: these events have a field named '{spec}', but --span reads '{spec}' as a \
+                 duration first, so a field of that name cannot be a --span field."
+            ),
+            _ => String::new(),
+        };
         let message = crate::config::format_warning_message_auto(&format!(
             "{} event(s) had no usable timestamp and could not be placed in a window, so they \
              are in no --span-summary row. {} needs a parsed timestamp on every event — check \
              the detected timestamp field with --stats, or group by count (--span N) or field \
-             (--span FIELD) instead.",
-            self.unassigned_events, flag
+             (--span FIELD) instead.{}",
+            self.unassigned_events, flag, shadowing
         ));
         let _ = SafeStderr::new().writeln(&message);
     }

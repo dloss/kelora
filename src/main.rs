@@ -1302,6 +1302,29 @@ fn maybe_print_key_typo_hint(
     }
 }
 
+/// Hint when the `--span FIELD` field was never present on any input event
+/// (#416). Every event then lands in one `(unset)` span, and `--span-summary`
+/// prints a single row that reads like a real rollup. A field present on only
+/// some events is normal (missing values stay in the current span), so only
+/// the never-seen case — the typo signal — is flagged.
+///
+/// Span assignment runs before the script stages, so only input fields count
+/// as "present": a field an `--exec` creates is too late to group by.
+fn span_field_typo_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
+    let crate::config::SpanMode::Field { field_name } = &config.processing.span.as_ref()?.mode
+    else {
+        return None;
+    };
+    if stats.events_created == 0 || stats.discovered_keys.contains(field_name) {
+        return None;
+    }
+    Some(format!(
+        "--span field '{field_name}' was not present on any event, so every event landed in one \
+         '(unset)' span. {} Use --strict to make a missing --span field an error.",
+        unseen_key_suggestion(field_name, &stats.discovered_keys)
+    ))
+}
+
 /// Build the typo hint for one key flag, or `None` when every requested key was
 /// seen at least once. `consequence` is appended after the field name to explain
 /// the effect (empty for `-k`, where empty output already speaks for itself).
@@ -2408,6 +2431,18 @@ fn handle_pipeline_success(
         };
 
         if let Some(ref s) = pipeline_result.stats {
+            // Gated like the --span composition hints: --span-summary hushes
+            // ordinary hints, but its single '(unset)' row is exactly where a
+            // misspelled --span field has to be pointed out (#416).
+            if terminal_allowed && config.span_hints_allowed() {
+                if let Some(message) = span_field_typo_hint(config, s) {
+                    let formatted = config
+                        .format_hint_message(&message)
+                        .trim_start_matches('\n')
+                        .to_string();
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
+            }
             if config.output.stats.is_some() && terminal_allowed {
                 // Full stats when --stats flag is used (unless suppressed)
                 // Route to stdout in data-only mode, stderr when showing with events

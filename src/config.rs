@@ -294,10 +294,21 @@ pub struct PerformanceConfig {
 /// Span aggregation mode (--span)
 #[derive(Debug, Clone)]
 pub enum SpanMode {
-    Count { events_per_span: usize },
-    Time { duration_ms: i64 },
-    Field { field_name: String },
-    Idle { timeout_ms: i64 },
+    Count {
+        events_per_span: usize,
+    },
+    Time {
+        duration_ms: i64,
+        /// The `--span` argument as typed, kept so a diagnostic can name a
+        /// field of the same name that the duration reading shadows.
+        spec: String,
+    },
+    Field {
+        field_name: String,
+    },
+    Idle {
+        timeout_ms: i64,
+    },
 }
 
 /// Span aggregation configuration (--span / --span-close)
@@ -2232,7 +2243,10 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
         }
 
         return Ok(Some(SpanConfig {
-            mode: SpanMode::Time { duration_ms },
+            mode: SpanMode::Time {
+                duration_ms,
+                spec: span_spec.to_string(),
+            },
             close_script: cli.span_close.clone(),
             summary: resolve_span_summary(cli),
         }));

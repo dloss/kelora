@@ -804,6 +804,63 @@ fn sub_millisecond_span_is_a_usage_error_not_a_panic() {
 }
 
 #[test]
+fn hint_names_a_span_field_that_no_event_carries() {
+    // #416: a misspelled --span FIELD puts every event in one '(unset)' span;
+    // the hint must survive --span-summary's hint hush and suggest the field.
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "levle", "--span-summary=text"],
+        SUMMARY_INPUT,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(stdout.trim_end(), "(unset)  events=5");
+    assert!(
+        stderr.contains("--span field 'levle' was not present on any event"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("Did you mean 'level'?"), "{stderr}");
+}
+
+#[test]
+fn no_span_field_hint_when_the_field_is_on_some_events_or_hints_are_off() {
+    let input = "{\"a\":1}\n{\"svc\":\"x\",\"a\":2}";
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "svc", "--span-summary=text"],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(!stderr.contains("not present on any event"), "{stderr}");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--span",
+            "levle",
+            "--span-summary=text",
+            "--no-hints",
+        ],
+        SUMMARY_INPUT,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(!stderr.contains("not present on any event"), "{stderr}");
+}
+
+#[test]
+fn no_timestamp_warning_mentions_a_field_the_duration_shadows() {
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "5m", "--span-summary=text"],
+        "{\"5m\":\"a\"}\n{\"5m\":\"b\"}",
+    );
+    assert_eq!(exit_code, 0);
+    assert!(stderr.contains("no usable timestamp"), "{stderr}");
+    assert!(
+        stderr.contains("reads '5m' as a duration first"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn calendar_span_units_are_rejected_with_a_fixed_length_suggestion() {
     // #415: epoch-modulo alignment starts weeks on Thursday and lets months and
     // years drift, so these units are refused rather than silently misaligned.
