@@ -298,6 +298,11 @@ fn test_save_alias_preserves_no_emoji_flag() {
         "Should print success message. stdout: {}",
         stdout
     );
+    assert!(
+        stdout.contains("    noemoji = -f json --no-emoji"),
+        "Should echo the stored option string. stdout: {}",
+        stdout
+    );
 
     let config_contents =
         fs::read_to_string(&config_path).expect("Failed to read generated config file");

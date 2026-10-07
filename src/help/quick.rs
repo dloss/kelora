@@ -48,6 +48,7 @@ Common Options:
   --drain-diff                  Diff templates between a baseline and a target log (2 inputs, or 1 + --cut-at/--cut-before)
   --merge-sorted                Merge already-sorted files by timestamp; aborts on missing timestamps, parse failures, or disorder (sequential only)
   -P, --parallel                Process in parallel for high-throughput batch analysis (sequential by default)
+  -a, --alias <NAME>            Reuse saved options; add --save-alias <NAME> to any command to store its options
 
 More Help:
   kelora --help              Full CLI reference (all 100+ options grouped by category)

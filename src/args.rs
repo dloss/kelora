@@ -510,12 +510,16 @@ pub fn handle_save_alias(raw_args: &[String], alias_name: &str, use_emoji: bool)
     match ConfigFile::save_alias(alias_name, &alias_value, target_path) {
         Ok((config_path, previous_value)) => {
             let success_prefix = if use_emoji { "🔹" } else { "kelora:" };
+            // Echo what was stored (#359): everything on the command line is
+            // saved, including session-only flags like -n or -q, and seeing
+            // the stored string at save time is the cheapest way to notice.
             println!(
-                "{} Alias '{}' saved to {}",
+                "{} Alias '{}' saved to {}:",
                 success_prefix,
                 alias_name,
                 config_path.display()
             );
+            println!("    {} = {}", alias_name, alias_value);
 
             if let Some(prev) = previous_value {
                 let info_prefix = if use_emoji { "🔹" } else { "kelora:" };

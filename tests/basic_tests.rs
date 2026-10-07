@@ -39,6 +39,10 @@ fn test_quick_help_flag() {
         stdout.contains("--freq"),
         "Quick help should mention --freq, the shortest path to a frequency table"
     );
+    assert!(
+        stdout.contains("-a, --alias") && stdout.contains("--save-alias"),
+        "Quick help should mention -a/--alias and --save-alias (#359)"
+    );
 }
 
 #[test]

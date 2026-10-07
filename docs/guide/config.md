@@ -40,7 +40,9 @@ replaces the personal one.
 | `-v` | show which file, defaults, and aliases were applied |
 
 `--save-alias` is the easiest way to build an alias: refine a command until it
-does what you want, then add `--save-alias NAME` and run it once more.
+does what you want, then add `--save-alias NAME` and run it once more. Input
+files are left out; everything else is stored, including session flags such as
+`-n 5`, and the confirmation prints the stored line so you can check.
 
 ## How defaults and aliases combine with the command line
 
