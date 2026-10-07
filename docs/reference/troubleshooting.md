@@ -81,8 +81,8 @@ See [Work with Time](../guide/time.md).
 
 Wrap Rhai code in single quotes and use double quotes inside:
 `--filter 'e.level == "ERROR"'`. Regexes with backslashes are easiest as Rhai
-raw strings: `#"\d+"#`. On Windows, run `kelora` with no arguments for an
-interactive prompt that avoids nested quoting.
+raw strings: `#"\d+"#`. On Windows, use the
+[interactive prompt](../guide/explore.md#getting-help-in-the-terminal).
 
 ## Config surprises
 

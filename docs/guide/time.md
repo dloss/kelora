@@ -1,8 +1,7 @@
 # Work with Time
 
 Time filters, time windows, ordering, and time display all depend on one thing:
-Kelora knowing **which field holds the timestamp and how to read it**. Get that
-right first; everything else on this page follows.
+Kelora knowing **which field holds the timestamp and how to read it**.
 
 ## Which timestamp Kelora uses
 
@@ -12,7 +11,7 @@ RFC 3339, syslog, Apache, many application-log layouts, and Unix epochs in
 seconds, milliseconds, or microseconds. `--stats` says what it found:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/simple_json.jsonl -s 2>&1 | grep Timestamp
+kelora examples/simple_json.jsonl -s | grep Timestamp
 ```
 
 The parsed value is available to scripts as `meta.parsed_ts`. The field itself
@@ -34,21 +33,24 @@ Quote the format so the shell leaves `%` alone.
 ### Time zones
 
 A timestamp with an offset (`+02:00`, `Z`) is always read as written. A
-timestamp without one is **naive**, and Kelora assumes UTC unless you pass
-`--input-tz` (or set `TZ`). When that assumption affects the result — a time
+timestamp without one is **naive**: Kelora reads it in the zone given by
+`--input-tz`, else the `TZ` environment variable, else UTC. (In containers `TZ`
+is often set — check it if times look shifted.) When that assumption affects the result — a time
 filter, a time window, `--normalize-ts` — Kelora prints a hint:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/quickstart.log -f 'cols:ts(3) level *msg' --input-year 2024 --normalize-ts -n 1
 ```
 
-Zone abbreviations like `CEST` or `PST` are ignored, because they are ambiguous;
-use `--input-tz`.
+A trailing zone abbreviation (`CEST`, `PST`) stops auto-detection, because
+abbreviations are ambiguous. Add `%Z` to `--ts-format` to skip over it, and set
+the zone with `--input-tz`:
+`--ts-format '%Y-%m-%d %H:%M:%S %Z' --input-tz Europe/Berlin`.
 
 ### Missing years
 
-Syslog-style timestamps (`Jan 15 10:00:00`) have no year. Kelora picks the year
-that puts the timestamp closest to today, which is right for recent logs and
+Syslog-style timestamps (`Jan 15 10:00:00`) have no year. Kelora picks the date
+closest to now that is at most a day in the future — right for recent logs,
 wrong for archives; `--stats` says when it had to guess. Pass
 `--input-year 2024` for old files.
 
@@ -67,8 +69,6 @@ kelora examples/simple_json.jsonl --since 2024-01-15T10:15:00Z --until since+5m 
 
 `--since` is inclusive (at or after), `--until` too (at or before). Relative
 times count from *now*, so for an archived file use absolute times.
-
-Three things to know:
 
 - The time range is applied **before** every other filter and script, so
   `--freq` and other counts always cover exactly the events in the range.
@@ -117,13 +117,15 @@ kelora examples/simple_json.jsonl \
 | now | `now()` |
 | readable duration | `humanize_duration(e.duration_ms)` → `"1m 30s"` |
 
-Count events per hour, business hours only:
+Count events per hour, but only those before 11:00 Berlin time:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/api_latency_incident.jsonl \
-  --filter 'meta.parsed_ts.hour() >= 9 && meta.parsed_ts.hour() < 17' \
-  -m -e 'track_freq("per_10min", meta.parsed_ts.round_to("10m"))'
+kelora examples/web_access_large.log.gz \
+  --filter 'meta.parsed_ts.to_timezone("Europe/Berlin").hour() < 11' \
+  -m -e 'track_freq("per_hour", meta.parsed_ts.round_to("1h"))'
 ```
+
+`round_to` and `ceil_to` compute boundaries in UTC.
 
 For per-window rows with their own metrics, use [spans](spans.md).
 

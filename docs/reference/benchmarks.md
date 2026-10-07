@@ -1,9 +1,10 @@
 # Benchmarks
 
 How Kelora compares with specialized tools on common log tasks. The short
-version: on structured logs, Kelora is in the same league as `jq` and often
-faster; on plain text and CSV, dedicated tools are faster. Use whichever fits,
-and combine them — `rg` in front of Kelora, `qsv` behind it.
+version: on JSON, Kelora is comparable to `jq` — faster on simple filters,
+slower when a script runs on every event; on plain text and CSV, dedicated tools
+are faster. Use whichever fits, and combine them — `rg` in front of Kelora,
+`qsv` behind it.
 
 | Your main job | Fastest tool | Kelora is worth it when |
 |---|---|---|
@@ -32,8 +33,8 @@ jq 1.6, mlr 6.15.0, qsv 8.1.1, angle-grinder 0.19.5, klp 0.77.0.
 
 As a rule of thumb: options like `-l`, `--keep-lines`, and `--freq` run at
 several hundred thousand lines per second; per-event Rhai scripts at roughly
-100 000–200 000 lines per second per core; `--parallel` multiplies that by
-the number of cores. [Big Files, Many Files](../guide/files.md#make-it-faster)
+100 000–200 000 lines per second per core; `--parallel` gave about 3× on six
+cores. [Big Files, Many Files](../guide/files.md#make-it-faster)
 lists what makes a run faster.
 
 ## Run them yourself

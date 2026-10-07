@@ -23,7 +23,11 @@ Each event is a map of fields, available as `e`.
 | add or change a field | `e.duration_s = e.duration_ms / 1000.0` |
 | remove a field | `e.password = ()` |
 | drop the whole event | `e = ()` |
-| copy into a new field | `e.path_only = e.path.before("?")` |
+| copy into a new field | `e.path_only = e.path.split("?")[0]` |
+| rename a field | `e.rename_field("ts", "timestamp")` |
+
+`()` is Rhai's "nothing", like `null` elsewhere: assigning it removes a field,
+and reading a missing field gives it.
 
 Alongside `e`, scripts see `meta`: `meta.line` (the raw input line),
 `meta.line_num`, `meta.filename`, and `meta.parsed_ts` (the parsed timestamp,
@@ -60,7 +64,7 @@ operation:
 | `e.dur.to_upper()` | error — no methods on `()` |
 | `e.user.role`, when `user` is missing | error — can't look inside `()` |
 
-Two idioms cover every case:
+Guard first, or read with a default:
 
 ```rhai
 if e.has("dur") { e.dur_s = e.dur / 1000.0 }   // guard first
@@ -94,7 +98,7 @@ instead. See [errors](../how-it-works.md#when-something-goes-wrong).
 `before`, `after`, `between`, and `extract_regex` return `""` when there is
 nothing to return; add `.or_empty()` to get `()` instead, which skips the
 assignment: `e.user = e.msg.after("user=").or_empty()` creates `user` only on
-lines that have one. [Get Logs into Shape](parse.md#6-finish-the-job-in-a-script)
+lines that have one. Test such a value with `!= ()`, not `!= ""`. [Get Logs into Shape](parse.md#6-finish-the-job-in-a-script)
 shows the extraction functions at work.
 
 ## Logic
@@ -184,7 +188,9 @@ KELORA_SECRET=team-key kelora examples/web_access_large.log.gz \
 
 `mask_ip(n)` zeroes the last n parts of an address. `pseudonym(value, domain)`
 replaces a value with a keyed alias: the same input and `KELORA_SECRET` always
-give the same alias, so you can still count and join on it. `hash()` gives a
+give the same alias, so you can still count and join on it. Keep the secret
+stable and private — without it, Kelora uses a random key and the aliases change
+on every run. `hash()` gives a
 plain SHA-256 digest, and `normalized()` replaces IPs, emails, UUIDs and the
 like inside free text. The [cookbook](../cookbook.md#privacy) has complete recipes.
 

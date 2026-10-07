@@ -5,8 +5,7 @@
 When the job involves structure: parsing a format, filtering on fields,
 counting, comparing events, or several of those in one pass. For finding a
 string, `grep`/`rg` are simpler and faster; for reshaping JSON documents, `jq`
-is more expressive. Kelora is the middle ground between "grep is enough" and
-"I need a log platform", and it composes with both — see
+is more expressive. Kelora composes with both — see
 [Output and Integration](guide/output.md#kelora-in-a-pipeline).
 
 ## Does Kelora store, index, or follow logs?
@@ -43,9 +42,10 @@ interactive prompt with history and normal quoting.
 
 ## Why Rhai?
 
-Rhai is a small scripting language embedded in Rust: safe (scripts can't touch
-files or the network unless you allow it), fast to start, and familiar to
-anyone who has written JavaScript or Rust. Kelora's built-in functions cover
+Rhai is a small scripting language embedded in Rust: sandboxed (scripts can't
+write files unless you pass `--allow-fs-writes`, and Kelora has no network
+code), fast to start, and familiar to anyone who has written JavaScript or
+Rust. Kelora's built-in functions cover
 most log work, so scripts stay short. See
 [Transform with Scripts](guide/scripting.md).
 
@@ -62,13 +62,6 @@ validates behavior. An extensive test suite, `cargo audit`, and `cargo deny`
 run on every change. Read the
 [security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md)
 before using Kelora on sensitive data.
-
-## Why is there so much code for a CLI tool?
-
-Kelora bundles many parsers, multiline handling, time parsing, an embedded
-scripting runtime with 150+ functions, streaming aggregation, parallel
-processing, and several output formats — plus tests for a long tail of
-real-world log quirks. The size follows the feature set.
 
 ## Where do I report bugs or ask questions?
 

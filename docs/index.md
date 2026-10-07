@@ -12,11 +12,9 @@ cover.
 **Find out what's in a file.** Kelora decompresses it, recognizes the format,
 and profiles every field:
 
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/web_access_large.log.gz --discover
-    ```
+```bash exec="on" source="above" result="ansi"
+kelora examples/web_access_large.log.gz --discover
+```
 
 **Handle mixed formats.** A cascade tries parsers in order on each line, so
 JSON and plain text can share a file. Keep the JSON, drop the noise, write CSV:
@@ -61,15 +59,14 @@ platform" — the tool for the throwaway Python script you'd otherwise write.
   becomes one pass, with state kept across events.
 - **Messy input is normal.** Mixed formats, `key=value` pairs inside messages,
   JSON inside text, stack traces across lines.
-- **Simple things stay simple.** `-l error`, `--since 1h`, `--freq status` need
-  no scripting. When logic gets stateful — sessions, request/response pairs,
-  error rates per window — there's a real language.
-- **Plays well with others.** Pipe `rg` in front, `jq`, DuckDB, or a
-  spreadsheet behind.
+- **No script for simple jobs.** `-l error`, `--since 1h`, `--freq status`.
+  For stateful logic — sessions, request/response pairs, error rates per
+  window — there's a scripting language.
+- **Composes.** `rg` in front; `jq`, DuckDB, or a spreadsheet behind.
 
 ## What it does
 
-| | |
+| Topic | Covers |
 |---|---|
 | [Get logs into shape](guide/parse.md) | 20+ formats, auto-detection, cascades, columns, regex, multiline events |
 | [Filter](guide/filter.md) | raw lines, file sections, time ranges, levels, expressions, context lines |
@@ -83,13 +80,13 @@ The [Cookbook](cookbook.md) has ready-made commands for common questions.
 
 ## About
 
-Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE).
+Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE)
+(bundled grok code: Apache-2.0).
 It runs locally: no networking, no telemetry, enforced by a CI check.
 
 Kelora is an experiment in agentic AI development: AI agents write all
-implementation and tests, and I steer requirements rather than writing or
-reviewing code. Validation relies on an extensive automated test suite plus
-`cargo audit` and `cargo deny`. It is a single-developer spare-time project
-with best-effort support; review the
+implementation and tests, and I steer requirements
+([more](faq.md#was-kelora-built-with-ai)). It is a single-developer spare-time
+project with best-effort support; review the
 [security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before
 using it on sensitive data.

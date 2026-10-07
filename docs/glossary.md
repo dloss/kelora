@@ -1,5 +1,8 @@
 # Glossary
 
+**`()`** — Rhai's "nothing", like `null`: a missing field reads as `()`, and
+assigning `()` removes a field. [Missing fields](guide/scripting.md#missing-fields)
+
 **Alias** — a named set of options stored in a config file and used with
 `-a NAME`. [Configuration](guide/config.md)
 
@@ -14,6 +17,10 @@ each event records the winner in `_format`. [Get Logs into Shape](guide/parse.md
 
 **Core fields** — timestamp, level, and message; `-c` shows only these.
 
+**Diagnostics** — what Kelora reports about a run on stderr: errors (⚠️),
+warnings (🔸), hints (💡), and, with `-v`, status (🔹).
+[What Kelora prints](how-it-works.md#what-kelora-prints)
+
 **Drain** — the algorithm behind `--drain`, which groups messages into
 templates. [Summarize](guide/summarize.md#message-templates)
 
@@ -23,8 +30,15 @@ with multiline grouping, several. In scripts it is `e`.
 **Field** — a named value in an event, such as `level` or `status`. Values can
 be strings, numbers, booleans, maps, or arrays.
 
+**Late event** — with time spans, an event whose timestamp falls in a span that
+already closed; it passes through but isn't counted in that span.
+
 **Level** — an event's severity (`ERROR`, `WARN`, …), read from a field such as
 `level` or `severity`. Filtered with `-l` and `-L`.
+
+**`meta`** — information about the current event that isn't one of its fields:
+`meta.line`, `meta.line_num`, `meta.filename`, `meta.parsed_ts`.
+[Script variables](reference/script-variables.md)
 
 **Metrics** — values collected by `track_*()` functions and by `--freq`,
 `--describe`, `--card`; printed with `-m`, readable as `metrics` in `--end`.
@@ -33,12 +47,11 @@ be strings, numbers, booleans, maps, or arrays.
 **Multiline** — joining several physical lines into one event before parsing
 (`-M`). [Multiline reference](reference/multiline.md)
 
+**Naive timestamp** — a timestamp without a zone offset, read in `--input-tz`
+(or `TZ`, else UTC). [Time zones](guide/time.md#time-zones)
+
 **Parallel mode** — processing batches of events on all CPU cores
 (`--parallel`). [Big Files, Many Files](guide/files.md#make-it-faster)
-
-**`meta`** — information about the current event that isn't one of its fields:
-`meta.line`, `meta.line_num`, `meta.filename`, `meta.parsed_ts`.
-[Script variables](reference/script-variables.md)
 
 **Resilient mode** — the default: lines that fail to parse and scripts that
 fail on an event are reported and skipped, and the run continues.

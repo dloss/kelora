@@ -66,10 +66,11 @@ Timezone policy (how the zone is decided):
   assumption (suppress with --no-diagnostics / --silent).
 
 Year policy (how the year is decided when the format has none):
-  - Year-less layouts (syslog's "Jan 15 14:30:45", glog, redis, ...) carry no
-    year at all, so kelora picks between last year, this year and next year and
-    keeps the candidate nearest the current clock. That is right for recent logs
-    and for logs crossing New Year's Eve, and wrong for archives: a 2005 capture
+  - Year-less layouts (syslog's "Jan 15 14:30:45", glog, ...) carry no year at
+    all, so kelora picks between last year, this year and next year and keeps
+    the candidate nearest the current clock that is at most a day in the
+    future. That is right for recent logs and for logs crossing New Year's
+    Eve, and wrong for archives: a 2005 capture
     is dated this year, and so are --since/--until, --span boundaries and
     --merge-sorted ordering. --stats reports when it guessed.
   - --input-year YYYY states the year instead of guessing it. Every year-less

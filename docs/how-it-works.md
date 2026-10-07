@@ -7,41 +7,43 @@ differs from the printed events, why an event vanished.
 
 ## The pipeline
 
+```text
+read → select lines → join lines → parse → time range → your stages → spans → pick fields → output
+```
+
 | Step | Question it answers | Options |
 |---|---|---|
 | **Read** | Which bytes? | files, globs, stdin, `.gz`/`.zst`, `--file-order`, `--merge-sorted` |
 | **Select lines** | Which raw lines count? | `--skip-lines`, `--head`, `--section-*`, `--keep-lines`, `--ignore-lines` |
-| **Group** | What is one event? | `--extract-prefix`, `-M`/`--multiline` |
+| **Join lines** | What is one event? | `--extract-prefix`, `-M`/`--multiline` |
 | **Parse** | Which fields does it have? | `-f`, `--ts-field`, `--ts-format`, `--input-tz`, `--input-year` |
 | **Time range** | Which period? | `--since`, `--until` |
 | **Your stages** | Which events, and what changes? | `--filter`, `-e`/`--exec`, `-E`, `-l`, `-L`, `--assert` |
-| **Group over time** | Which window? | `--span`, `--span-idle`, `--span-close` |
-| **Shape output** | Which fields, how many events? | `--normalize-ts`, `-k`, `-K`, `-n` |
-| **Present** | In what form? | `-F`, `-J`, `-o`; or a summary: `-s`, `-m`, `--freq`, `--drain`, `-d` |
+| **Spans** | Which window? | `--span`, `--span-idle`, `--span-close` |
+| **Pick fields** | Which fields, how many events? | `--normalize-ts`, `-k`, `-K`, `-n` |
+| **Output** | In what form? | `-F`, `-J`, `-o`; or a summary: `-s`, `-m`, `--freq`, `--drain`, `-d` |
 
 Every command picks what it needs from each step and takes the defaults for
 the rest. `kelora access.log -l error --freq path` reads one file, selects
-every line, groups nothing, auto-detects the format, keeps errors, and
-presents a frequency table.
+every line, joins nothing, auto-detects the format, keeps errors, and outputs a
+frequency table.
 
 ## Processing order
 
-1. `--begin` runs once, before any input is read.
-2. Input is read; lines are selected; multiline events are assembled.
-3. Each event is parsed and its timestamp resolved.
-4. The time range (`--since`/`--until`) drops events outside it — before any
-   of your stages, so counts always match the range. Events without a
-   timestamp are dropped too (with a warning).
-5. **Your stages run in the order you wrote them**: `--filter`, `--exec`,
-   `-E`, `-l`, `-L`, and `--assert`, interleaved as on the command line. An
-   event dropped by one stage never reaches the next.
-6. Spans close as their window ends; `--span-close` runs for each.
-7. `--normalize-ts` rewrites the timestamp, `-k`/`-K` pick fields, and `-n`
-   stops after N events — always in this order, wherever you typed them.
-8. The event is formatted and written, or counted into a summary.
-9. After the last event, `--end` runs, then metrics and statistics are printed.
+Events go through the steps in the order of the table. Around and within
+them:
 
-Consequences worth knowing:
+- `--begin` runs once before any input is read; `--end` runs once after the
+  last event, followed by metrics and statistics.
+- The time range drops events outside it, and events without a timestamp,
+  before any of your stages — so counts always match the range.
+- **Your stages run in the order you wrote them**: `--filter`, `--exec`, `-E`,
+  `-l`, `-L`, and `--assert`, interleaved as on the command line. An event
+  dropped by one stage never reaches the next.
+- In the pick-fields step, `--normalize-ts`, `-k`/`-K`, and `-n` always apply in
+  that order, wherever you typed them.
+
+So:
 
 - `-k` picks fields after your stages have run. An event left with no fields
   at all is not printed, so `-k status` also hides events without `status` —
@@ -76,8 +78,8 @@ variable and field.
 
 ## When something goes wrong
 
-Kelora is **resilient** by default: one bad line shouldn't cost you the other
-million.
+By default a bad line or a failing script is counted and skipped, and the run
+continues:
 
 | Problem | Default behavior |
 |---|---|
@@ -89,12 +91,10 @@ million.
 At the end, a short summary on stderr names the problem and the first
 affected lines. `-v` prints each error as it happens.
 
-The exit code stays 0 as long as the run did its job. It is 1 when it
-couldn't: a named file couldn't be opened, *no* line parsed, a filter failed
-on *every* event, or an `--assert` failed. With `--strict`, the first parse,
-filter, or script error stops the run with exit 1 — use it where bad input
-must not pass silently. [Exit codes](reference/exit-codes.md) has the full
-table.
+The exit code stays 0 as long as the run did its job, and is 1 when it
+couldn't ([details](reference/exit-codes.md)). With `--strict`, the first
+parse, filter, or script error stops the run with exit 1 — use it where bad
+input must not pass silently.
 
 An `--exec` stage is all-or-nothing: if its third statement fails, the first
 two are undone too. So split independent work into separate `--exec` stages
@@ -126,10 +126,9 @@ and for interactive use.
 
 `--parallel` splits the input into batches and processes them on all CPU
 cores. Output stays in input order (unless you add `--unordered`), and
-`track_*()` metrics from all workers are merged. Order-dependent features —
-spans, context lines, `--window`, `state`, `--merge-sorted`, `--discover`,
-`--drain`, the map formats — need sequential processing. See
-[Big Files, Many Files](guide/files.md#make-it-faster).
+`track_*()` metrics from all workers are merged. Order-dependent features
+don't work in parallel; [Big Files, Many Files](guide/files.md#what-parallel-cant-do)
+lists what happens to each.
 
 ## Memory
 

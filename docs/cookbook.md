@@ -45,12 +45,10 @@ kelora examples/api_latency_incident.jsonl -l error --span 5m --span-summary
 
 ### What changed after the deploy?
 
-```bash exec="on" source="above" result="ansi"
-kelora --drain-diff examples/deploy_before.jsonl examples/deploy_after.jsonl -k msg
-```
-
-With one file, split it at the deploy: `--cut-before 'e.msg.contains("deploy")'`
-or `--cut-at 2025-01-20T14:00Z`. [Summarize](guide/summarize.md#what-changed-between-two-logs)
+`kelora --drain-diff before.log after.log -k msg` lists message templates that
+appeared, disappeared, or changed rate. With one file, split it at the deploy:
+`--cut-before 'e.msg.contains("deploy")'` or `--cut-at 2025-01-20T14:00Z`.
+[Summarize](guide/summarize.md#what-changed-between-two-logs)
 
 ### Which exceptions do the stack traces contain?
 
@@ -62,15 +60,27 @@ kelora examples/stacktrace_java.log -f line -M java \
   --freq exception
 ```
 
-[Get Logs into Shape](guide/parse.md#one-event-spans-several-lines)
+`-M java` suits output without timestamps; for timestamped logs use
+`-M timestamp`. [Get Logs into Shape](guide/parse.md#one-event-spans-several-lines)
+
+### When did each exception first appear?
+
+Remember the first timestamp per value in `state`, count with `track_freq`,
+and print both at the end:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/multiline_stacktrace.log -M timestamp -q \
+  -e 'let x = e.msg.extract_regex("([\\w.]+(?:Exception|Error)):", 1);
+      if x != "" { track_freq("n", x); if !state.contains(x) { state[x] = e.ts } }' \
+  --end 'for k in state.keys() { print(`${k}  first: ${state[k]}  count: ${metrics.n[k]}`) }'
+```
+
+[Cross-Event Logic](guide/state.md)
 
 ### Show the events around each error
 
-```bash exec="on" source="above" result="ansi"
-kelora examples/ci_pipeline.log -l error -B 1 -A 1 -c
-```
-
-[Filter](guide/filter.md#context-around-matches)
+`kelora app.log -l error -B 2 -A 2` — like `grep -B/-A`, with each event's role
+marked. [Filter](guide/filter.md#context-around-matches)
 
 ### One timeline from several services
 
@@ -99,13 +109,11 @@ kelora examples/web_access.log -e 'e.path = e.path.split("?")[0]' --filter 'e.st
 
 ### The slowest endpoints
 
-`--describe` gives percentiles for one group; for a ranking, keep each
-endpoint's worst response time:
+Rank endpoints by their worst response time:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/api_latency_incident.jsonl -m \
-  -e 'track_top_by("slowest", e.endpoint, e.response_time_ms, 3)' \
-  -e 'track_stats("ms", e.response_time_ms)'
+  -e 'track_top_by("slowest", e.endpoint, e.response_time_ms, 3)'
 ```
 
 ### Latency percentiles per endpoint
@@ -154,13 +162,25 @@ kelora examples/auth-logs.jsonl \
   -k timestamp,sub,role,expires
 ```
 
-### Requests from outside a network
+### Requests from one network
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/web_access.log --filter '!e.ip.is_in_cidr("10.0.0.0/8") && !e.ip.is_private_ip()' -k ip,path,status
+kelora examples/web_access.log --filter 'e.ip.is_in_cidr("198.51.100.0/24")' -k ip,path,status
 ```
 
 ## Parsing
+
+### Firewall logs (`KEY=VALUE` pairs)
+
+`ufw.log` and iptables logs are syslog; the pairs are in `msg`:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/ufw_firewall.log --filter 'e.msg.contains("[UFW BLOCK]")' \
+  -e 'e.absorb_kv("msg")' --freq SRC --freq DPT
+```
+
+If your firewall log isn't recognized (`-d` shows only `line`), use `line`
+instead of `msg`.
 
 ### `key=value` pairs inside messages
 
@@ -173,12 +193,9 @@ kelora examples/quickstart.log -f 'cols:ts(3) level *msg' --input-year 2024 -l e
 
 ### Kubernetes container logs with JSON payloads
 
-Kelora detects the CRI format; the JSON inside `msg` needs one more step.
-Lines that aren't JSON, like the panic, keep their text:
-
-```bash exec="on" source="above" result="ansi"
-kelora examples/pod_cri.log -e 'e.absorb_json("msg")' -k ts,stream,level,msg,status,ms
-```
+`kelora pod.log -e 'e.absorb_json("msg")'` — Kelora detects the CRI format, and
+`absorb_json` turns the JSON inside `msg` into fields.
+[Get Logs into Shape](guide/parse.md#6-finish-the-job-in-a-script)
 
 ### Keep only the JSON lines (or only the rest)
 
@@ -222,6 +239,22 @@ removes them before later stages and summaries see them.
 kelora examples/api_logs.jsonl -l error -k timestamp,service,status,message -F csv
 ```
 
+Add `-o errors.csv` to write a file. To rename a column, rename the field:
+`-e 'e.rename_field("ts", "timestamp")'`.
+
+### Share failed requests with a vendor
+
+Non-2xx only, users replaced by stable pseudonyms, client IPs cut to /16,
+query strings (which can carry IDs) removed:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/web_access.log \
+  --filter 'e.status < 200 || e.status >= 300' \
+  -e 'if e.has("user") { e.user = pseudonym(e.user, "user") }
+      e.ip = e.ip.mask_ip(2); e.path = e.path.split("?")[0]' \
+  -k ts,path,status,user,ip -F csv
+```
+
 ### A reproducible 10 % sample
 
 Hash a stable field, so the same requests are chosen every time:
@@ -232,13 +265,9 @@ kelora examples/web_access_large.log.gz --filter 'e.ip.bucket() % 10 == 0' -J -n
 
 ### One row per array element
 
-```bash exec="on" source="above" result="ansi"
-kelora examples/fan_out_batches.jsonl -e 'emit_each(e.orders, #{batch_id: e.batch_id})' \
-  -e 'emit_each(e.items, #{batch_id: e.batch_id, order_id: e.order_id})' \
-  -k batch_id,order_id,sku,qty,price -F csv -n 4
-```
-
-[Transform with Scripts](guide/scripting.md#one-event-per-array-element)
+`-e 'emit_each(e.orders, #{batch_id: e.batch_id})'` replaces each event with one
+event per element of `orders`, keeping the batch ID. Add `-F csv -k …` for a
+table. [Transform with Scripts](guide/scripting.md#one-event-per-array-element)
 
 ## Monitoring
 
@@ -252,35 +281,24 @@ kelora examples/api_latency_incident.jsonl -q --span 1m \
   --span-close 'let n = span.metric("failed"); if n >= 3 { print(`ALERT ${span.label}: ${n} failed requests`) }'
 ```
 
-On a live stream: `tail -F app.log | kelora -j -q --span 1m …`.
+On a live stream (`tail -F app.log | kelora -j -q --span 1m …`), a minute's
+alert prints when the first line of the next minute arrives.
 
 ### Fail a CI job when the log has errors
 
-```bash exec="on" source="above" result="ansi" returncode="1"
-kelora examples/ci_pipeline.log -q --assert 'e.level != "ERROR"'
-```
-
-[Output and Integration](guide/output.md#exit-codes)
+`kelora ci.log -q --assert 'e.level != "ERROR"'` exits 1 if any event breaks the
+assertion. [Output and Integration](guide/output.md#exit-codes-in-scripts-and-ci)
 
 ### Detect silence
 
-Flag pauses longer than five minutes between events:
-
-```bash exec="on" source="above" result="ansi"
-kelora examples/worker_bursts.jsonl --window 1 \
-  -e 'if window.len() > 1 && (meta.parsed_ts - to_datetime(window[1].ts)).as_seconds() > 300 { e.after_gap = true }' \
-  --filter 'e.has("after_gap")' -k ts,job
-```
-
-[Cross-Event Logic](guide/state.md#-window-look-at-previous-events)
+Compare each event with the previous one using `--window 1`.
+[Cross-Event Logic](guide/state.md#-window-look-at-previous-events) has the
+command.
 
 ### Requests that never got a response
 
-```bash exec="on" source="above" result="ansi"
-kelora examples/rpc_pairs.jsonl -q \
-  -e 'if e.kind == "request" { state[e.req] = e.path } else { state.remove(e.req) }' \
-  --end 'for k in state.keys() { print(`no response: ${k} ${state[k]}`) }'
-```
+Remember requests in `state`, remove them when the response arrives, and print
+what's left in `--end`. [Cross-Event Logic](guide/state.md#reports-at-the-end)
 
 ## Time
 
@@ -296,8 +314,5 @@ kelora examples/web_access_large.log.gz -m -e 'track_freq("hour", meta.parsed_ts
 kelora examples/simple_json.jsonl -k timestamp,message -n 3 \
   --filter 'meta.parsed_ts.to_timezone("Europe/Berlin").hour() in 9..17'
 ```
-
-`--filter` takes a single expression; use `--exec` for scripts with `let`
-statements and drop events there with `e = ()`.
 
 [Work with Time](guide/time.md#time-in-scripts)

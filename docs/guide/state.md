@@ -2,8 +2,7 @@
 
 Most of Kelora looks at one event at a time. Some questions need memory: Is
 this the first time we've seen this user? How long did the request take
-until its response arrived? Which jobs never finished? This page covers the
-four tools for that:
+until its response arrived? Which jobs never finished? Four tools help:
 
 | Tool | Gives you | Typical use |
 |---|---|---|
@@ -63,7 +62,8 @@ state["n"] = state.get("n", 0) + 1; e.seq = state["n"]
 
 `state` holds everything you put in it for the whole run. Remove entries you
 no longer need, as in the request/response example. It requires sequential
-processing (no `--parallel`).
+processing: with `--parallel`, every `state` access is a script error — the
+run still exits 0, but your logic never ran ([details](files.md#what-parallel-cant-do)).
 
 ## `--window`: look at previous events
 

@@ -29,8 +29,9 @@ above: the average looks fine, the tail does not.
 ## Output: table, TSV, JSON
 
 In a terminal you get the table. Piped or redirected, the same command writes
-one tab-separated row per value, sorted by count — so `head` gives the top N
-and `tail` the rarest:
+one tab-separated row per value — metric name, value, count — sorted by count,
+so `head` gives the top N and `tail` the rarest (statistics like `--describe`
+print as `name_stat`, empty column, value):
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/web_access_large.log.gz --freq status | head -3
@@ -69,7 +70,7 @@ Each call names its metric, so one run can track many things.
 | `track_unique(name, value)` | the distinct values themselves |
 | `track_cardinality(name, value)` | an estimate of the distinct count (what `--card` uses) |
 
-`()` values are skipped, so `track_freq("user", e.get("user"))` simply ignores
+`()` values are skipped, so `track_freq("user", e.get("user"))` ignores
 events without a user. Percentiles and cardinality are approximate (t-digest,
 HyperLogLog) and use constant memory, so they work on files of any size.
 
@@ -84,7 +85,7 @@ see [Cross-Event Logic](state.md#reports-at-the-end).
 `--span` and `--span-summary`:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/api_latency_incident.jsonl --span 10m --freq status --span-summary
+kelora examples/api_latency_incident.jsonl --span 20m --freq level --span-summary
 ```
 
 [Group into Spans](spans.md) covers count-based windows, sessions, and

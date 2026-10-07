@@ -4,7 +4,7 @@
 |---|---|
 | 0 | the run did its job |
 | 1 | the run failed (see below), or any error with `--strict` |
-| 2 | invalid command line or config file: unknown option, bad value, conflicting options |
+| 2 | invalid command line or config file: unknown option, bad value, most conflicting options |
 | 130 | interrupted (Ctrl-C) |
 | 134 | internal error (a bug — please report it) |
 | 141 | broken pipe: the reader went away, e.g. `head` closed the pipe |

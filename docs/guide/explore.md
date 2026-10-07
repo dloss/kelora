@@ -73,7 +73,7 @@ differ. `--drain` groups messages into templates and replaces the parts that
 vary with placeholders:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/syslog_errors.log --drain -k msg
+kelora examples/app_monitoring.jsonl --drain -k message
 ```
 
 ## How does it change over time?

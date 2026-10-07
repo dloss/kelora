@@ -180,7 +180,7 @@ pub struct Cli {
     /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
     /// With 'auto', the format is detected from the first non-empty line (stdin) or a sample of the file (files: the head plus, for larger plain files, a few probe windows deeper in); a file that mixes formats is parsed with a cascade of the detected formats automatically. For mixed stdin streams pass a cascade (below) explicitly.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
-    /// Built-in application-log formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
+    /// Built-in application-log formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, postgres, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event, unless the record already has one of its own (that value is kept).
     /// Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier).
     /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'.
@@ -299,7 +299,7 @@ pub struct Cli {
     )]
     pub ts_format: Option<String>,
 
-    /// Assume timezone for input timestamps without timezone info (default: UTC).
+    /// Assume timezone for input timestamps without timezone info (default: the TZ environment variable if set, else UTC).
     /// Use 'local' for system local time.
     /// Examples: 'Europe/Berlin', 'local', 'UTC'.
     #[arg(long = "input-tz", value_name = "TZ", help_heading = "Input Options")]
@@ -477,7 +477,7 @@ pub struct Cli {
         require_equals = true,
         default_missing_value = "auto",
         help_heading = "Processing Options",
-        help = "One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.\n\nEach row carries the span label, the event count, and every per-window metric\nfrom additive track_* calls (including those synthesized by --freq/--describe).\n\nFormats: text (key=value lines), tsv (label<TAB>metric<TAB>key<TAB>value records),\njson (one object per line). Bare --span-summary auto-selects: text on a terminal,\ntsv when piped or redirected (like -m).\n\nRows are data on stdout, so --no-script-output and -m do not suppress them.\nA window that received no input produces no row, so a time series has gaps\nwhere nothing was logged; a window whose events were all filtered out still\nproduces a row, with events=0.\n\nExamples:\n  --span 1m --span-summary               Events per minute\n  -l error --span 5m --span-summary      Errors per 5 minutes\n  --span 1m --freq level --span-summary  Per-minute level breakdown\n  --span-idle 5m --span-summary          Session sizes\n  --span 1m --span-summary=tsv | duckdb  Time series out\n\nNote the '=': --span-summary=tsv (a space is read as a filename)."
+        help = "One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.\n\nEach row carries the span label, the event count, and every per-window metric\nfrom additive track_* calls (including those synthesized by --freq/--describe).\n\nFormats: text (key=value lines), tsv (label<TAB>metric<TAB>key<TAB>value records),\njson (one object per line). Bare --span-summary auto-selects: text on a terminal,\ntsv when piped or redirected (like -m).\n\nRows are data on stdout, so --no-script-output and -m do not suppress them.\nA window that received no input produces no row, so a time series has gaps\nwhere nothing was logged; a window whose events were all removed by --filter/--levels\nstill produces a row, with events=0. Windows outside --since/--until never appear.\n\nExamples:\n  --span 1m --span-summary               Events per minute\n  -l error --span 5m --span-summary      Errors per 5 minutes\n  --span 1m --freq level --span-summary  Per-minute level breakdown\n  --span-idle 5m --span-summary          Session sizes\n  --span 1m --span-summary=tsv > series.tsv  Time series for a database or plot\n\nNote the '=': --span-summary=tsv (a space is read as a filename)."
     )]
     pub span_summary: Option<SpanSummaryFormat>,
 

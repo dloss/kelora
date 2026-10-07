@@ -10,13 +10,13 @@ defaults = --no-emoji --input-tz Europe/Berlin
 
 [aliases]
 errors = -l error,critical -k timestamp,service,message
-slow   = --filter 'e.duration_ms > 1000' -k timestamp,path,duration_ms
-nginx  = -f combined --ts-field ts
+nginx  = -f combined
+5xx    = --filter 'e.status >= 500' -k ts,status,path
 ```
 
 ```bash
 kelora -a errors app.jsonl
-kelora -a nginx -a slow access.log      # aliases combine
+kelora -a nginx -a 5xx access.log       # aliases combine
 ```
 
 ## Where Kelora looks
@@ -24,7 +24,7 @@ kelora -a nginx -a slow access.log      # aliases combine
 | File | Scope |
 |---|---|
 | `.kelora.ini` in the current directory or the nearest parent | project — commit it so the team shares the aliases |
-| `~/.config/kelora/kelora.ini` (`%APPDATA%\kelora\kelora.ini` on Windows) | personal |
+| `~/.config/kelora/kelora.ini` (or `$XDG_CONFIG_HOME/kelora/kelora.ini`; `%APPDATA%\kelora\kelora.ini` on Windows) | personal |
 
 Kelora reads both. Aliases from both files are available, the project's
 version winning when a name exists in both; the project's `defaults` line

@@ -62,7 +62,7 @@ kelora examples/simple_json.jsonl --since 2024-01-15T10:20:00Z --until 2024-01-1
 
 `--since` and `--until` accept absolute times (`2024-01-15 10:00`), relative
 times (`1h`, `-30m`, `yesterday`), and anchors (`--until since+15m`). They read
-the timestamp the parser found and run before every other filter, so events
+the timestamp the parser found and run before every event filter and script, so events
 without a timestamp are dropped (Kelora warns when that happens). Details and
 time zones: [Work with Time](time.md).
 
@@ -73,8 +73,9 @@ kelora examples/simple_json.jsonl -l error,critical -k level,message
 ```
 
 `-l` keeps the listed levels, `-L` drops them (`-L debug,trace`). Matching is
-case-insensitive. They read the event's level field (`level`, `severity`, …,
-whatever the parser produced).
+case-insensitive. They read the event's level field, whichever of `level`,
+`lvl`, `severity`, `loglevel`, … it has. `-l` takes names, not a threshold: see
+the [FAQ](../faq.md#how-do-i-filter-warn-and-above) for "WARN and above".
 
 ## Expressions
 
@@ -102,10 +103,13 @@ Expressions you will use most:
 | which file | `meta.filename.contains("api")` |
 | negate | `!(e.msg.contains("healthz"))` |
 
-A missing field compares as false, so `--filter 'e.duration_ms > 1000'` simply
+A missing field compares as false, so `--filter 'e.duration_ms > 1000'`
 skips events without `duration_ms`. Calling a method on a missing field is an
 error; Kelora reports it and treats the event as not matching. See
 [missing fields](scripting.md#missing-fields).
+
+`--filter` takes a single expression; for logic that needs `let` statements,
+use `--exec` and drop events there with `e = ()`.
 
 Repeat `--filter` for AND. Filters and `--exec` stages run in the order you
 write them, so a filter can use a field computed by an earlier `--exec`:
@@ -126,7 +130,7 @@ stable value, so the same requests or users are kept on every run and in every
 file:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/web_access_large.log.gz --filter 'e.ip.bucket() % 10 == 0' --stats 2>&1 | grep Events
+kelora examples/web_access_large.log.gz --filter 'e.ip.bucket() % 10 == 0' --stats | grep Events
 ```
 
 `--filter 'sample_every(10)'` keeps every tenth event; `--filter 'sample_prob(0.1)'`
@@ -136,14 +140,14 @@ a random 10 %.
 
 Like `grep -A/-B/-C`: show events before and after each match. In the default
 format, a marker shows each event's role: `◉` (or `*`) for a match, `/` before,
-`\` after.
+`\` after, `|` between two matches.
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/ci_pipeline.log -l error -B 1 -A 1 -c
 ```
 
 A match is an event that passes the filters (`--filter`, `-l`, `-L`) placed
-before any `--exec`. Context requires sequential mode.
+before any `--exec`. With `--parallel`, context is ignored (with a warning).
 
 ## Duplicates and first occurrences
 

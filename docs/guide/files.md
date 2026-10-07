@@ -1,7 +1,7 @@
 # Big Files, Many Files
 
 Kelora streams: it reads a line, processes it, writes the result, and moves
-on, so file size is limited by your patience, not your memory. This page covers
+on, so memory use doesn't grow with file size (exceptions: [Memory](../how-it-works.md#memory)). This page covers
 reading many files at once, merging them, and making big jobs faster.
 
 ## Many files
@@ -19,7 +19,7 @@ kelora examples/merge_*.jsonl -e 'e.file = meta.filename' -k file,ts,msg -n 3
 | read files in name or modification-time order | `--file-order name`, `--file-order mtime` (default: the order given) |
 | files in different formats | `-f auto-per-file` detects each file separately |
 | read stdin as one of the inputs | `-` as a file name |
-| more files than the shell allows | `find … -print0` piped into `xargs -0 kelora …` |
+| more files than the shell allows | `find … -exec zcat -f {} +`, piped into a single `kelora -f FORMAT` so summaries cover everything |
 
 Multiline events never span two files.
 
@@ -48,8 +48,9 @@ In rough order of effect:
    cost for everything you don't need.
 2. **Prefer options over scripts.** `-l error` is faster than
    `--filter 'e.level == "ERROR"'`, and `--freq status` than a `track_freq`
-   script. Filters that are plain comparisons (`e.status >= 500`) take a fast
-   path; function calls go through the script interpreter.
+   script. Filters built from comparisons, `&&`/`||`/`!`, and
+   `contains`/`starts_with`/`ends_with` take a fast path; other function calls
+   go through the script interpreter.
 3. **Filter before you transform.** Put `--filter` stages before expensive
    `--exec` stages, so the expensive work runs on fewer events.
 4. **Use `--parallel` (`-P`) for batch jobs.** It splits the input across CPU
@@ -61,20 +62,20 @@ In rough order of effect:
 
 `--stats` reports the throughput of each run, so you can compare variants.
 
-### What `--parallel` can't do
+### What `--parallel` can't do {#what-parallel-cant-do}
 
 Features that depend on event order need sequential processing. With spans,
 context lines (`-A/-B/-C`), or `--window`, Kelora ignores `--parallel` with a
 warning; with `--discover`, `--drain`, `--merge-sorted`, and the map formats
-it refuses the combination. `state` raises a script error in parallel mode.
+it refuses the combination. `state` raises a script error on every event — the run still exits 0, so check for the error summary.
 `track_*()` metrics work and are merged correctly across workers.
 
 ## How fast is it?
 
-On structured logs, Kelora keeps up with `jq` and is often faster: options
-like `-l`, `--keep-lines`, and `--freq` run at several hundred thousand lines
-per second, per-event scripts at roughly 100 000–200 000 lines per second per
-core, and `--parallel` multiplies that by the number of cores. Plain-text
+On JSON, Kelora is comparable to `jq`: faster on simple filters, a little
+slower when a script runs on every event. Options like `-l`, `--keep-lines`, and
+`--freq` run at several hundred thousand lines per second, per-event scripts at
+roughly 100 000–200 000 per core; `--parallel` gave about 3× on six cores. Plain-text
 search (`rg`) and CSV analytics (`qsv`, `mlr`) are faster in their niche —
 combine them with Kelora rather than choosing. [Benchmarks](../reference/benchmarks.md)
 has the measurements.

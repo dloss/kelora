@@ -743,3 +743,36 @@ fn span_size_is_the_included_count_not_the_retained_event_count() {
         vec!["3 3", "1 1", "1 1"]
     );
 }
+
+#[test]
+fn time_span_ignores_events_outside_since_until() {
+    // Events the --since/--until window drops must not open spans: no rows for
+    // windows outside the selected range, not even empty ones.
+    let input = r#"{"ts":"2024-01-01T09:50:00Z","level":"ERROR"}
+{"ts":"2024-01-01T10:05:00Z","level":"ERROR"}
+{"ts":"2024-01-01T10:20:00Z","level":"INFO"}
+{"ts":"2024-01-01T10:40:00Z","level":"ERROR"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-l",
+            "error",
+            "--since",
+            "2024-01-01T10:00:00Z",
+            "--until",
+            "2024-01-01T10:29:59Z",
+            "--span",
+            "15m",
+            "--span-summary=text",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "stderr: {stderr}");
+    assert_eq!(
+        stdout, "2024-01-01T10:00:00Z  events=1\n2024-01-01T10:15:00Z  events=0\n",
+        "only windows inside the range; the filtered INFO event keeps its window"
+    );
+}

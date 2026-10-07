@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **`absorb_*()` no longer drops a payload key named like the source field** - `e.absorb_json("msg")` on a `msg` holding `{"msg":"listening","port":8080}` set `port` but lost `msg`: the source field was deleted after the merge, taking the merged value with it. This is the common shape of Kubernetes/CRI logs. The same applied to `absorb_logfmt`, `absorb_kv` (when nothing was left over), `absorb_jwt`, and `absorb_regex`. The extracted value now survives.
 
+- **`--since`/`--until` no longer create empty `--span` windows outside the range** - Events the time range dropped still opened time spans, so `--since 10:00 --until 12:00 --span 15m --span-summary` printed `events=0` rows for 09:30 or 12:15. Those events now leave the spans alone; counts inside the range are unchanged.
+
+- **`map.flatten_field(name)` can be called** - It was registered in a way Rhai couldn't match, so every call failed with "Function not found".
+
 - **`absorb_regex()` keeps the source field when the pattern doesn't match** - It used to delete the field on every non-matching line, so `-e 'e.absorb_regex("msg", …)'` erased the message of each line the pattern was not written for. Now, like the other `absorb_*` functions, it leaves the field untouched and returns `status: "empty"`. If you relied on the deletion, remove the field yourself when `status` is `"empty"`.
 
 - **`to_datetime(text, format, tz)` reads the text in `tz`** - A timestamp without an offset was read as UTC and only then converted to `tz`, so `to_datetime("15.01.2024 09:00", "%d.%m.%Y %H:%M", "Europe/Berlin")` gave 09:00 UTC instead of 08:00 UTC. The zone now says where the wall-clock time was recorded, matching `--input-tz`. Timestamps with an explicit offset are unchanged. If you relied on the old result, drop the zone argument and convert with `.to_timezone(tz)`.

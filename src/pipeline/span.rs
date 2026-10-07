@@ -312,12 +312,7 @@ impl SpanProcessor {
     }
 
     pub fn prepare_event(&mut self, event: &mut Event, ctx: &mut PipelineContext) -> Result<()> {
-        ctx.meta.span_status = None;
-        ctx.meta.span_id = None;
-        ctx.meta.span_start = None;
-        ctx.meta.span_end = None;
-        event.set_span_info(SpanInfo::default());
-        self.pending = None;
+        self.skip_event(event, ctx);
 
         match self.mode.clone() {
             SpanMode::Count { events_per_span: _ } => self.prepare_count_event(event, ctx),
@@ -325,6 +320,19 @@ impl SpanProcessor {
             SpanMode::Field { field_name } => self.prepare_field_event(event, ctx, &field_name),
             SpanMode::Idle { timeout_ms } => self.prepare_idle_event(event, ctx, timeout_ms),
         }
+    }
+
+    /// Clear span state for an event that belongs to no span — one the
+    /// `--since`/`--until` window is about to drop. It must not open, extend,
+    /// or close a span, or windows outside the range show up (empty) in
+    /// `--span-summary`.
+    pub fn skip_event(&mut self, event: &mut Event, ctx: &mut PipelineContext) {
+        ctx.meta.span_status = None;
+        ctx.meta.span_id = None;
+        ctx.meta.span_start = None;
+        ctx.meta.span_end = None;
+        event.set_span_info(SpanInfo::default());
+        self.pending = None;
     }
 
     pub fn prepare_emitted_event(&mut self, event: &mut Event) {

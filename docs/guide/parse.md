@@ -20,7 +20,7 @@ if it can't find it.
 ## How to tell whether parsing worked
 
 Parsed events show several named fields. An unparsed event has a single `line`
-field, and Kelora prints a hint:
+field holding the whole line, and Kelora prints a hint:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/simple_line.log -n 2
@@ -177,6 +177,10 @@ field when it is fully consumed, and return a status (`"applied"`,
 `"parse_error"`, …) you can branch on, as above. The full list is in the
 [function reference](../reference/functions.md#parsing-functions).
 
+The field doesn't have to come from a parser: on a file Kelora couldn't
+parse, everything is in `line`, so `-e 'e.absorb_kv("line")'` turns any
+`KEY=VALUE` pairs in it straight into fields.
+
 The same approach parses a field that is itself a log line — a JSON payload
 inside a Kubernetes CRI `msg`, a `key=value` list inside a syslog message:
 
@@ -197,7 +201,7 @@ physical lines. `-M` (`--multiline`) joins them into one event **before**
 parsing:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/multiline_stacktrace.log -M timestamp -l error -n 1
+kelora examples/multiline_stacktrace.log -M timestamp -l error -n 1 -k ts,level,msg
 ```
 
 | Strategy | A new event starts at | Good for |
@@ -210,7 +214,7 @@ kelora examples/multiline_stacktrace.log -M timestamp -l error -n 1
 | `all` | — (the whole input is one event) | whole-file processing |
 
 Lines are joined with spaces by default; add `--multiline-join=newline` to keep
-the line structure (the presets do this already). Multiline grouping happens
+the line structure (`java`, `python`, and `go` already join with newlines). Multiline grouping happens
 before parsing, so the joined block must still match your format — free-text
 parsers (`line`, `raw`, regex with a trailing `.*`, the built-in application
 formats) handle that. Details: `kelora --help-multiline` and
@@ -236,20 +240,13 @@ common names (`ts`, `timestamp`, `time`, `@timestamp`, …) and common formats.
 `--stats` reports what it found:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/cols_fixed.log -f 'cols:ts(2) level service *msg' --stats 2>&1 | grep Timestamp
+kelora examples/cols_fixed.log -f 'cols:ts(2) level service *msg' --stats | grep Timestamp
 ```
 
-If it found nothing, or the wrong field:
-
-| Problem | Fix |
-|---|---|
-| Field has an unusual name | `--ts-field when` |
-| Unusual format | `--ts-format '%d.%m.%Y %H:%M:%S'` ([format codes](../reference/time-reference.md)) |
-| No zone in the timestamp, and it isn't UTC | `--input-tz Europe/Berlin` (or `local`) |
-| No year (syslog, glog) | `--input-year 2024` |
-
-The parsed timestamp is available to scripts as `meta.parsed_ts`.
-[Working with time](time.md) covers filtering, zones, and time arithmetic.
+If it found nothing or the wrong field, `--ts-field`, `--ts-format`,
+`--input-tz`, and `--input-year` fix it — see
+[Work with Time](time.md#when-detection-needs-help). The parsed timestamp is
+available to scripts as `meta.parsed_ts`.
 
 ## When lines don't parse
 

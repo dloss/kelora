@@ -983,7 +983,24 @@ impl Pipeline {
         };
 
         if let Some(span_processor) = self.span_processor.as_mut() {
-            span_processor.prepare_event(&mut event, ctx)?;
+            // The --since/--until window runs as the first script stage, after
+            // span assignment. An event it will drop is not part of the input
+            // the user selected, so it must not touch the spans.
+            let outside_window =
+                self.timestamp_window
+                    .as_ref()
+                    .is_some_and(|window| match event.parsed_ts {
+                        Some(ts) => {
+                            window.since.is_some_and(|since| ts < since)
+                                || window.until.is_some_and(|until| ts > until)
+                        }
+                        None => true,
+                    });
+            if outside_window {
+                span_processor.skip_event(&mut event, ctx);
+            } else {
+                span_processor.prepare_event(&mut event, ctx)?;
+            }
         }
 
         // Update window manager (skipped entirely when no stage observes the

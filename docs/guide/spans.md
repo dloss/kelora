@@ -2,8 +2,9 @@
 
 A **span** is a run of consecutive events: everything in one five-minute
 window, every 1000 events, one burst of activity between quiet periods.
-Kelora closes each span as soon as it is complete and reports on it, so this
-works on endless streams as well as files.
+Kelora reports on each span when it closes — when the first event past its
+end arrives, or when the input ends — so this works on endless streams as well
+as files. On a quiet stream, that report can come late.
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/api_latency_incident.jsonl --span 10m --freq status --span-summary
@@ -39,17 +40,18 @@ kelora examples/worker_bursts.jsonl --span-idle 5m --freq job --span-summary
 | Format | Use for |
 |---|---|
 | `--span-summary` | text in a terminal, TSV when piped |
-| `--span-summary=tsv` | long-format rows (`label`, `metric`, `key`, `value`) for DuckDB, pandas, gnuplot |
+| `--span-summary=tsv` | long-format rows: label, metric, key, value (key empty for plain counts such as `events`) — for DuckDB, pandas, gnuplot |
 | `--span-summary=json` | one JSON object per span, nested metrics intact |
 
 A window that received no input produces no row, so a time series from
 `--span-summary` has gaps where nothing was logged — fill them downstream if
-you need a dense series. A window whose events were all filtered out still
-gets a row, with `events=0`.
+you need a dense series. A window whose events were all removed by `--filter`
+or `-l` still gets a row, with `events=0`; windows outside `--since`/`--until`
+don't appear at all.
 
-Only metrics that can be split per span appear in the rows: counts, sums,
-averages, distinct values. Minimum, maximum, percentiles, and top-N have no
-per-span value; Kelora says so and leaves them out:
+Only counts, sums, averages, and distinct values are tracked per span.
+Minimum, maximum, percentiles, and top-N are tracked for the whole run only;
+Kelora says so and leaves them out of the rows:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/worker_bursts.jsonl --span-idle 5m --describe ms --span-summary
@@ -71,8 +73,8 @@ kelora examples/api_latency_incident.jsonl -q --span 10m \
 
 | Variable | Contains |
 |---|---|
-| `span.label` | the start time (time spans) or the span ID (`#0`, `#1`, … for count spans) |
-| `span.start`, `span.end` | window boundaries as datetimes |
+| `span.label` | the start time (time and idle spans), the field value (`--span FIELD`), or `#0`, `#1`, … (count spans) |
+| `span.start`, `span.end` | window boundaries as datetimes; empty for count and field spans |
 | `span.size` | number of events |
 | `span.metric("name")` | this span's value of a metric, `0` if the span had none |
 | `span.metrics` | all per-span metric values as a map |
@@ -92,4 +94,5 @@ timestamp falls in a span that already closed is **late**
 closed span. Out-of-order input — merged files, parallel shippers — produces
 late events; sort it first if every event must count.
 
-Spans need sequential processing, so they can't be combined with `--parallel`.
+Spans need sequential processing; with `--parallel`, Kelora warns and ignores
+it ([details](files.md#what-parallel-cant-do)).

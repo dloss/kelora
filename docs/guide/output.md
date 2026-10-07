@@ -51,8 +51,11 @@ For very large files, a fast line search in front can do most of the
 filtering before Kelora parses anything:
 
 ```bash
-rg -z 'checkout' huge-*.log.gz | kelora -j --filter 'e.duration_ms > 1000'
+rg -zI 'checkout' huge-*.log.gz | kelora -j --filter 'e.duration_ms > 1000'
 ```
+
+(`-I` stops `rg` from prefixing each line with its file name, which would break
+the JSON.)
 
 Downstream:
 
@@ -74,26 +77,19 @@ Kelora also reads its own JSON output, so you can split work into steps:
 `kelora raw.log -f 'cols:…' -J > clean.jsonl`, then explore `clean.jsonl`
 without re-parsing.
 
-## Exit codes
+## Exit codes in scripts and CI
 
-| Code | Meaning |
-|---|---|
-| 0 | success — including runs where some lines failed to parse or some scripts failed (reported on stderr) |
-| 1 | the run could not do its job: a file couldn't be opened, no line parsed at all, a filter failed on every event, an `--assert` failed, or any error with `--strict` |
-| 2 | invalid command line or config file |
-| 130, 141, 143 | interrupted (Ctrl-C), broken pipe, terminated |
-
-Matching nothing is not an error, so the exit code doesn't tell you whether
-events matched. To make a CI step fail when a log contains errors, use
-`--assert`:
+Kelora exits 0 when the run did its job — even if some lines didn't parse —
+and 1 when it couldn't ([all codes](../reference/exit-codes.md)). Matching
+nothing is not an error, so the exit code doesn't tell you whether events
+matched. To make a CI step fail when a log contains errors, use `--assert`:
 
 ```bash exec="on" source="above" result="ansi" returncode="1"
 kelora examples/ci_pipeline.log -q --assert 'e.level != "ERROR"'
 ```
 
 `--strict` turns every parse or script error into exit 1, so malformed input
-can't pass silently. [Exit codes](../reference/exit-codes.md) has the full
-table.
+can't pass silently.
 
 ## Less noise
 
