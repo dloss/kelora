@@ -1,0 +1,2365 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/guide/scripting/">
+      
+      
+        <link rel="prev" href="../filter/">
+      
+      
+        <link rel="next" href="../summarize/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Transform with Scripts - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#transform-with-scripts" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Transform with Scripts
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../explore/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-event-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The event, e
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#missing-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stages-run-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stages run in order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nested-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested JSON
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Nested JSON">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-event-per-array-element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One event per array element
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lookups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-before-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact before sharing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-a-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug a script
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/security-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-event-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The event, e
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#missing-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stages-run-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stages run in order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nested-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested JSON
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Nested JSON">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-event-per-array-element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One event per array element
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lookups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-before-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact before sharing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse scripts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-a-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug a script
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="transform-with-scripts">Transform with Scripts<a class="headerlink" href="#transform-with-scripts" title="Permanent link">&para;</a></h1>
+<p>When options run out, <code>--filter</code> and <code>--exec</code> (<code>-e</code>) run small
+<a href="https://rhai.rs">Rhai</a> scripts on each event. Rhai reads like a mix of
+JavaScript and Rust; this page covers what log work needs. The
+<a href="../../reference/rhai-cheatsheet/">Rhai cheatsheet</a> has the full syntax, and
+<code>kelora --help-functions KEYWORD</code> searches the 150+ built-in functions.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.duration_s = e.get("duration_ms", 0) / 1000.0; e.service = e.service.to_upper()'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,duration_s,message
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:01:30Z' <span class=" -Color -Color-Green">service</span>='DATABASE' <span class=" -Color -Color-Green">duration_s</span>=5.0
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">message</span>='Query timeout'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:03:30Z' <span class=" -Color -Color-Green">service</span>='AUTH' <span class=" -Color -Color-Green">duration_s</span>=0.0
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">message</span>='Account locked'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:16:00Z' <span class=" -Color -Color-Green">service</span>='API' <span class=" -Color -Color-Green">duration_s</span>=0.0
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">message</span>='Service unavailable'
+</code></pre></div>
+<h2 id="the-event-e">The event, <code>e</code><a class="headerlink" href="#the-event-e" title="Permanent link">&para;</a></h2>
+<p>Each event is a map of fields, available as <code>e</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Do</th>
+<th>Write</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>read a field</td>
+<td><code>e.status</code>, <code>e["user-agent"]</code> (names with <code>-</code>, <code>@</code>, <code>.</code>)</td>
+</tr>
+<tr>
+<td>read nested data</td>
+<td><code>e.user.id</code>, <code>e.tags[0]</code>, <code>e.tags[-1]</code></td>
+</tr>
+<tr>
+<td>add or change a field</td>
+<td><code>e.duration_s = e.duration_ms / 1000.0</code></td>
+</tr>
+<tr>
+<td>remove a field</td>
+<td><code>e.password = ()</code></td>
+</tr>
+<tr>
+<td>drop the whole event</td>
+<td><code>e = ()</code></td>
+</tr>
+<tr>
+<td>copy into a new field</td>
+<td><code>e.path_only = e.path.split("?")[0]</code></td>
+</tr>
+<tr>
+<td>rename a field</td>
+<td><code>e.rename_field("ts", "timestamp")</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>()</code> is Rhai's "nothing", like <code>null</code> elsewhere: assigning it removes a field,
+and reading a missing field gives it.</p>
+<p>Alongside <code>e</code>, scripts see <code>meta</code>: <code>meta.line</code> (the raw input line),
+<code>meta.line_num</code>, <code>meta.filename</code>, and <code>meta.parsed_ts</code> (the parsed timestamp,
+see <a href="../time/">Work with Time</a>). The <a href="../../reference/script-variables/">script variables
+reference</a> lists everything.</p>
+<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<p>JSON and logfmt values keep their types: numbers are numbers, <code>true</code> is a
+boolean. Text formats — <code>line</code>, <code>cols:</code> and <code>csv</code> without type annotations,
+most <code>regex:</code> groups — give you strings. <code>-F inspect</code> shows the type of every
+field:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/errors_json_types.jsonl<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>---
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id      | string | "123"
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>count   | string | "not-a-number"
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ratio   | string | "invalid"
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>enabled | string | "yes"
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>meta.line_num | int    | 1
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>meta.filename | string | "examples/errors_json_types.jsonl"
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>---
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>id      | int   | 456
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>count   | int   | 789
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>ratio   | float | 0.5
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>enabled | bool  | true
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>meta.line_num | int    | 2
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>meta.filename | string | "examples/errors_json_types.jsonl"
+</code></pre></div>
+<p>Comparing a string with a number never matches (<code>"500" &gt; 400</code> is false), so
+convert first: <code>to_int()</code> / <code>to_float()</code> return <code>()</code> when conversion fails, and
+<code>to_int_or(0)</code> / <code>to_float_or(0.0)</code> return a default instead. Integer division
+truncates: <code>e.ms / 1000</code> is an integer, <code>e.ms / 1000.0</code> a float.</p>
+<h2 id="missing-fields">Missing fields<a class="headerlink" href="#missing-fields" title="Permanent link">&para;</a></h2>
+<p>Events in the same file often have different fields. A missing field reads as
+<code>()</code> — <strong>accessing it never fails by itself.</strong> What happens next depends on the
+operation:</p>
+<table>
+<thead>
+<tr>
+<th>Expression, when <code>dur</code> is missing</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>e.dur == "x"</code>, <code>e.dur &gt; 5</code></td>
+<td><code>false</code> — comparisons accept <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.dur + "ms"</code></td>
+<td><code>"ms"</code> — string concatenation accepts <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.dur + 1</code></td>
+<td>error — no arithmetic on <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.dur.to_upper()</code></td>
+<td>error — no methods on <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.user.role</code>, when <code>user</code> is missing</td>
+<td>error — can't look inside <code>()</code></td>
+</tr>
+</tbody>
+</table>
+<p>Guard first, or read with a default:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>if e.has("dur") { e.dur_s = e.dur / 1000.0 }   // guard first
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>e.dur_s = e.get("dur", 0) / 1000.0              // or read with a default
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>e.role = e.get_path("user.role", "guest")       // same for nested paths
+</code></pre></div>
+<p>When a script fails on an event, Kelora rolls that <code>--exec</code> back (the event
+keeps its previous fields), counts the error, and continues. The summary on
+stderr names the line and the problem; <code>--strict</code> stops at the first error
+instead. See <a href="../../how-it-works/#when-something-goes-wrong">errors</a>.</p>
+<h2 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Want</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>test for text</td>
+<td><code>.contains("x")</code>, <code>.starts_with("x")</code>, <code>.matches("re")</code></td>
+</tr>
+<tr>
+<td>change case</td>
+<td><code>.to_lower()</code>, <code>.to_upper()</code></td>
+</tr>
+<tr>
+<td>cut around delimiters</td>
+<td><code>.before(" ")</code>, <code>.after("=")</code>, <code>.between("[", "]")</code></td>
+</tr>
+<tr>
+<td>split</td>
+<td><code>.split(",")</code> (array), <code>.col(2)</code> (third whitespace column)</td>
+</tr>
+<tr>
+<td>regex capture</td>
+<td><code>.extract_regex("id=(\\d+)", 1)</code></td>
+</tr>
+<tr>
+<td>replace</td>
+<td><code>.replace_regex("\\d+", "N")</code></td>
+</tr>
+<tr>
+<td>trim</td>
+<td><code>.strip()</code>, <code>.clip()</code> (also strips punctuation)</td>
+</tr>
+<tr>
+<td>length</td>
+<td><code>.len()</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title"><code>trim</code> and <code>replace</code> return nothing</p>
+<p>Rhai's built-in <code>trim()</code> and <code>replace()</code> change a string variable in place and
+return <code>()</code>, so <code>e.y = e.x.trim()</code> leaves <code>y</code> unset. Use <code>strip()</code> and
+<code>replace_regex()</code>, which return the new string.</p>
+</div>
+<p><code>before</code>, <code>after</code>, <code>between</code>, and <code>extract_regex</code> return <code>""</code> when there is
+nothing to return; add <code>.or_empty()</code> to get <code>()</code> instead, which skips the
+assignment: <code>e.user = e.msg.after("user=").or_empty()</code> creates <code>user</code> only on
+lines that have one. Test such a value with <code>!= ()</code>, not <code>!= ""</code>. <a href="../parse/#6-finish-the-job-in-a-script">Get Logs into Shape</a>
+shows the extraction functions at work.</p>
+<h2 id="logic">Logic<a class="headerlink" href="#logic" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>let ms = e.get("duration_ms", 0);                 // local variable
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>e.speed = if ms &gt; 1000 { "slow" } else { "ok" };  // if is an expression
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>if e.status &gt;= 500 { e.alert = true; } else if e.status == 404 { e.alert = false; }
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>e.class = switch e.status / 100 { 2 =&gt; "ok", 4 =&gt; "client", 5 =&gt; "server", _ =&gt; "other" };
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>for tag in e.tags { if tag == "pii" { e.redact = true; } }
+</code></pre></div>
+<p>Separate statements with <code>;</code>. Strings take double quotes, so wrap the whole
+script in single quotes on the shell; <code>#"…"#</code> is a raw string, handy for
+regexes with backslashes.</p>
+<h2 id="stages-run-in-order">Stages run in order<a class="headerlink" href="#stages-run-in-order" title="Permanent link">&para;</a></h2>
+<p>Every <code>--filter</code> and <code>--exec</code> is a stage, and stages run in the order you
+write them. Field changes carry from one stage to the next; <code>let</code> variables
+don't — each stage has its own scope:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.ms = e.duration_ms.to_int_or(0)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.ms &gt; 1000'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.secs = e.ms / 1000.0'</span><span class="w">       </span><span class="c1"># sees e.ms, only for events that passed the filter</span>
+</code></pre></div>
+<p>Put statements that share a <code>let</code> in one <code>--exec</code>. Splitting work across
+several stages has one advantage: if a later stage fails, the fields set by
+earlier stages survive.</p>
+<h2 id="nested-json">Nested JSON<a class="headerlink" href="#nested-json" title="Permanent link">&para;</a></h2>
+<p><code>get_path</code> and <code>has_path</code> walk dotted paths with array indexes, returning a
+default instead of failing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.first_sku = e.get_path("orders[0].items[0].sku", "none"); e.n_orders = e.get("orders", []).len()'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>batch_id,n_orders,first_sku
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">batch_id</span>='batch_001' <span class=" -Color -Color-Green">n_orders</span>=2 <span class=" -Color -Color-Green">first_sku</span>='A001'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">batch_id</span>='batch_002' <span class=" -Color -Color-Green">n_orders</span>=1 <span class=" -Color -Color-Green">first_sku</span>='C001'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">batch_id</span>='batch_003' <span class=" -Color -Color-Green">n_orders</span>=3 <span class=" -Color -Color-Green">first_sku</span>='D001'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">batch_id</span>='batch_004' <span class=" -Color -Color-Green">n_orders</span>=0 <span class=" -Color -Color-Green">first_sku</span>='none'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">batch_id</span>='batch_005' <span class=" -Color -Color-Green">n_orders</span>=0 <span class=" -Color -Color-Green">first_sku</span>='none'
+</code></pre></div>
+<p><code>-k</code> selects top-level fields only, so copy nested values up first, as above.
+<code>e.flattened()</code> returns the whole event as one level of keys like
+<code>orders[0].order_id</code>, ready for CSV export.</p>
+<h3 id="one-event-per-array-element">One event per array element<a class="headerlink" href="#one-event-per-array-element" title="Permanent link">&para;</a></h3>
+<p><code>emit_each(array)</code> replaces the current event with one event per element. The
+optional second argument adds fields to each, typically the parent's IDs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'emit_each(e.orders, #{batch_id: e.batch_id})'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'emit_each(e.items, #{batch_id: e.batch_id, order_id: e.order_id})'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-k<span class="w"> </span>batch_id,order_id,sku,qty,price<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">batch_id</span>='batch_001' <span class=" -Color -Color-Green">order_id</span>='ord_1' <span class=" -Color -Color-Green">sku</span>='A001' <span class=" -Color -Color-Green">qty</span>=2 <span class=" -Color -Color-Green">price</span>=10.0
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">batch_id</span>='batch_001' <span class=" -Color -Color-Green">order_id</span>='ord_1' <span class=" -Color -Color-Green">sku</span>='A002' <span class=" -Color -Color-Green">qty</span>=1 <span class=" -Color -Color-Green">price</span>=20.0
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">batch_id</span>='batch_001' <span class=" -Color -Color-Green">order_id</span>='ord_2' <span class=" -Color -Color-Green">sku</span>='B001' <span class=" -Color -Color-Green">qty</span>=3 <span class=" -Color -Color-Green">price</span>=15.0
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">batch_id</span>='batch_002' <span class=" -Color -Color-Green">order_id</span>='ord_3' <span class=" -Color -Color-Green">sku</span>='C001' <span class=" -Color -Color-Green">qty</span>=1 <span class=" -Color -Color-Green">price</span>=50.0
+</code></pre></div>
+<p>Each <code>emit_each</code> fans out one level, and later stages see the new events.</p>
+<h2 id="lookups">Lookups<a class="headerlink" href="#lookups" title="Permanent link">&para;</a></h2>
+<p><code>--begin</code> runs once before any event; whatever it stores in <code>conf</code> is
+read-only afterwards. Use it to load lookup tables:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>-l<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--begin<span class="w"> </span><span class="s1">'conf.owner = #{database: "dba-team", auth: "identity", disk: "infra"}'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.owner = conf.owner.get(e.service) ?? "unassigned"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-k<span class="w"> </span>service,owner,message
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">service</span>='database' <span class=" -Color -Color-Green">owner</span>='dba-team' <span class=" -Color -Color-Green">message</span>='Query timeout'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">service</span>='auth' <span class=" -Color -Color-Green">owner</span>='identity' <span class=" -Color -Color-Green">message</span>='Account locked'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">service</span>='disk' <span class=" -Color -Color-Green">owner</span>='infra' <span class=" -Color -Color-Green">message</span>='Disk space critical'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">service</span>='api' <span class=" -Color -Color-Green">owner</span>='unassigned' <span class=" -Color -Color-Green">message</span>='Service unavailable'
+</code></pre></div>
+<p>In <code>--begin</code>, <code>read_lines("blocked.txt")</code> returns a file's lines as an array
+and <code>read_file("map.json").parse_json()</code> loads a JSON map. Memory <em>across</em>
+events (counters, deduplication, sessions) is different: see
+<a href="../state/">Cross-Event Logic</a>.</p>
+<h2 id="redact-before-sharing">Redact before sharing<a class="headerlink" href="#redact-before-sharing" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>team-key<span class="w"> </span>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.ip = e.ip.mask_ip(2); if e.has("user") { e.user = pseudonym(e.user, "users") }'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>ip,user,path<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ip</span>='120.180.0.0' <span class=" -Color -Color-Green">user</span>='dAfZqbdcoKyc5q7mDnSGQjGu'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">path</span>='/reintermediate/e-commerce/cross-platform'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ip</span>='83.14.0.0' <span class=" -Color -Color-Green">user</span>='QEk-iR9bGmeyLqtP280tHEsT'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">path</span>='/infrastructures/customized/portals/enhance'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">ip</span>='233.208.0.0' <span class=" -Color -Color-Green">user</span>='mKIdGhJ2q_jd4zTOTDi-08gU'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">path</span>='/enterprise/iterate/integrate/exploit'
+</code></pre></div>
+<p><code>mask_ip(n)</code> zeroes the last n parts of an address. <code>pseudonym(value, domain)</code>
+replaces a value with a keyed alias: the same input and <code>KELORA_SECRET</code> always
+give the same alias, so you can still count and join on it. Keep the secret
+stable and private — without it, Kelora uses a random key and the aliases change
+on every run. <code>hash()</code> gives a
+plain SHA-256 digest, and <code>normalized()</code> replaces IPs, emails, UUIDs and the
+like inside free text. The <a href="../../cookbook/security-privacy/">cookbook</a> has complete recipes.</p>
+<h2 id="reuse-scripts">Reuse scripts<a class="headerlink" href="#reuse-scripts" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-E transform.rhai</code></td>
+<td>an <code>--exec</code> stage read from a file</td>
+</tr>
+<tr>
+<td><code>-I helpers.rhai</code></td>
+<td>function definitions for the next stage: <code>-I helpers.rhai --filter 'is_noise(e)'</code></td>
+</tr>
+<tr>
+<td><code>--save-alias NAME</code></td>
+<td>save the whole command line; rerun with <code>-a NAME</code> (<a href="../config/">Configuration</a>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="debug-a-script">Debug a script<a class="headerlink" href="#debug-a-script" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>-F inspect</code> shows each field's type.</li>
+<li><code>-n 5</code> while you iterate.</li>
+<li><code>print(...)</code> and <code>eprint(...)</code> write to stdout/stderr from inside a script.</li>
+<li><code>-v</code> prints every error with its line; <code>--strict</code> stops at the first one.</li>
+<li><code>--assert 'e.has("user_id")'</code> reports events that break an expectation
+  without filtering them.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../filter/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Filter">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Filter
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../summarize/" class="md-footer__link md-footer__link--next" aria-label="Next: Summarize">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Summarize
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
