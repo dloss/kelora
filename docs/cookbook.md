@@ -210,7 +210,7 @@ kelora examples/mixed_format.log -f json,line --filter 'e._format == "line"' -k 
 
 ### A custom format
 
-Walk the [parsing ladder](guide/parse.md): named format, cascade, `cols:`,
+Work through [Get Logs into Shape](guide/parse.md): named format, cascade, `cols:`,
 `regex:`, then extraction in a script.
 
 ## Privacy

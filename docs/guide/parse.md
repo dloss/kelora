@@ -1,10 +1,10 @@
 # Get Logs into Shape
 
 Everything in Kelora — filters, scripts, metrics, output — works on **fields**.
-Parsing turns each line into an event with named fields. This page is a ladder:
-start at the top, and stop at the first rung that gives you the fields you need.
+Parsing turns each line into an event with named fields. Try these approaches
+in order and stop at the first one that gives you the fields you need:
 
-| Rung | Use when | Tool |
+| | Use when | Tool |
 |---|---|---|
 | 1 | The format is common | nothing — auto-detection |
 | 2 | You know the format, or detection guessed wrong | `-f json`, `-f logfmt`, `-f syslog`, … |
@@ -13,7 +13,7 @@ start at the top, and stop at the first rung that gives you the fields you need.
 | 5 | Anything with a pattern | `-f 'regex:(?P<ts>\S+) …'` |
 | 6 | Fields are buried inside a text field | `absorb_kv()`, `extract_regex()`, … in `--exec` |
 
-Two adjustments apply at any rung: [join multi-line events](#one-event-spans-several-lines)
+Two adjustments apply to all of them: [join multi-line events](#one-event-spans-several-lines)
 before parsing, and [tell Kelora which field is the timestamp](#make-the-timestamp-work)
 if it can't find it.
 
@@ -42,7 +42,7 @@ kelora -v examples/app.log -n 2
 
 Detection runs once per run (on files, it samples the head plus a few probes
 deeper in). If a file mixes a dominant format with stray text lines, it
-switches to a cascade automatically — see rung 3. On stdin, it uses the first
+switches to a cascade automatically (see 3 below). On stdin, it uses the first
 line only.
 
 ## 2. Name the format
@@ -159,18 +159,19 @@ kelora examples/incident_story.log \
   -e 'if e.absorb_logfmt("msg").status != "applied" { e.absorb_kv("msg") }'
 ```
 
-The tools for this rung:
+Functions for pulling fields out of text — here `msg` stands for whichever
+field holds it:
 
 | Function | Pulls out |
 |---|---|
-| `e.absorb_kv("f")` | `key=value` tokens; leftover text stays in `f` (not quote-aware) |
-| `e.absorb_logfmt("f")` | a field that is entirely logfmt (quote-aware, typed) |
-| `e.absorb_json("f")` | a JSON object stored as a string |
-| `e.absorb_regex("f", pattern)` | named groups from a regex |
-| `e.f.extract_regex(pattern, 1)` | one capture group |
-| `e.f.between("[", "]")`, `.after(":")`, `.before(" ")` | text around delimiters |
-| `e.f.extract_json()`, `.extract_ip()`, `.extract_url()` | the first JSON / IP / URL in free text |
-| `e.f.parse_url()`, `.parse_user_agent()`, `.parse_jwt()` | structured values into maps |
+| `e.absorb_kv("msg")` | `key=value` tokens; leftover text stays in `msg` (not quote-aware) |
+| `e.absorb_logfmt("msg")` | a field that is entirely logfmt (quote-aware, typed) |
+| `e.absorb_json("msg")` | a JSON object stored as a string |
+| `e.absorb_regex("msg", pattern)` | named groups from a regex |
+| `e.msg.extract_regex(pattern, 1)` | one capture group |
+| `e.msg.between("[", "]")`, `.after(":")`, `.before(" ")` | text around delimiters |
+| `e.msg.extract_json()`, `.extract_ip()`, `.extract_url()` | the first JSON / IP / URL in free text |
+| `e.url.parse_url()`, `e.agent.parse_user_agent()`, `e.token.parse_jwt()` | structured values into maps |
 
 `absorb_*` functions merge the extracted fields into the event, remove the source
 field when it is fully consumed, and return a status (`"applied"`,
