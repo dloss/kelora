@@ -19,7 +19,8 @@ cols:<spec>
   Custom column-based parsing with whitespace or custom separator
   Fields: User-defined via spec
   Examples: 'cols:ts level *msg'
-            'cols:ts(2) level *msg'  (ts consumes 2 tokens)
+            'cols:ts(2) level *msg'  (ts joins 2 tokens: 2024-01-15 10:00:00)
+            'cols:ts(3) level *msg'  (syslog-style Jan 15 10:00:00 is 3 tokens)
             'cols:name age:int city' --cols-sep '|'
   Tokens: field       - consume one column
           field(N)    - consume N columns and join

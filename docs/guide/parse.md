@@ -109,12 +109,14 @@ kelora -f 'cols:ts(2) level service *msg' examples/cols_fixed.log -n 3
 | Token | Meaning |
 |---|---|
 | `name` | one column |
-| `name(3)` | three columns, joined (e.g. a date and a time) |
+| `name(3)` | three columns, joined (e.g. syslog-style `Jan 15 10:00:00`) |
 | `-` / `-(2)` | skip one / two columns |
 | `*name` | the rest of the line (must be last) |
 | `name:int` | convert: `int`, `float`, `bool` |
 
-Use `--cols-sep '|'` for a different separator.
+Count the timestamp's whitespace tokens: `ts(2)` for `2024-01-15 10:00:00`,
+`ts(3)` for `Jan 15 10:00:00`. The no-format hint names the count when the
+sampled lines agree on one. Use `--cols-sep '|'` for a different separator.
 
 ## 5. Patterns: `regex:`
 

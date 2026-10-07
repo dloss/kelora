@@ -1061,3 +1061,32 @@ fn test_multiline_hint_stays_quiet_without_traces() {
         stderr
     );
 }
+
+/// The fallback hint's `cols:` suggestion counts the timestamp tokens it saw:
+/// syslog-style `Jan 15 10:00:00` needs `ts(3)`, not the old fixed `ts(2)`,
+/// which put the time in `level` (#420).
+#[test]
+fn test_fallback_hint_derives_cols_ts_token_count() {
+    let dir = TempDir::new().expect("tempdir");
+    let syslogish = write_input(
+        &dir,
+        "q.log",
+        "Jan 15 10:00:00 INFO Application started\nJan 15 10:00:05 WARN Slow query\n",
+    );
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&["--hints"], &[&syslogish]);
+    assert_eq!(exit_code, 0, "{}", stderr);
+    assert!(
+        stderr.contains("-f 'cols:ts(3) level *msg'"),
+        "hint should suggest ts(3): {}",
+        stderr
+    );
+    assert!(!stderr.contains("ts(2)"), "no ts(2) for syslog: {}", stderr);
+
+    let plain = write_input(&dir, "p.log", "hello\nworld\n");
+    let (_stdout, stderr, _) = run_kelora_with_files(&["--hints"], &[&plain]);
+    assert!(
+        stderr.contains("cols:ts(N) level *msg") && stderr.contains("ts(3) for syslog-style"),
+        "without a level shape the hint explains N: {}",
+        stderr
+    );
+}

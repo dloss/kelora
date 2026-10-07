@@ -94,6 +94,11 @@ pub struct DetectedFormat {
     /// (e.g. `json,syslog,line`). `Some` exactly when `unparsed_formats` is
     /// non-empty; feeds the same hint.
     pub cascade_suggestion: Option<String>,
+    /// How many whitespace-separated tokens precede a level-looking token in
+    /// the sampled lines (e.g. 2 for `2024-01-15 10:00:00 INFO …`, 3 for
+    /// syslog-style `Jan 15 10:00:00 INFO …`), when the sample agrees on one
+    /// count. Feeds the `cols:ts(N)` suggestion in the fallback hint only.
+    pub leading_ts_tokens: Option<usize>,
 }
 
 /// A multiline (stack-trace) shape that detection can spot in its sample and
@@ -194,11 +199,17 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             multiline_hint: None,
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
         }),
         Some(line) => {
             // Remove newline for detection
             let trimmed_line = line.trim_end_matches(&['\r', '\n'][..]);
             let detected = parsers::detect_format(trimmed_line)?;
+            let leading_ts_tokens = if matches!(detected, config::InputFormat::Line) {
+                leading_ts_tokens(std::iter::once(trimmed_line))
+            } else {
+                None
+            };
             Ok(DetectedFormat {
                 format: detected,
                 had_input: true,
@@ -208,6 +219,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 multiline_hint: None,
                 unparsed_formats: Vec::new(),
                 cascade_suggestion: None,
+                leading_ts_tokens,
             })
         }
     }
@@ -243,6 +255,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             multiline_hint: None,
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
@@ -256,6 +269,11 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
     // advisory --multiline hint. Indentation matters to the signatures, so
     // scan the untrimmed-start lines (only the trailing newline is gone).
     let multiline_hint = detect_multiline_signature(trimmed.iter().copied());
+    let leading_ts_tokens = if matches!(detected.format, config::InputFormat::Line) {
+        leading_ts_tokens(trimmed.iter().copied())
+    } else {
+        None
+    };
     Ok(DetectedFormat {
         format: detected.format,
         had_input: true,
@@ -265,6 +283,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
         multiline_hint,
         unparsed_formats: detected.unparsed_formats,
         cascade_suggestion: detected.suggested_cascade,
+        leading_ts_tokens,
     })
 }
 
@@ -482,6 +501,7 @@ pub fn detect_format_for_parallel_mode(
                 multiline_hint: None,
                 unparsed_formats: Vec::new(),
                 cascade_suggestion: None,
+                leading_ts_tokens: None,
             },
             None,
         ));
@@ -559,10 +579,75 @@ pub fn format_detected_format_notice(
         if let Some(message) = unparsed_formats_hint_text(detected) {
             return Some(config.format_hint_message(&message));
         }
-        let message = config.format_hint_message(
-            "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.",
-        );
-        Some(message)
+        Some(config.format_hint_message(&fallback_hint_text(detected.leading_ts_tokens)))
+    } else {
+        None
+    }
+}
+
+/// Body of the "No input format detected" hint. When the sample agreed on how
+/// many tokens precede the level (`leading_ts_tokens`), the `cols:` suggestion
+/// names that count — `ts(2)` mis-splits syslog-style `Jan 15 10:00:00` lines
+/// (#420). Otherwise the text explains `ts(N)` with both common shapes rather
+/// than offering a count that may be wrong.
+fn fallback_hint_text(leading_ts_tokens: Option<usize>) -> String {
+    match leading_ts_tokens {
+        Some(n) => format!(
+            "No input format detected; keeping whole lines as 'line'. The sampled lines look like 'timestamp LEVEL message' with a {n}-token timestamp; extract fields with -f 'cols:ts({n}) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts({n}) level *msg'. See --help-formats."
+        ),
+        None => "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(N) level *msg' (or a regex:), where N is how many whitespace-separated tokens the timestamp spans: ts(1) for 2024-01-15T10:00:00Z, ts(3) for syslog-style 'Jan 15 10:00:00'. Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(N) level *msg'. See --help-formats.".to_string(),
+    }
+}
+
+/// Level words recognized by `leading_ts_tokens` (compared case-insensitively,
+/// after stripping surrounding brackets/punctuation such as `[INFO]` or `WARN:`).
+const LEVEL_WORDS: &[&str] = &[
+    "TRACE", "DEBUG", "DBG", "INFO", "INF", "NOTICE", "WARN", "WARNING", "WRN", "ERROR", "ERR",
+    "FATAL", "CRIT", "CRITICAL", "ALERT", "EMERG", "PANIC", "SEVERE",
+];
+
+/// Most tokens a timestamp is assumed to span (`Mon Jan 15 10:00:00 2024` is 5).
+const MAX_TS_TOKENS: usize = 5;
+
+/// Count the whitespace-separated tokens in front of a level-looking token,
+/// when the sampled lines agree on one count.
+///
+/// Per line: the first token (index 1..=`MAX_TS_TOKENS`) that is a level word
+/// marks the boundary, and at least one token before it must contain a digit
+/// (a timestamp has digits; `Jan` alone does not count). The result is the
+/// count shared by every line that has such a boundary, provided at least half
+/// of the sampled lines do — anything less consistent returns `None` so the
+/// hint falls back to the generic `ts(N)` explanation instead of guessing.
+fn leading_ts_tokens<'a>(lines: impl IntoIterator<Item = &'a str>) -> Option<usize> {
+    let mut total = 0usize;
+    let mut agreed: Option<usize> = None;
+    let mut matched = 0usize;
+    for line in lines {
+        if line.trim().is_empty() {
+            continue;
+        }
+        total += 1;
+        let tokens: Vec<&str> = line.split_whitespace().take(MAX_TS_TOKENS + 1).collect();
+        let boundary = (1..tokens.len()).find(|&i| {
+            let word = tokens[i].trim_matches(|c: char| !c.is_ascii_alphanumeric());
+            LEVEL_WORDS.iter().any(|lvl| lvl.eq_ignore_ascii_case(word))
+        });
+        let Some(n) = boundary else { continue };
+        if !tokens[..n]
+            .iter()
+            .any(|t| t.chars().any(|c| c.is_ascii_digit()))
+        {
+            continue;
+        }
+        match agreed {
+            None => agreed = Some(n),
+            Some(prev) if prev != n => return None,
+            Some(_) => {}
+        }
+        matched += 1;
+    }
+    if total > 0 && matched * 2 >= total {
+        agreed
     } else {
         None
     }
@@ -1052,6 +1137,7 @@ mod tests {
             multiline_hint: detect_multiline_signature(["\tat com.example.Foo.bar(Foo.java:1)"]),
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
         };
         assert!(detected.multiline_hint.is_some());
 
@@ -1079,6 +1165,7 @@ mod tests {
             multiline_hint: None,
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
             ..detected
         };
         assert!(multiline_hint_message(&cfg, &clean).is_none());
@@ -1132,6 +1219,7 @@ mod tests {
             multiline_hint: None,
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
         };
 
         let mut verbose_cfg = base_config();
@@ -1158,6 +1246,7 @@ mod tests {
             multiline_hint: None,
             unparsed_formats: vec!["logfmt".to_string()],
             cascade_suggestion: Some("json,logfmt,line".to_string()),
+            leading_ts_tokens: None,
         };
 
         // Normal run: hint tier, no warning.
@@ -1195,6 +1284,7 @@ mod tests {
         let clean = DetectedFormat {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
             ..detected
         };
         assert!(unparsed_formats_data_mode_warning(&data_mode, &clean).is_none());
@@ -1267,6 +1357,7 @@ mod tests {
             multiline_hint: None,
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
+            leading_ts_tokens: None,
         };
 
         // A confident auto-detection is silent on a normal run...
@@ -1408,5 +1499,51 @@ mod tests {
             parse_failure_warning_message(&cfg, Some(&stats), true, false).is_none(),
             "should not warn on low error rate"
         );
+    }
+
+    #[test]
+    fn leading_ts_tokens_counts_syslog_and_iso_shapes() {
+        let syslog = [
+            "Jan 15 10:00:00 INFO Application started on :8080",
+            "Jan 15 10:00:05 WARN Slow query",
+        ];
+        assert_eq!(leading_ts_tokens(syslog), Some(3));
+        let iso_space = [
+            "2024-01-15 10:00:00 [INFO] Server starting",
+            "2024-01-15 10:00:01 [DEBUG] Loading plugins",
+        ];
+        assert_eq!(leading_ts_tokens(iso_space), Some(2));
+        assert_eq!(
+            leading_ts_tokens(["2024-01-15T10:00:00Z error: disk full"]),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn leading_ts_tokens_declines_when_unsure() {
+        // No level word anywhere.
+        assert_eq!(leading_ts_tokens(["just some text", "more text"]), None);
+        // Lines disagree on the count.
+        assert_eq!(
+            leading_ts_tokens(["Jan 15 10:00:00 INFO a", "2024-01-15T10:00:00Z INFO b"]),
+            None
+        );
+        // Tokens before the level carry no digits: not a timestamp.
+        assert_eq!(leading_ts_tokens(["server INFO started"]), None);
+        // Only a minority of lines have the shape.
+        assert_eq!(
+            leading_ts_tokens(["Jan 15 10:00:00 INFO a", "x", "y", "z"]),
+            None
+        );
+    }
+
+    #[test]
+    fn fallback_hint_names_derived_count_or_explains_n() {
+        let derived = fallback_hint_text(Some(3));
+        assert!(derived.contains("-f 'cols:ts(3) level *msg'"), "{derived}");
+        assert!(!derived.contains("ts(2)"), "{derived}");
+        let generic = fallback_hint_text(None);
+        assert!(generic.contains("cols:ts(N) level *msg"), "{generic}");
+        assert!(generic.contains("ts(3) for syslog-style"), "{generic}");
     }
 }

@@ -33,7 +33,7 @@ kelora --drain -k msg app.log          # Cluster messages into templates (one te
 kelora -n 5 app.log                    # Peek at the first events
 ```
 
-On a large file, add `--head 10000` to read only the first N lines. If `-d` reports format `line`, kelora found no structure: extract fields with `-f 'cols:ts(2) level *msg'` or `-f 'regex:...'` (see `--help-formats`, `--help-regex`).
+On a large file, add `--head 10000` to read only the first N lines. If `-d` reports format `line`, kelora found no structure: extract fields with `-f 'cols:ts(N) level *msg'` (N = whitespace tokens in the timestamp; the hint names it when it can tell) or `-f 'regex:...'` (see `--help-formats`, `--help-regex`).
 
 ## 2. Investigate an Incident
 
