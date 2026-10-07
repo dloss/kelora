@@ -1,0 +1,4 @@
+{"ts":"2024-04-09T09:41:02Z","service":"api","level":"WARN","msg":"upstream latency rising"}
+{"ts":"2024-04-09T09:41:04Z","service":"api","level":"ERROR","msg":"database timeout"}
+{"ts":"2024-04-09T09:41:07Z","service":"api","level":"ERROR","msg":"request failed: 503"}
+{"ts":"2024-04-09T09:41:12Z","service":"api","level":"INFO","msg":"circuit breaker open"}

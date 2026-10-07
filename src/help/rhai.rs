@@ -8,7 +8,7 @@ For Rhai language details: https://rhai.rs
 
 VARIABLES & TYPES:
   let x = 42;                          Variable declaration (required for new vars)
-  let name = "alice";                  String (double quotes only)
+  let name = "alice";                  String (double quotes; 'x' is a single char)
   let re = #"\d+"#;                    Raw string, no escape processing — best for regexes
                                        (Rust/Python style r"..." is not Rhai)
   let active = true;                   Boolean (true/false)
@@ -88,21 +88,23 @@ FUNCTIONS & CLOSURES:
 FUNCTION-AS-METHOD SYNTAX:
   Any built-in function can be called as a method on its first argument:
 
-  extract_regex(e.line, "\d+")         Function call style
-  e.line.extract_regex("\d+")          Method call style (same thing!)
+  extract_regex(e.line, #"\d+"#)       Function call style (#"..."# = raw string)
+  e.line.extract_regex(#"\d+"#)        Method call style (same thing!)
 
   Use method style for chaining: e.url.extract_domain().lower().strip()
   Exception: your own functions (--include / fn) bind the receiver to
   `this`, so call them function-style: is_problem(e), not e.is_problem()
 
 RHAI QUIRKS & GOTCHAS:
-  • Strings use double quotes only: "hello" (not 'hello')
+  • Strings use double quotes: "hello" ('x' is a char literal, not a string)
   • Semicolons recommended (optional at end of blocks, required for multiple statements)
   • No null/undefined: use unit type () to represent "nothing"
-  • No implicit type conversion: "5" + 3 is error (use "5".to_int() + 3)
+  • String + anything concatenates: "5" + 3 is "53" (use "5".to_int() + 3 for 8)
   • try/catch available: try { ... } catch (err) { ... } catches runtime errors (type/type-mismatch, missing fields); compile errors still abort; prefer guards/to_int_or over exceptions for speed
   • let required for new variables (x = 1 errors if x not declared)
-  • Arrays/maps are reference types: modifying copies affects original
+  • Arrays/maps are copied on assignment: let b = a; b.push(1) leaves a unchanged
+  • trim(), replace(), sort(), reverse() change a variable in place and return ();
+    use strip(), replace_regex(), sorted(), reversed() to get a new value
   • Last expression in block is return value (no return needed)
   • Single-line comments: // ...  Multi-line: /* ... */
   • No-parens x.name is a property/getter or map key, not a method: text.len (string length) works, but on a map e.len is the field "len" — use len(e) or e.len() for a count
@@ -114,7 +116,8 @@ KELORA PIPELINE STAGES:
   --exec-file     Same as --exec, reads script from file
   --end           Post-run once after processing; access global `metrics` map for reports
 
-  Prerequisites: --allow-fs-writes (file I/O), --window N (windowing), --metrics (tracking)
+  Prerequisites: --allow-fs-writes (file I/O), --window N (the `window` array);
+                 -m/--metrics only to print tracked metrics (track_* works without it)
 
 VARIABLE SCOPE BETWEEN STAGES:
   Each --exec stage runs in ISOLATION. Local variables (let) do NOT persist:
@@ -122,7 +125,7 @@ VARIABLE SCOPE BETWEEN STAGES:
   WRONG:  kelora -e 'let ctx = e.id' -e 'e.context = ctx'     # ERROR: ctx undefined!
   RIGHT:  kelora -e 'let ctx = e.id; e.context = ctx'         # Use semicolons for shared vars
 
-  What persists:   e.field modifications, conf, metrics
+  What persists:   e.field modifications, state, track_* metrics (conf is read-only)
   What doesn't:    let variables, function definitions (unless from --include)
 
 KELORA EVENT ACCESS:
@@ -161,7 +164,6 @@ MISSING FIELDS:
     e.get("dur", 0) + 1                Method-style
     e.get_path("user.name", "none")     For dotted paths
     if e.has("dur") { e.dur + 1 }      Guard first
-    e.dur ?? e.dur + 1                 Null-coalescing op
   
   has/get work on top-level keys; has_path/get_path also walk dotted paths.
 
@@ -278,7 +280,7 @@ SCRIPT OUTPUT (print/eprint):
                --silent does NOT suppress print/eprint (they still work)
 
   File operations (always work, requires --allow-fs-writes):
-    append_file(path, content), write_file(path, content), --metrics-file
+    append_file(path, content), mkdir(path), truncate_file(path), --metrics-file
 
 For other help topics: kelora -h
 "###;

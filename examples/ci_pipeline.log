@@ -1,0 +1,12 @@
+2024-03-02 09:00:00 INFO ==> stage: build
+2024-03-02 09:00:04 INFO compiling 214 files
+2024-03-02 09:00:31 WARN deprecated API used in auth/session.rs
+2024-03-02 09:00:39 INFO build finished in 39s
+2024-03-02 09:00:40 INFO ==> stage: test
+2024-03-02 09:00:41 INFO running 1532 tests
+2024-03-02 09:01:12 ERROR test payments::refund_partial failed: expected 200, got 500
+2024-03-02 09:01:13 ERROR test payments::refund_full failed: timeout after 30s
+2024-03-02 09:01:30 INFO 1530 passed, 2 failed
+2024-03-02 09:01:31 INFO ==> stage: deploy
+2024-03-02 09:01:32 WARN deploy skipped: tests failed
+2024-03-02 09:01:32 INFO pipeline finished with status=failed

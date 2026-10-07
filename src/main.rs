@@ -2326,9 +2326,17 @@ fn handle_pipeline_success(
     // An --end stage sees the `metrics` global and is the idiomatic way to
     // consume metrics into a custom report, so treat its presence as the metrics
     // already being handled — nudging "rerun with -m" there is just noise.
+    // The same holds for span reporting: --span-close reads span.metrics and
+    // --span-summary prints the per-window values itself.
+    let span_consumes_metrics = config
+        .processing
+        .span
+        .as_ref()
+        .is_some_and(|span| span.close_script.is_some() || span.summary.is_some());
     let metrics_were_requested = config.output.metrics.is_some()
         || config.output.metrics_file.is_some()
-        || config.processing.end.is_some();
+        || config.processing.end.is_some()
+        || span_consumes_metrics;
     if !metrics_were_requested
         && !pipeline_result.tracking_data.user.is_empty()
         && hints_allowed_runtime

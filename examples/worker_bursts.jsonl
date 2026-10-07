@@ -1,0 +1,12 @@
+{"ts":"2024-05-06T08:00:02Z","worker":"w1","job":"resize","ms":120}
+{"ts":"2024-05-06T08:00:05Z","worker":"w1","job":"resize","ms":135}
+{"ts":"2024-05-06T08:00:09Z","worker":"w1","job":"thumbnail","ms":48}
+{"ts":"2024-05-06T08:00:15Z","worker":"w1","job":"resize","ms":142}
+{"ts":"2024-05-06T08:12:40Z","worker":"w1","job":"transcode","ms":2210}
+{"ts":"2024-05-06T08:12:52Z","worker":"w1","job":"transcode","ms":2390}
+{"ts":"2024-05-06T08:13:01Z","worker":"w1","job":"thumbnail","ms":51}
+{"ts":"2024-05-06T08:41:10Z","worker":"w1","job":"resize","ms":118}
+{"ts":"2024-05-06T08:41:11Z","worker":"w1","job":"resize","ms":121}
+{"ts":"2024-05-06T08:41:13Z","worker":"w1","job":"resize","ms":119}
+{"ts":"2024-05-06T08:41:16Z","worker":"w1","job":"thumbnail","ms":47}
+{"ts":"2024-05-06T08:41:20Z","worker":"w1","job":"resize","ms":125}

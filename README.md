@@ -104,9 +104,9 @@ Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's
 - **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
 - **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
 
-Kelora trades raw speed for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. For pure text search use `grep`; for pure JSON queries use `jq`.
+On structured logs Kelora keeps up with `jq` and is often faster; per-event scripts run at roughly 100–200k lines per second per core, and `--parallel` uses all cores ([benchmarks](https://kelora.dev/latest/reference/benchmarks/)). For pure text search, `rg`/`grep` are faster — pipe them in front.
 
-See [Power-User Techniques](https://kelora.dev/latest/how-to/power-user-techniques/) for JWT parsing, cryptographic pseudonymization, pattern normalization, and deterministic sampling.
+The [Cookbook](https://kelora.dev/latest/cookbook/) has ready-made commands for incident triage, web traffic, security, privacy, and monitoring.
 
 ## Installation
 
@@ -140,11 +140,11 @@ Kelora follows semver starting with v1.0 — CLI flags and Rhai functions are st
 
 > 📚 **[Read the full documentation at kelora.dev](https://kelora.dev)**
 
-- [Quickstart](https://kelora.dev/latest/quickstart/)
-- [Tutorials](https://kelora.dev/latest/tutorials/)
-- [How-To Guides](https://kelora.dev/latest/how-to/)
-- [Concepts](https://kelora.dev/latest/concepts/)
-- [Reference](https://kelora.dev/latest/reference/)
+- [Explore a log file](https://kelora.dev/latest/guide/explore/) — the first five minutes
+- [Get logs into shape](https://kelora.dev/latest/guide/parse/) — parsing any format, from auto-detection to regex
+- [Cookbook](https://kelora.dev/latest/cookbook/) — commands for common questions
+- [How it works](https://kelora.dev/latest/how-it-works/) — the pipeline and processing order
+- [CLI options](https://kelora.dev/latest/reference/cli-reference/) and [functions](https://kelora.dev/latest/reference/functions/)
 
 ## Examples
 

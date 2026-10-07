@@ -192,6 +192,12 @@ fn absorb_kv_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Absorb
         return result;
     }
 
+    // With no remainder the source is fully consumed: remove it before the
+    // merge so a parsed key of the same name survives (see merge_absorbed).
+    if !opts.keep_source && remainder.is_none() && event.remove(field).is_some() {
+        result.removed_source = true;
+    }
+
     let mut wrote = false;
     let preexisting_keys = if opts.overwrite {
         None
@@ -224,15 +230,8 @@ fn absorb_kv_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Absorb
     result.written = wrote;
 
     if !opts.keep_source {
-        match remainder {
-            Some(ref text) => {
-                event.insert(field.into(), Dynamic::from(text.clone()));
-            }
-            None => {
-                if event.remove(field).is_some() {
-                    result.removed_source = true;
-                }
-            }
+        if let Some(ref text) = remainder {
+            event.insert(field.into(), Dynamic::from(text.clone()));
         }
     }
 
@@ -284,34 +283,7 @@ fn absorb_logfmt_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Ab
     let mut result = AbsorbResult::new(AbsorbStatus::Applied);
     result.data = data_map.clone();
 
-    let preexisting_keys = if opts.overwrite {
-        None
-    } else {
-        Some(
-            event
-                .keys()
-                .map(|key| key.to_string())
-                .collect::<HashSet<String>>(),
-        )
-    };
-
-    for (key, value) in data_map.iter() {
-        if !opts.overwrite {
-            if let Some(existing) = &preexisting_keys {
-                if existing.contains(key.as_str()) {
-                    continue;
-                }
-            }
-        }
-
-        event.insert(key.clone(), value.clone());
-        result.written = true;
-    }
-
-    if !opts.keep_source && event.remove(field).is_some() {
-        result.removed_source = true;
-    }
-
+    merge_absorbed(event, field, &data_map, &opts, &mut result);
     result
 }
 
@@ -361,34 +333,7 @@ fn absorb_jwt_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Absor
     let mut result = AbsorbResult::new(AbsorbStatus::Applied);
     result.data = data_map.clone();
 
-    let preexisting_keys = if opts.overwrite {
-        None
-    } else {
-        Some(
-            event
-                .keys()
-                .map(|key| key.to_string())
-                .collect::<HashSet<String>>(),
-        )
-    };
-
-    for (key, value) in data_map.iter() {
-        if !opts.overwrite {
-            if let Some(existing) = &preexisting_keys {
-                if existing.contains(key.as_str()) {
-                    continue;
-                }
-            }
-        }
-
-        event.insert(key.clone(), value.clone());
-        result.written = true;
-    }
-
-    if !opts.keep_source && event.remove(field).is_some() {
-        result.removed_source = true;
-    }
-
+    merge_absorbed(event, field, &data_map, &opts, &mut result);
     result
 }
 
@@ -462,34 +407,7 @@ fn absorb_json_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Abso
     let mut result = AbsorbResult::new(AbsorbStatus::Applied);
     result.data = data_map.clone();
 
-    let preexisting_keys = if opts.overwrite {
-        None
-    } else {
-        Some(
-            event
-                .keys()
-                .map(|key| key.to_string())
-                .collect::<HashSet<String>>(),
-        )
-    };
-
-    for (key, value) in data_map.iter() {
-        if !opts.overwrite {
-            if let Some(existing) = &preexisting_keys {
-                if existing.contains(key.as_str()) {
-                    continue;
-                }
-            }
-        }
-
-        event.insert(key.clone(), value.clone());
-        result.written = true;
-    }
-
-    if !opts.keep_source && event.remove(field).is_some() {
-        result.removed_source = true;
-    }
-
+    merge_absorbed(event, field, &data_map, &opts, &mut result);
     result
 }
 
@@ -562,11 +480,10 @@ fn absorb_regex_impl(
     let caps = match re.captures(&text) {
         Some(caps) => caps,
         None => {
-            let mut result = AbsorbResult::new(AbsorbStatus::Empty);
-            if !opts.keep_source && event.remove(field).is_some() {
-                result.removed_source = true;
-            }
-            return result;
+            // No match means nothing was extracted, so the source is left alone
+            // (like absorb_json/absorb_logfmt on input they can't parse) —
+            // deleting it would lose the original text of every other line.
+            return AbsorbResult::new(AbsorbStatus::Empty);
         }
     };
 
@@ -593,35 +510,42 @@ fn absorb_regex_impl(
     let mut result = AbsorbResult::new(AbsorbStatus::Applied);
     result.data = data_map.clone();
 
-    let preexisting_keys = if opts.overwrite {
+    merge_absorbed(event, field, &data_map, &opts, &mut result);
+    result
+}
+
+/// Merge extracted fields into the event, consuming the source field.
+///
+/// The source field is removed *before* the merge, so a payload key that
+/// shares the source field's name (a CRI `msg` holding `{"msg": ...}`) lands
+/// on the event instead of being deleted along with the source.
+fn merge_absorbed(
+    event: &mut Map,
+    field: &str,
+    data_map: &Map,
+    opts: &AbsorbOptions,
+    result: &mut AbsorbResult,
+) {
+    if !opts.keep_source && event.remove(field).is_some() {
+        result.removed_source = true;
+    }
+
+    let preexisting_keys: Option<HashSet<String>> = if opts.overwrite {
         None
     } else {
-        Some(
-            event
-                .keys()
-                .map(|key| key.to_string())
-                .collect::<HashSet<String>>(),
-        )
+        Some(event.keys().map(|key| key.to_string()).collect())
     };
 
     for (key, value) in data_map.iter() {
-        if !opts.overwrite {
-            if let Some(existing) = &preexisting_keys {
-                if existing.contains(key.as_str()) {
-                    continue;
-                }
+        if let Some(existing) = &preexisting_keys {
+            if existing.contains(key.as_str()) {
+                continue;
             }
         }
 
         event.insert(key.clone(), value.clone());
         result.written = true;
     }
-
-    if !opts.keep_source && event.remove(field).is_some() {
-        result.removed_source = true;
-    }
-
-    result
 }
 
 fn build_data_map(pairs: &[(String, String)]) -> Map {
@@ -1355,8 +1279,8 @@ mod tests {
         let result = absorb_regex_impl(&mut event, "msg", pattern, None);
 
         assert_eq!(result.status, AbsorbStatus::Empty);
-        assert!(result.removed_source);
-        assert!(!event.contains_key("msg"));
+        assert!(!result.removed_source);
+        assert_eq!(event.get("msg").unwrap().to_string(), "No pattern here");
     }
 
     #[test]
@@ -1439,5 +1363,55 @@ mod tests {
             event.get("message").unwrap().to_string(),
             "Database connection failed"
         );
+    }
+
+    #[test]
+    fn absorb_json_keeps_payload_key_named_like_source() {
+        let mut event = Map::new();
+        event.insert(
+            "msg".into(),
+            map_string(r#"{"msg":"listening","port":8080}"#),
+        );
+
+        let result = absorb_json_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(result.removed_source);
+        assert_eq!(event.get("msg").unwrap().to_string(), "listening");
+        assert_eq!(event.get("port").unwrap().as_int().unwrap(), 8080);
+    }
+
+    #[test]
+    fn absorb_json_keeps_payload_key_named_like_source_without_overwrite() {
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string(r#"{"msg":"listening"}"#));
+        let mut options = Map::new();
+        options.insert("overwrite".into(), Dynamic::from(false));
+
+        let result = absorb_json_impl(&mut event, "msg", Some(&options));
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert_eq!(event.get("msg").unwrap().to_string(), "listening");
+    }
+
+    #[test]
+    fn absorb_logfmt_keeps_payload_key_named_like_source() {
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string(r#"level=info msg="cache warm""#));
+
+        let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert_eq!(event.get("msg").unwrap().to_string(), "cache warm");
+        assert_eq!(event.get("level").unwrap().to_string(), "info");
+    }
+
+    #[test]
+    fn absorb_kv_keeps_parsed_key_named_like_source() {
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string("x=1 msg=hello"));
+
+        let result = absorb_kv_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(result.removed_source);
+        assert_eq!(event.get("msg").unwrap().to_string(), "hello");
+        assert_eq!(event.get("x").unwrap().to_string(), "1");
     }
 }

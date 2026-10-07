@@ -1,0 +1,12 @@
+Mar  3 06:12:01 bastion sshd[4121]: Accepted publickey for deploy from 10.20.1.15 port 52114 ssh2: ED25519 SHA256:q2Xw
+Mar  3 06:14:22 bastion sshd[4188]: Failed password for invalid user admin from 203.0.113.77 port 40122 ssh2
+Mar  3 06:14:25 bastion sshd[4188]: Failed password for invalid user admin from 203.0.113.77 port 40122 ssh2
+Mar  3 06:14:29 bastion sshd[4190]: Failed password for root from 203.0.113.77 port 40188 ssh2
+Mar  3 06:15:02 bastion sshd[4201]: Failed password for invalid user oracle from 198.51.100.23 port 51002 ssh2
+Mar  3 06:15:40 bastion sshd[4215]: Failed password for root from 203.0.113.77 port 40310 ssh2
+Mar  3 06:16:11 bastion sshd[4230]: Accepted password for alice from 10.20.1.42 port 60231 ssh2
+Mar  3 06:17:03 bastion sudo[4247]:    alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx
+Mar  3 06:18:45 bastion sshd[4262]: Failed password for invalid user test from 198.51.100.23 port 51188 ssh2
+Mar  3 06:19:12 bastion sshd[4270]: Failed password for root from 192.0.2.200 port 33012 ssh2
+Mar  3 06:20:30 bastion sshd[4281]: Disconnected from authenticating user root 203.0.113.77 port 40310 [preauth]
+Mar  3 06:22:08 bastion sshd[4299]: Accepted publickey for deploy from 10.20.1.15 port 52440 ssh2: ED25519 SHA256:q2Xw

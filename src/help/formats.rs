@@ -30,8 +30,8 @@ cols:<spec>
 
 combined
   Apache/Nginx access logs (CLF, Combined, Nginx+request_time)
-  Fields: ip, ts, method, path, protocol, status
-          [identity, user, bytes, referer, agent, request_time]
+  Fields: ip, ts, request, method, path, protocol, status
+          [identity, user, bytes, referer, user_agent, request_time]
   Note: Fields in brackets are optional (omitted if value is "-")
 
 csv / tsv / csvnh / tsvnh
@@ -94,7 +94,7 @@ Built-in application-log formats
   the 'line' fallback, so they never override a format detected earlier; when
   one matches, it emits 'ts' (timestamp), 'level', 'msg', and format-specific
   extras (thread, logger, pid, ...).
-  Notes: glog/redis omit the year, so 'ts' is dated near the current year (like
+  Notes: glog omits the year, so 'ts' is dated near the current year (like
   syslog); pass --input-year YYYY for an archived log. haproxy lines are
   syslog-wrapped, so under -f auto they are detected
   as 'syslog' — pass -f haproxy to extract the structured fields. The access-log
@@ -138,7 +138,7 @@ auto (default)
   deeper offsets (1/4, 1/2, 3/4, tail), so a format change partway through
   the file — concatenated rotations, say — is still caught; gzip/zstd files
   sample the head only (compressed streams aren't seekable)
-  Detection order: json → syslog → cef → combined → cri → logfmt → csv
+  Detection order: json → cef → syslog → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once and applies to all lines
   Note: File input only: if the sampled head mixes formats, kelora parses
@@ -162,7 +162,7 @@ auto (default)
 
 auto-per-file
   Auto-detect format separately for each input file
-  Detection order: json → syslog → cef → combined → cri → logfmt → csv
+  Detection order: json → cef → syslog → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once per file and applies to that file's lines, sampling each
         file's head like 'auto' — a file that mixes formats gets a per-file

@@ -51,8 +51,20 @@
 
     See [all releases](https://github.com/dloss/kelora/releases) for ARM Linux, FreeBSD, OpenBSD, and more.
 
-## Next steps
+## Shell completion
 
-- **[Quickstart](quickstart.md)** — run your first commands in 5 minutes.
-- **[Tutorial: Basics](tutorials/basics.md)** — learn input formats, filtering, and output.
-- **[Shell completions](reference/cli-reference.md#shell-completions)** — enable tab completion for flags and values.
+```bash
+kelora --completions bash > ~/.local/share/bash-completion/completions/kelora
+kelora --completions zsh > "${fpath[1]}/_kelora"
+kelora --completions fish > ~/.config/fish/completions/kelora.fish
+```
+
+PowerShell and elvish are supported too (`--completions powershell`).
+
+## Check it works
+
+```bash
+kelora --version
+```
+
+Then [explore your first log file](guide/explore.md).

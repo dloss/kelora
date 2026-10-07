@@ -2316,6 +2316,25 @@ fn metrics_hint_suppressed_when_end_stage_consumes_metrics() {
 }
 
 #[test]
+fn metrics_hint_suppressed_when_span_hook_consumes_metrics() {
+    // --span-close reads span.metrics and --span-summary prints the per-window
+    // values, so the "rerun with -m" nudge would be noise.
+    for span_args in [
+        &["--span", "1", "--span-close", "print(span.metric(\"n\"))"][..],
+        &["--span", "1", "--span-summary=text"][..],
+    ] {
+        let mut args = vec!["-f", "json", "-q", "--exec", "track_inc(\"n\");"];
+        args.extend_from_slice(span_args);
+        let (_out, stderr, code) = run_kelora_with_input(&args, HINT_INPUT);
+        assert_eq!(code, 0, "args {args:?}: {stderr}");
+        assert!(
+            !stderr.contains(METRICS_HINT),
+            "metrics nudge should be suppressed with {span_args:?}, got: {stderr}"
+        );
+    }
+}
+
+#[test]
 fn stats_json_emits_machine_readable_object() {
     // --stats=json must emit a JSON object (regression: it used to silently
     // fall back to the human-readable table, ignoring the requested format).

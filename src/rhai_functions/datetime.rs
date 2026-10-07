@@ -144,9 +144,14 @@ pub fn to_datetime(
     // Try explicit format first
     if let Some(fmt) = format {
         if let Ok(naive_dt) = NaiveDateTime::parse_from_str(s, fmt) {
-            return Ok(DateTimeWrapper::new(
-                default_tz.from_utc_datetime(&naive_dt),
-            ));
+            // A timestamp without an offset is wall-clock time in the given zone
+            // (UTC by default). For a DST gap, where that wall-clock time does
+            // not exist, fall back to reading it as UTC.
+            let dt = default_tz
+                .from_local_datetime(&naive_dt)
+                .earliest()
+                .unwrap_or_else(|| default_tz.from_utc_datetime(&naive_dt));
+            return Ok(DateTimeWrapper::new(dt));
         }
         // Also try with timezone-aware parsing for explicit format
         if let Ok(dt) = DateTime::parse_from_str(s, fmt) {
@@ -161,12 +166,14 @@ pub fn to_datetime(
         )));
     }
 
-    // For auto-parsing (no explicit format), use the adaptive parser
-    // Rhai scripts use UTC interpretation for consistency
+    // For auto-parsing (no explicit format), use the adaptive parser. A
+    // timestamp without an offset is read as wall-clock time in the given zone
+    // (UTC by default); one with an offset keeps it.
+    let parse_tz = tz.unwrap_or("UTC");
     let parsed_utc = RHAI_TS_PARSER.with(|parser| {
         parser
             .borrow_mut()
-            .parse_ts_with_config(s, None, Some("UTC"))
+            .parse_ts_with_config(s, None, Some(parse_tz))
     });
 
     if let Some(utc_dt) = parsed_utc {
@@ -828,6 +835,35 @@ mod tests {
             Some("INVALID"),
         );
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_to_datetime_reads_naive_text_in_given_timezone() {
+        // 09:00 in Berlin (CET, UTC+1) is 08:00 UTC — with an explicit format...
+        let dt = to_datetime(
+            "15.01.2024 09:00",
+            Some("%d.%m.%Y %H:%M"),
+            Some("Europe/Berlin"),
+        )
+        .unwrap();
+        assert_eq!(
+            dt.inner.with_timezone(&Utc).to_rfc3339(),
+            "2024-01-15T08:00:00+00:00"
+        );
+
+        // ...and with the adaptive parser.
+        let dt = to_datetime("2024-01-15 09:00:00", None, Some("Europe/Berlin")).unwrap();
+        assert_eq!(
+            dt.inner.with_timezone(&Utc).to_rfc3339(),
+            "2024-01-15T08:00:00+00:00"
+        );
+
+        // An explicit offset wins over the zone hint.
+        let dt = to_datetime("2024-01-15T09:00:00+00:00", None, Some("Europe/Berlin")).unwrap();
+        assert_eq!(
+            dt.inner.with_timezone(&Utc).to_rfc3339(),
+            "2024-01-15T09:00:00+00:00"
+        );
     }
 
     #[test]

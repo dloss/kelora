@@ -1,612 +1,186 @@
 # Time Reference
 
-Complete reference for timestamp detection, parsing, formatting, and time-based operations in Kelora.
+Timestamp detection, parsing, time windows and time functions. For a task-oriented walkthrough see [guide/time.md](../guide/time.md).
 
-## Automatic Timestamp Detection
+## Which Field Is the Timestamp
 
-Kelora automatically detects timestamp fields in structured formats (JSON, logfmt, CEF, syslog, etc.) using a standard set of field names.
+Kelora parses one timestamp per event. The parsed value drives `--since`/`--until`, `--span`, `--mark-gaps`, `--merge-sorted`, `-z`/`-Z` and `--normalize-ts`, and is available in scripts as `meta.parsed_ts` (UTC datetime, `()` if missing). The original field keeps its raw string.
 
-### Auto-Detected Field Names
+Without `--ts-field`, the first of these names present in the event is used, in this priority order (exact, case-sensitive match):
 
-The following field names are recognized as timestamps (case-insensitive):
+`ts`, `_ts`, `timestamp`, `at`, `time`, `@timestamp`, `log_timestamp`, `event_time`, `datetime`, `date_time`, `created_at`, `logged_at`, `_t`, `@t`, `t`
 
-- `ts`
-- `_ts`
-- `timestamp`
-- `at`
-- `time`
-- `@timestamp`
-- `log_timestamp`
-- `event_time`
-- `datetime`
-- `date_time`
-- `created_at`
-- `logged_at`
-- `_t`
-- `@t`
-- `t`
+Only that field is tried: if `ts` exists but cannot be parsed, a later `time` field is not used. `Timestamp` or `TIME` are not detected. Name the field with `--ts-field`:
 
-**Behavior:**
-
-- Detection is case-insensitive (`Timestamp`, `TIMESTAMP`, etc. all match)
-- First matching field in the event is used
-- To override auto-detection, use `--ts-field <field_name>`
-
-**Example:**
 ```bash
-# Auto-detects "timestamp" field
-echo '{"timestamp": "2024-01-15T10:30:00Z", "level": "INFO"}' | kelora -j
-
-# Override to use "created_at" field
-echo '{"timestamp": "2024-01-15T10:30:00Z", "created_at": "2024-01-15T10:31:00Z"}' \
+echo '{"timestamp":"2024-01-15T10:30:00Z","created_at":"2024-01-15T10:31:00Z"}' \
   | kelora -j --ts-field created_at
 ```
 
-## Timestamp Format Parsing
+Parsers that produce a timestamp (syslog, combined, cri, the built-in application-log formats) put it in `ts`.
 
-Kelora uses [chrono format strings](https://docs.rs/chrono/latest/chrono/format/strftime/index.html) for parsing and formatting timestamps.
+Without `--ts-format`, common layouts are recognized automatically: RFC 3339/ISO 8601 (with `T` or space, any fraction, `Z` or offset), Apache `15/Jan/2024:10:30:00 +0000`, syslog `Jan 15 10:30:00`, Python `2024-01-15 10:30:00,123`, and Unix epochs as numbers or numeric strings:
 
-### Date and Time Components
+| Input | Read as |
+|-------|---------|
+| `1735566123` | seconds (10 digits) |
+| `1735566123000` | milliseconds (13 digits) |
+| `1735566123000000` | microseconds (16 digits) |
+| `1735566123000000000` | nanoseconds (19 digits) |
+| `1735566123.456` | seconds with fraction |
 
-| Token | Example | Description |
-|-------|---------|-------------|
-| `%Y` | `2024` | 4-digit year |
-| `%y` | `24` | 2-digit year |
-| `%m` | `01` | Month (01-12) |
-| `%b` | `Jan` | Abbreviated month name |
-| `%B` | `January` | Full month name |
-| `%d` | `15` | Day of month (01-31) |
-| `%j` | `015` | Day of year (001-366) |
-| `%H` | `14` | Hour (00-23) |
-| `%I` | `02` | Hour (01-12) |
+## Parsing Options
+
+| Flag | Purpose |
+|------|---------|
+| `--ts-field <FIELD>` | field to parse instead of the auto-detected one |
+| `--ts-format <FMT>` | chrono format of that field; see [Format Codes](#format-codes) |
+| `--input-tz <TZ>` | zone for timestamps without an offset: `UTC` (default), `local`, or an IANA name such as `Europe/Berlin`. The `TZ` environment variable also sets it. |
+| `--input-year <YEAR>` | year for year-less timestamps, or `auto` (default) |
+
+## Year and Timezone
+
+**Timezone.** A numeric offset in the timestamp (`+0200`, `Z`) is always used. A timestamp without one (syslog, log4j, python-logging, glog, apache-error, postgres, `2024-01-15 10:30:00`, …) is read in `--input-tz`, default UTC. A zone abbreviation such as `CEST` or `EST` is ignored and the value is treated as naive, because abbreviations are ambiguous and carry no DST information. If logs were written in local time and `--input-tz` is not set, every timestamp is shifted, and so are time windows, span boundaries and merge order. Kelora prints a hint once when a time filter, `--span` or `--normalize-ts` relies on the UTC assumption.
+
+**Year.** Year-less layouts (syslog `Jan 15 10:30:00`, glog, haproxy) get last year, this year or next year, whichever is nearest the current clock. That is right for recent logs and logs that cross New Year, wrong for archives. `-s/--stats` reports how many years were guessed. `--input-year 2005` puts every year-less timestamp in 2005, which means a December→January log gets January 2005, not 2006; split such files or keep `auto`.
+
+```bash
+kelora Linux_2k.log --input-year 2005 --since 2005-06-01 --until 2005-07-01
+kelora app.log --ts-format '%Y-%m-%d %H:%M:%S' --input-tz Europe/Berlin
+```
+
+## Format Codes
+
+`--ts-format`, `to_datetime(text, fmt)`, `dt.format(fmt)` and `-M timestamp:format=` use [chrono format strings](https://docs.rs/chrono/latest/chrono/format/strftime/index.html). Quote the format in single quotes so the shell leaves `%` alone.
+
+| Code | Example | Meaning |
+|------|---------|---------|
+| `%Y` / `%y` | `2024` / `24` | year, 4 / 2 digits |
+| `%m` | `01` | month 01–12 |
+| `%b` / `%B` | `Jan` / `January` | month name |
+| `%d` | `15` | day 01–31 |
+| `%j` | `015` | day of year |
+| `%H` / `%I` | `14` / `02` | hour, 24h / 12h |
 | `%p` | `PM` | AM/PM |
-| `%M` | `30` | Minute (00-59) |
-| `%S` | `45` | Second (00-59) |
+| `%M` | `30` | minute |
+| `%S` | `45` | second |
+| `%.f` | `.123`, `.123456` | dot plus any number of fraction digits; a comma is accepted too |
+| `%3f` / `%6f` / `%9f` | `123` / `123456` / `123456789` | exactly 3 / 6 / 9 fraction digits (put the `.` or `,` before it) |
+| `%f` | `123456789` | fraction digits read as a nanosecond count: `.%f` on `.123456` gives 123456 ns, not 0.123456 s. Prefer `%.f` or `%6f`. |
+| `%z` / `%:z` | `+0100` / `+01:00` | numeric offset |
+| `%Z` | `EST` | zone abbreviation; consumed but ignored |
+| `%a` / `%A` | `Mon` / `Monday` | weekday name |
+| `%w` | `1` | weekday, 0 = Sunday |
+| `%W` / `%U` | `03` | week number, Monday / Sunday first |
+| `%s` | `1705318200` | Unix seconds |
 
-### Subsecond Precision
+| `--ts-format` | Matches |
+|---------------|---------|
+| `'%Y-%m-%dT%H:%M:%S%.f%:z'` | `2024-01-15T10:30:00.123+02:00` |
+| `'%Y-%m-%d %H:%M:%S'` | `2024-01-15 10:30:00` |
+| `'%Y-%m-%d %H:%M:%S,%3f'` | `2024-01-15 10:30:00,123` (Python logging) |
+| `'%d/%b/%Y:%H:%M:%S %z'` | `15/Jan/2024:10:30:00 +0100` (Apache) |
+| `'%b %d %H:%M:%S'` | `Jan 15 10:30:00` (syslog; year guessed) |
+| `'%m/%d/%Y %I:%M:%S %p'` | `01/15/2024 02:30:00 PM` |
+| `'%a %b %d %H:%M:%S %Y'` | `Mon Jan 15 14:30:45 2024` |
 
-| Token | Example | Description |
-|-------|---------|-------------|
-| `%f` | `123456789` | Nanoseconds (9 digits) |
-| `%3f` | `123` | Milliseconds (3 digits) |
-| `%6f` | `123456` | Microseconds (6 digits) |
-| `%9f` | `123456789` | Nanoseconds (9 digits) |
-| `%.f` | `.123` or `.123456` | Auto-match subseconds with dot |
+## Time Windows: `--since`, `--until`
 
-### Timezone Tokens
+`--since` keeps events at or after a time, `--until` at or before.
 
-| Token | Example | Description |
-|-------|---------|-------------|
-| `%z` | `+0000` | Numeric offset (+HHMM) |
-| `%:z` | `+00:00` | Numeric offset with colon |
-| `%Z` | `UTC`, `EST` | Timezone abbreviation |
+| Value | Meaning |
+|-------|---------|
+| `2024-01-15T10:00:00Z`, `2024-01-15T10:00:00+01:00` | absolute |
+| `2024-01-15 10:00`, `2024-01-15T10:00:00` | absolute, read in `--input-tz` |
+| `2024-01-15`, `2024/01/15`, `01/15/2024`, `15.01.2024`, `January 15, 2024`, `15 January 2024` | midnight UTC of that date (not `--input-tz`) |
+| `10:30`, `10:30:00` | that UTC clock time on today's local date |
+| `1705318200`, `1705318200.5`, `1705318200000` | Unix epoch, same digit rules as above |
+| `now` | now |
+| `today`, `yesterday`, `tomorrow` | 00:00 UTC on that local date |
+| `1h`, `-1h`, `30m`, `2d`, `1w`, `90s`, `3 days` | that long ago |
+| `+1h`, `+30m` | that far in the future |
+| `now-15m`, `now+5m` | relative to now |
+| `since+30m`, `since-30m` | relative to the `--since` value (use in `--until`) |
+| `until+1h`, `until-1h` | relative to the `--until` value (use in `--since`) |
 
-### Weekday Formats
-
-| Token | Example | Description |
-|-------|---------|-------------|
-| `%a` | `Mon` | Abbreviated weekday |
-| `%A` | `Monday` | Full weekday name |
-| `%w` | `1` | Weekday number (0=Sunday) |
-
-### Week Numbers
-
-| Token | Example | Description |
-|-------|---------|-------------|
-| `%W` | `03` | Week number (Monday as first day) |
-| `%U` | `03` | Week number (Sunday as first day) |
-
-### Common Timestamp Format Examples
-
-```bash
-# ISO 8601 / RFC3339
-kelora --ts-format '%Y-%m-%dT%H:%M:%S%.f%:z' app.log
-
-# Apache/Nginx logs
-kelora --ts-format '%d/%b/%Y:%H:%M:%S %z' access.log
-
-# Syslog
-kelora --ts-format '%b %d %H:%M:%S' syslog.log
-
-# Python logging
-kelora --ts-format '%Y-%m-%d %H:%M:%S,%3f' app.log
-
-# Custom date and time
-kelora --ts-format '%Y-%m-%d %H:%M:%S' app.log
-
-# Unix timestamp (numeric)
-# No format needed - auto-detected
-
-# US format with 12-hour time
-kelora --ts-format '%m/%d/%Y %I:%M:%S %p' app.log
-```
-
-### Naive Timestamps and Timezone Handling
-
-If your timestamps lack timezone information, specify the input timezone:
+Units: `s`, `m`, `h`, `d`, `w`, also spelled out (`min`, `hours`, `days`, `weeks`, …). One number and one unit only: `1h30m` and `500ms` are rejected; write `90m`.
 
 ```bash
-# Timestamps are in UTC
-kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz UTC app.log
-
-# Timestamps are in local time
-kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz local app.log
-
-# Timestamps are in specific timezone
-kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz America/New_York app.log
+kelora app.log --since 1h                                 # last hour
+kelora app.log --since now-15m
+kelora app.log --since 2024-01-15T10:00:00Z --until 2024-01-15T11:00:00Z
+kelora app.log --since 2024-01-15T10:00:00Z --until since+45m
+kelora app.log --since until-1h --until 2024-01-15T11:00:00Z
+kelora app.log --since -2h --until since+1h               # one hour, starting two hours ago
 ```
 
-**Timezone Options:**
+- Only one bound may refer to the other: `--since until-1h --until since+1h` is an error, as is `since+…` without `--since`.
+- `1h`, `today` and bare clock times are relative to the current clock, not to the log. On an archived log use absolute timestamps.
+- The window reads the timestamp the parser produced and runs before every script stage. Setting a timestamp field in `--exec` does not move an event in or out of the window. For a timestamp you build in a script, filter on it instead:
 
-- `UTC` - Coordinated Universal Time
-- `local` - System local timezone
-- `America/New_York`, `Europe/London`, etc. - Named IANA timezones
+  ```bash
+  kelora -f json app.log \
+    --exec 'e.derived = to_datetime(e.date + "T" + e.time + "Z")' \
+    --filter 'e.derived >= to_datetime("2024-05-01T00:00:00Z")'
+  ```
 
-## CLI Timestamp Options
+- An event without a parsed timestamp is dropped by the window (it never reaches `--filter`, `--exec` or `--assert`), and a warning gives the count. Fix the timestamp with `--ts-field`/`--ts-format`, merge continuation lines with `-M`, or use `--filter` instead of a window for undated cascade `line` events. `--strict` aborts on the first such event.
+- `--cut-at` (for `--drain-diff`) accepts the same values except the `since`/`until` anchors.
 
-### Parsing Configuration
+## Display and Normalization
 
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--ts-field <FIELD>` | Override auto-detected timestamp field | `--ts-field created_at` |
-| `--ts-format <FORMAT>` | Custom timestamp format (chrono syntax) | `--ts-format '%Y-%m-%d %H:%M:%S'` |
-| `--input-tz <TZ>` | Timezone for naive timestamps | `--input-tz America/New_York` |
+| Flag | Effect |
+|------|--------|
+| `-z, --show-ts-local` | show the timestamp field as local RFC 3339; default output format only |
+| `-Z, --show-ts-utc` | show it as UTC RFC 3339; default output format only |
+| `--normalize-ts` | rewrite the timestamp field as RFC 3339 UTC (`2024-01-15T10:30:00+00:00`) in every output format. Applied at output: scripts still see the raw value. |
 
-### Time Range Filtering
+`-z`/`-Z` have no effect on `-F json`, `logfmt` or `csv`; use `--normalize-ts` there.
 
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--since <TIME>` | Include events from this time onward | `--since '1h'` or `--since '2024-01-15T10:00:00Z'` |
-| `--until <TIME>` | Include events until this time | `--until '30m'` or `--until '2024-01-15T11:00:00Z'` |
+Other time-based flags: `--span 5m` (fixed time windows, see [guide/spans.md](../guide/spans.md)), `--mark-gaps 5m` (divider line where consecutive events are at least that far apart), `--merge-sorted` (merge files by timestamp, see [guide/files.md](../guide/files.md)).
 
-**Relative Time Formats:**
+## Rhai Functions
 
-- `1h` - 1 hour ago
-- `30m` - 30 minutes ago
-- `2d` - 2 days ago
-- `1w` - 1 week ago
-- `+1h` - 1 hour in the future (prefix `+` for future times)
-- Combine: `1h30m` - 1 hour 30 minutes ago
+Use `meta.parsed_ts` for the event's own timestamp; `to_datetime()` is for other fields. Full list: [functions.md](functions.md#datetime-functions).
 
-**Absolute Time Formats:**
-
-- ISO 8601: `2024-01-15T10:30:00Z`
-- RFC3339: `2024-01-15T10:30:00+00:00`
-- Unix timestamps: `1705318200`
-- Date only: `2024-01-15` (assumes 00:00:00)
-- Time only: `10:30:00` (assumes today)
-- Special values: `now`, `today`, `yesterday`, `tomorrow`
-
-**Anchored Timestamps:**
-
-Anchor one boundary to the other for duration-based windows:
-
-- `since+DURATION` - Duration after `--since` value
-- `since-DURATION` - Duration before `--since` value
-- `until+DURATION` - Duration after `--until` value
-- `until-DURATION` - Duration before `--until` value
-- `now+DURATION` - Duration from current time (future)
-- `now-DURATION` - Duration from current time (past)
+| Function | Returns / notes |
+|----------|-----------------|
+| `now()` | current time, UTC |
+| `to_datetime(text)` | parse with the auto-detection rules above; naive text is read as UTC |
+| `to_datetime(text, fmt)` | parse with a chrono format; error if it does not match |
+| `to_datetime(text, fmt, tz)` | text without an offset is read as wall-clock time in `tz`: `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "America/New_York")` is `10:30-05:00` (15:30 UTC) |
+| `dt.year()` `.month()` `.day()` `.hour()` `.minute()` `.second()` | int, in `dt`'s zone |
+| `dt.ts_nanos()` | Unix nanoseconds |
+| `dt.to_iso()` | `2024-01-15T10:30:00+00:00` |
+| `dt.format(fmt)` | chrono format, e.g. `"%Y-%m-%d %I:%M %p"` → `2024-01-15 10:30 AM` |
+| `dt.to_utc()`, `dt.to_local()`, `dt.to_timezone("Europe/Berlin")` | same instant in another zone |
+| `dt.timezone_name()` | `"UTC"`, `"Europe/Berlin"` |
+| `dt.round_to("5m")` | floor to the interval (`12:34:56` → `12:30:00`). Boundaries are computed in UTC, so `"1d"` on a New York time gives `19:00-05:00`; the result keeps `dt`'s zone |
+| `dt.ceil_to("5m")` | up to the next boundary (UTC-based, like `round_to`); unchanged if already on one |
+| `dt + dur`, `dt - dur` | datetime |
+| `dt1 - dt2` | duration, always positive (absolute difference) |
+| `==` `!=` `<` `<=` `>` `>=` | compare datetimes, or durations |
+| `to_duration("1h30m")` | duration; accepts combined units, spaces, `ms`, fractions (`"1.5h"`) |
+| `duration_from_seconds(n)`, `_milliseconds`, `_nanoseconds`, `_minutes`, `_hours`, `_days` | duration |
+| `dur.as_seconds()`, `as_milliseconds()`, `as_nanoseconds()`, `as_minutes()`, `as_hours()`, `as_days()` | int, truncated: 90 minutes `.as_hours()` is `1` |
+| `dur.to_string()` | humanized, largest two units: `"1h 30m"` |
+| `humanize_duration(ms)` | `5000` → `"5s"` |
+| `d1 + d2`, `d1 - d2` (positive), `d * n`, `d / n` | duration |
 
 ```bash
-# Show 30 minutes starting at 10:00
-kelora --since "10:00" --until "since+30m" app.log
-
-# Show 1 hour ending at 11:00
-kelora --since "until-1h" --until "11:00" app.log
-
-# Show 1 hour starting from 2 hours ago
-kelora --since "2h" --until "since+1h" app.log
-
-# Show 45 minutes starting at a specific timestamp
-kelora --since "2024-01-15T10:00:00Z" --until "since+45m" app.log
-
-# Show next 5 minutes (using now anchor)
-kelora --until "now+5m" app.log
-
-# Show from 1 hour ago to 5 minutes from now
-kelora --since "now-1h" --until "now+5m" app.log
-```
-
-**Important Notes:**
-
-- `since` anchors to the `--since` value, `until` anchors to the `--until` value
-- `now` anchors to the current time (doesn't require --since or --until to be set)
-- Cannot use both anchors in the same command (e.g., `--since until-1h --until since+1h` is an error)
-- The anchor target must be specified (e.g., `--until since+30m` requires `--since` to be set)
-
-**Basic Examples:**
-```bash
-# Last hour
-kelora -j --since 1h app.log
-
-# Last 30 minutes
-kelora -j --since 30m app.log
-
-# Between two times
-kelora -j --since '2024-01-15T10:00:00Z' --until '2024-01-15T11:00:00Z' app.log
-
-# Since absolute time
-kelora -j --since '2024-01-15T10:00:00Z' app.log
-
-# Future events (1 hour from now)
-kelora -j --since +1h app.log
-```
-
-### Timestamp Display and Conversion
-
-| Flag | Description | Example |
-|------|-------------|---------|
-| `-z` | Display timestamps as local RFC3339 (display only) | `kelora -j -z app.log` |
-| `-Z` | Display timestamps as UTC RFC3339 (display only) | `kelora -j -Z app.log` |
-| `--normalize-ts` | Normalize timestamp field to RFC3339 (modifies event) | `kelora -j --normalize-ts app.log` |
-
-**Difference between `-z/-Z` and `--normalize-ts`:**
-
-- `-z` and `-Z`: Display-only formatting, doesn't modify event data
-- `--normalize-ts`: Converts the timestamp field in the event itself to RFC3339
-
-```bash
-# Display in local time (doesn't modify events)
-kelora -j -z app.log -F json
-
-# Convert timestamp field to RFC3339 in events
-kelora -j --normalize-ts app.log -F json
-```
-
-### Time-Based Features
-
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--span <DURATION>` | Time-based span windows for aggregation | `--span 1h` |
-| `--mark-gaps <DURATION>` | Insert markers when time delta exceeds duration | `--mark-gaps 5m` |
-
-**Example:**
-```bash
-# 1-hour aggregation windows
-kelora -j --span 1h --exec 'emit_span(|s| {count: s.len()})' app.log
-
-# Mark gaps longer than 5 minutes
-kelora -j --mark-gaps 5m app.log
-```
-
-## Rhai DateTime Functions
-
-Complete reference for working with dates and times in Rhai scripts.
-
-### Parsing and Creation
-
-| Function | Description | Example |
-|----------|-------------|---------|
-| `to_datetime(text)` | Parse ISO 8601 timestamp (auto-format) | `to_datetime("2024-01-15T10:30:00Z")` |
-| `to_datetime(text, fmt)` | Parse with custom format | `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S")` |
-| `to_datetime(text, fmt, tz)` | Parse with format and timezone | `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "America/New_York")` |
-| `now()` | Current time (UTC) | `now()` |
-
-### DateTime Components
-
-Access components of a DateTime value:
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.year()` | Integer | Year (e.g., 2024) |
-| `.month()` | Integer | Month (1-12) |
-| `.day()` | Integer | Day of month (1-31) |
-| `.hour()` | Integer | Hour (0-23) |
-| `.minute()` | Integer | Minute (0-59) |
-| `.second()` | Integer | Second (0-59) |
-| `.ts_nanos()` | Integer | Unix timestamp in nanoseconds |
-
-**Example:**
-```rhai
-let dt = to_datetime(e.timestamp);
-if dt.hour() >= 9 && dt.hour() < 17 {
-    print("Business hours");
-}
-```
-
-### DateTime Formatting
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `.to_iso()` | Convert to ISO 8601 string | `dt.to_iso()` → `"2024-01-15T10:30:00Z"` |
-| `.format(fmt)` | Format with custom pattern | `dt.format("%Y-%m-%d")` → `"2024-01-15"` |
-
-### Timezone Conversion
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `.to_utc()` | Convert to UTC | `dt.to_utc()` |
-| `.to_local()` | Convert to local timezone | `dt.to_local()` |
-| `.to_timezone(name)` | Convert to named timezone | `dt.to_timezone("America/New_York")` |
-| `.timezone_name()` | Get timezone name | `dt.timezone_name()` → `"UTC"` |
-
-### Time Bucketing
-
-#### `.round_to(interval)`
-
-Round a timestamp down to the nearest interval. Essential for grouping events into time buckets for histograms, time-series analysis, and aggregation.
-
-**Syntax:**
-```rhai
-rounded_dt = dt.round_to("interval")
-```
-
-**Parameters:**
-- `interval` - Duration string (e.g., `"5m"`, `"1h"`, `"1d"`)
-
-**Returns:** DateTimeWrapper rounded down to the interval boundary
-
-**Examples:**
-```rhai
-// Group events into 5-minute buckets
-let timestamp = to_datetime(e.timestamp);
-e.bucket = timestamp.round_to("5m").to_iso();
-track_freq("requests_per_5min", e.bucket);
-
-// Hourly aggregation
-let hourly = timestamp.round_to("1h");
-e.hour_label = hourly.format("%Y-%m-%d %H:00");
-
-// Daily rollups
-e.date = timestamp.round_to("1d").format("%Y-%m-%d");
-```
-
-**Common intervals:**
-- **Minute-level:** `"1m"`, `"5m"`, `"15m"`, `"30m"`
-- **Hour-level:** `"1h"`, `"6h"`, `"12h"`
-- **Day-level:** `"1d"`, `"7d"`
-
-**How it works:**
-- Rounds **down** to the nearest interval boundary (floor operation)
-- `2024-01-15T12:34:56Z` with `"5m"` → `2024-01-15T12:30:00Z`
-- `2024-01-15T12:34:56Z` with `"1h"` → `2024-01-15T12:00:00Z`
-- `2024-01-15T12:34:56Z` with `"1d"` → `2024-01-15T00:00:00Z`
-- Preserves the original timezone
-
-#### `.ceil_to(interval)`
-
-Round a timestamp **up** to the next interval boundary. If the timestamp is already exactly on a boundary, it stays unchanged.
-
-**Syntax:**
-```rhai
-ceiled_dt = dt.ceil_to("interval")
-```
-
-**Examples:**
-```rhai
-let timestamp = to_datetime(e.timestamp);
-
-// Compute bucket start and end times
-e.bucket_start = timestamp.round_to("1h").to_iso();
-e.bucket_end = timestamp.ceil_to("1h").to_iso();
-
-// 12:34:56 ceil to 5m → 12:35:00
-// 12:30:00 ceil to 5m → 12:30:00 (already on boundary)
-```
-
-Accepts the same interval strings as `round_to()`. Preserves the original timezone.
-
-### DateTime Comparison
-
-DateTime values support all comparison operators:
-
-```rhai
-let dt1 = to_datetime("2024-01-15T10:30:00Z");
-let dt2 = to_datetime("2024-01-15T11:00:00Z");
-
-dt1 == dt2  // false
-dt1 != dt2  // true
-dt1 < dt2   // true
-dt1 <= dt2  // true
-dt1 > dt2   // false
-dt1 >= dt2  // false
-```
-
-### DateTime Arithmetic
-
-```rhai
-// Add duration to datetime
-let dt = to_datetime("2024-01-15T10:00:00Z");
-let later = dt + to_duration("1h30m");  // 2024-01-15T11:30:00Z
-
-// Subtract duration from datetime
-let earlier = dt - to_duration("30m");  // 2024-01-15T09:30:00Z
-
-// Difference between two datetimes (returns Duration)
-let dt1 = to_datetime("2024-01-15T10:00:00Z");
-let dt2 = to_datetime("2024-01-15T11:30:00Z");
-let elapsed = dt2 - dt1;  // Duration: 1h30m
-```
-
-## Rhai Duration Functions
-
-### Parsing and Creation
-
-| Function | Description | Example |
-|----------|-------------|---------|
-| `to_duration(text)` | Parse duration string | `to_duration("1h30m")` |
-| `duration_from_seconds(n)` | Create from seconds | `duration_from_seconds(3600)` |
-| `duration_from_milliseconds(n)` | Create from milliseconds | `duration_from_milliseconds(5000)` |
-| `duration_from_nanoseconds(n)` | Create from nanoseconds | `duration_from_nanoseconds(1000000)` |
-| `duration_from_minutes(n)` | Create from minutes | `duration_from_minutes(30)` |
-| `duration_from_hours(n)` | Create from hours | `duration_from_hours(2)` |
-| `duration_from_days(n)` | Create from days | `duration_from_days(7)` |
-
-**Duration String Format:**
-
-- `1h` - 1 hour
-- `30m` - 30 minutes
-- `45s` - 45 seconds
-- `500ms` - 500 milliseconds
-- Combine: `1h30m45s` - 1 hour, 30 minutes, 45 seconds
-
-### Duration Conversion
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.as_seconds()` | Float | Duration in seconds |
-| `.as_milliseconds()` | Integer | Duration in milliseconds |
-| `.as_nanoseconds()` | Integer | Duration in nanoseconds |
-| `.as_minutes()` | Float | Duration in minutes |
-| `.as_hours()` | Float | Duration in hours |
-| `.as_days()` | Float | Duration in days |
-
-### Duration Formatting
-
-| Function | Description | Example |
-|----------|-------------|---------|
-| `humanize_duration(ms)` | Format milliseconds as human-readable | `humanize_duration(5000)` → `"5s"` |
-| `.to_string()` | Convert duration to string | `dur.to_string()` → `"1h30m"` |
-
-**Example:**
-```rhai
-let dur = to_duration("1h30m");
-print(`${dur.as_minutes()} minutes`);  // 90 minutes
-print(`${dur.as_seconds()} seconds`);  // 5400 seconds
-```
-
-### Duration Arithmetic
-
-```rhai
-// Add durations
-let d1 = to_duration("1h");
-let d2 = to_duration("30m");
-let total = d1 + d2;  // 1h30m
-
-// Subtract durations
-let diff = d1 - d2;  // 30m
-
-// Multiply duration
-let doubled = d1 * 2;  // 2h
-
-// Divide duration
-let half = d1 / 2;  // 30m
-```
-
-### Duration Comparison
-
-Duration values support all comparison operators:
-
-```rhai
-let d1 = to_duration("1h");
-let d2 = to_duration("30m");
-
-d1 == d2  // false
-d1 != d2  // true
-d1 > d2   // true
-d1 >= d2  // true
-d1 < d2   // false
-d1 <= d2  // false
-```
-
-## Common Patterns
-
-### Calculate Request Duration
-
-```rhai
-// Parse timestamps and calculate duration
-let start = to_datetime(e.start_time);
-let end = to_datetime(e.end_time);
-let duration = end - start;
-e.duration_ms = duration.as_milliseconds();
-```
-
-### Filter Business Hours
-
-```rhai
-// Use inside a --filter stage to keep only business hours (9 AM - 5 PM)
-let dt = to_datetime(e.timestamp);
-dt.hour() >= 9 && dt.hour() < 17
-```
-
-### Compare Against Current Time
-
-```rhai
-// Find events older than 1 hour
-let dt = to_datetime(e.timestamp);
-let age = now() - dt;
-if age > to_duration("1h") {
-    e.is_old = true;
-}
-```
-
-### Format Timestamp for Display
-
-```rhai
-// Convert to custom display format
-let dt = to_datetime(e.timestamp);
-e.display_time = dt.format("%Y-%m-%d %I:%M %p");
-// Result: "2024-01-15 10:30 AM"
-```
-
-### Time-Based Aggregation
-
-```rhai
-// Group by hour of day
-let dt = to_datetime(e.timestamp);
-e.hour_of_day = dt.hour();
+kelora app.log --filter 'meta.parsed_ts.hour() >= 9 && meta.parsed_ts.hour() < 17'
+kelora app.log -m --exec 'track_freq("per_5m", meta.parsed_ts.round_to("5m"))'
+kelora app.log --exec 'e.age_s = (now() - meta.parsed_ts).as_seconds()'
+kelora app.log --exec 'e.duration_ms = (to_datetime(e.end_time) - to_datetime(e.start_time)).as_milliseconds()'
 ```
 
 ## Troubleshooting
 
-### Timestamp Not Detected
-
-**Problem:** Timestamps not being parsed automatically.
-
-**Solutions:**
-
-1. Check if field name is in auto-detected list (see above)
-2. Specify field explicitly: `--ts-field your_field_name`
-3. Check field value is a string (not nested object)
-
-### Parse Errors
-
-**Problem:** "Failed to parse timestamp" errors.
-
-**Solutions:**
-
-1. Check if format matches exactly: `--ts-format '%Y-%m-%d %H:%M:%S'`
-2. Verify timezone handling: add `--input-tz UTC` for naive timestamps
-3. Check for subsecond precision: use `%.f` for auto-matching
-4. Look for Python comma separator: automatic conversion to period
-
-### Timezone Issues
-
-**Problem:** Times appear in wrong timezone.
-
-**Solutions:**
-
-1. For display: Use `-z` (local) or `-Z` (UTC)
-2. For naive inputs: Set `--input-tz America/New_York`
-3. Check TZ environment variable if using "local"
-4. Verify timestamp includes timezone: `+00:00` or `Z`
-
-### Relative Time Parsing
-
-**Problem:** `--since 1h` not working as expected.
-
-**Solutions:**
-
-1. Check timestamp is properly detected/parsed first
-2. Ensure timestamps are in chronological order (for best results)
-3. Verify format: `1h`, `30m`, `2d` (no spaces)
-4. Use absolute times if relative parsing fails
-
-### Syslog Year Inference
-
-**Problem:** Syslog timestamps missing year.
-
-**Solution:**
-
-- Kelora infers year from current time
-- For historical logs, ensure system clock is correct
-- Use custom format with explicit year if available
-
-## See Also
-
-- [Working with Time Tutorial](../tutorials/working-with-time.md) - Step-by-step guide with examples
-- [Functions Reference](functions.md) - Complete Rhai function documentation
-- [CLI Reference](cli-reference.md) - All command-line flags
-- [Script Variables](script-variables.md) - Available variables in Rhai scripts
-- [Chrono Format Strings](https://docs.rs/chrono/latest/chrono/format/strftime/index.html) - Complete format token reference
+| Symptom | Check |
+|---------|-------|
+| `-s` shows `Timestamp: (none found…)` | field name not in the list above (case matters): `--ts-field` |
+| `-s` shows `0/N parsed` | layout not recognized: `--ts-format` |
+| times off by whole hours | naive timestamps read as UTC: `--input-tz` |
+| syslog/glog dated in the wrong year | `--input-year` |
+| `--since 1h` keeps nothing | it means one hour before now; use an absolute time for old logs |
+| events vanish with `--since`/`--until` | events without a parsed timestamp are dropped; see the warning count |

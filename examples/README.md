@@ -2,7 +2,7 @@
 
 This directory contains sample files for testing Kelora with different log formats, edge cases, and real-world scenarios. Use these files to experiment with filters, transformations, and parsing strategies before processing your own logs.
 
-For detailed guides and tutorials, see the [documentation](https://kelora.dev).
+For guides and recipes, see the [documentation](https://kelora.dev).
 
 ## Quick Start
 
@@ -280,12 +280,18 @@ Production-like log files for testing realistic use cases:
 - `syslog_errors.log` - High-volume syslog error stream (great for `--drain`)
 - `duration_logs.jsonl` - Performance timing analysis
 - `uptime_windows.jsonl` - Service uptime windows
-- `incident_story.log` - Simulated incident timeline
+- `incident_story.log` - Simulated incident timeline (mixed `key=value` and free text)
+- `ci_pipeline.log` - CI run with `==> stage:` markers (good for `--section-*`)
+- `sshd_auth.log` - sshd/sudo auth log, syslog without year
+- `pod_cri.log` - Kubernetes CRI container log with JSON payloads and a Go panic
+- `rpc_pairs.jsonl` - request/response pairs, one request without a response (`state`)
+- `worker_bursts.jsonl` - job bursts separated by idle gaps (`--span-idle`, `--window`)
+- `merge_api.jsonl`, `merge_worker.jsonl` - two time-sorted files that interleave (`--merge-sorted`)
 - And many more...
 
 ### Power-User Technique Examples
 
-Examples for advanced features from the [Power-User Techniques](https://kelora.dev/how-to/power-user-techniques/) guide:
+Examples for advanced features used in the [Cookbook](https://kelora.dev/latest/cookbook/):
 
 - `production-errors.jsonl` - Pattern normalization with `normalized()`
 - `user-activity.jsonl` - Deterministic sampling with `bucket()`
@@ -440,7 +446,7 @@ kelora examples/web_access_large.log.gz
 
 ## Next Steps
 
-- [Documentation](https://kelora.dev) - How-to guides and tutorials
+- [Documentation](https://kelora.dev) - Guide, cookbook, and reference
 - `kelora --help` - Complete CLI reference
 - `kelora --help-functions` - All 150+ built-in Rhai functions
 - `kelora --help-examples` - Common usage patterns

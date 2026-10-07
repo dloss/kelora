@@ -39,7 +39,8 @@ jobs:
         run: |
           PATH="${GITHUB_WORKSPACE}/target/release:${PATH}" \
           KELORA_IGNORE_CONFIG=1 \
-          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with markdown-exec[ansi] mike deploy --push dev
+          DISABLE_MKDOCS_2_WARNING=true \
+          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects mike deploy --push dev
 
       - name: Deploy release version
         if: startsWith(github.ref, 'refs/tags/v')
@@ -47,10 +48,12 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/}
           PATH="${GITHUB_WORKSPACE}/target/release:${PATH}" \
           KELORA_IGNORE_CONFIG=1 \
-          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with markdown-exec[ansi] mike deploy --push --update-aliases $VERSION latest
+          DISABLE_MKDOCS_2_WARNING=true \
+          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects mike deploy --push --update-aliases $VERSION latest
           PATH="${GITHUB_WORKSPACE}/target/release:${PATH}" \
           KELORA_IGNORE_CONFIG=1 \
-          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with markdown-exec[ansi] mike set-default --push latest
+          DISABLE_MKDOCS_2_WARNING=true \
+          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects mike set-default --push latest
 
       - name: Prune superseded docs versions
         run: |

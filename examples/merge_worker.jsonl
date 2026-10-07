@@ -1,0 +1,4 @@
+{"ts":"2024-04-09T09:41:01Z","service":"worker","level":"INFO","msg":"batch 881 started"}
+{"ts":"2024-04-09T09:41:03Z","service":"worker","level":"WARN","msg":"retry queue depth=120"}
+{"ts":"2024-04-09T09:41:06Z","service":"worker","level":"ERROR","msg":"lost connection to database"}
+{"ts":"2024-04-09T09:41:10Z","service":"worker","level":"INFO","msg":"reconnected"}

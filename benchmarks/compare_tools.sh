@@ -563,7 +563,7 @@ local available=$(check_available_tools grep rg awk sed jq mlr qsv agrind klp)
     echo ""
     echo "To add your results to the documentation:"
     echo "  1. Copy the system info and benchmark tables from $RESULTS_DIR/"
-    echo "  2. Add a new section to docs/concepts/benchmark-results.md"
+    echo "  2. Update the results table in docs/reference/benchmarks.md"
     echo "  3. Include your CPU, OS, and date"
     echo ""
     echo "Quick preview of all results:"

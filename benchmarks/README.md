@@ -153,5 +153,5 @@ These are generated automatically from the JSON test data.
 ### Documentation
 
 Comparison results and analysis are documented in:
-- **[docs/concepts/performance-comparisons.md](../docs/concepts/performance-comparisons.md)** - Comprehensive guide with decision matrix
+- **[docs/reference/benchmarks.md](../docs/reference/benchmarks.md)** - Results table and tool-choice guide
 - Results include honest assessment of when to use each tool

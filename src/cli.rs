@@ -438,7 +438,7 @@ pub struct Cli {
     #[arg(long = "allow-fs-writes", help_heading = "Processing Options")]
     pub allow_fs_writes: bool,
 
-    /// Enable access to a sliding window of N+1 recent events (needed for window_* functions).
+    /// Keep the current event and the N before it in the `window` array for scripts (window[0] is the current event).
     #[arg(long = "window", value_name = "N", help_heading = "Processing Options")]
     pub window_size: Option<usize>,
 
@@ -477,7 +477,7 @@ pub struct Cli {
         require_equals = true,
         default_missing_value = "auto",
         help_heading = "Processing Options",
-        help = "One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.\n\nEach row carries the span label, the event count, and every per-window metric\nfrom additive track_* calls (including those synthesized by --freq/--describe).\n\nFormats: text (key=value lines), tsv (label<TAB>metric<TAB>key<TAB>value records),\njson (one object per line). Bare --span-summary auto-selects: text on a terminal,\ntsv when piped or redirected (like -m).\n\nRows are data on stdout, so --no-script-output and -m do not suppress them.\nOnly windows containing events produce a row — empty windows are skipped rather\nthan emitted as zeroes.\n\nExamples:\n  --span 1m --span-summary               Events per minute\n  -l error --span 5m --span-summary      Errors per 5 minutes\n  --span 1m --freq level --span-summary  Per-minute level breakdown\n  --span-idle 5m --span-summary          Session sizes\n  --span 1m --span-summary=tsv | duckdb  Time series out\n\nNote the '=': --span-summary=tsv (a space is read as a filename)."
+        help = "One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.\n\nEach row carries the span label, the event count, and every per-window metric\nfrom additive track_* calls (including those synthesized by --freq/--describe).\n\nFormats: text (key=value lines), tsv (label<TAB>metric<TAB>key<TAB>value records),\njson (one object per line). Bare --span-summary auto-selects: text on a terminal,\ntsv when piped or redirected (like -m).\n\nRows are data on stdout, so --no-script-output and -m do not suppress them.\nA window that received no input produces no row, so a time series has gaps\nwhere nothing was logged; a window whose events were all filtered out still\nproduces a row, with events=0.\n\nExamples:\n  --span 1m --span-summary               Events per minute\n  -l error --span 5m --span-summary      Errors per 5 minutes\n  --span 1m --freq level --span-summary  Per-minute level breakdown\n  --span-idle 5m --span-summary          Session sizes\n  --span 1m --span-summary=tsv | duckdb  Time series out\n\nNote the '=': --span-summary=tsv (a space is read as a filename)."
     )]
     pub span_summary: Option<SpanSummaryFormat>,
 

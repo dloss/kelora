@@ -1,24 +1,25 @@
 # Function Reference
 
-Complete reference for all 150+ built-in Rhai functions available in Kelora. Functions are organized by category for easy lookup.
+Every built-in Rhai function, grouped by category. `kelora --help-functions` prints the same catalogue in the terminal; `kelora --help-functions <word>` searches it.
 
-!!! tip "Function Call Syntax"
-    Rhai allows two styles: `value.method(args)` or `function(value, args)`. Use whichever feels more natural.
+!!! tip "Call syntax"
+    Rhai accepts `value.method(args)` and `function(value, args)` interchangeably: `e.msg.after(":")` is `after(e.msg, ":")`.
 
 ## Quick Navigation
 
-- [String Functions](#string-functions) - Text manipulation, parsing, encoding
-- [Array Functions](#array-functions) - Array operations, sorting, filtering
-- [Map/Object Functions](#mapobject-functions) - Field access, manipulation, conversion
-- [DateTime Functions](#datetime-functions) - Time parsing, formatting, arithmetic
-- [Math Functions](#math-functions) - Numeric operations
-- [Output Formatting](#output-formatting-functions) - Human-readable number formatting
-- [Type Conversion](#type-conversion-functions) - Safe type conversions
-- [Utility Functions](#utility-functions) - Environment, files, pseudonyms
-- [Tracking/Metrics](#trackingmetrics-functions) - Counters, aggregations
-- [File Output](#file-output-functions) - Writing data to files
-- [Event Manipulation](#event-manipulation) - Field removal, fan-out
-- [Span Context](#span-context-span-close-only) - Per-span metadata & rollups
+- [String Functions](#string-functions) - extraction, parsing, encoding, manipulation
+- [Array Functions](#array-functions) - sorting, aggregation, transformation
+- [Map/Object Functions](#mapobject-functions) - field access, reshaping, serialization
+- [DateTime Functions](#datetime-functions) - timestamps, durations, bucketing
+- [Math Functions](#math-functions) - numeric helpers, sampling
+- [Output Formatting](#output-formatting-functions) - human-readable numbers, padding, colors, bars
+- [Type Conversion](#type-conversion-functions) - safe conversions
+- [Utility Functions](#utility-functions) - environment, files, pseudonyms, Drain
+- [State Management](#state-management-functions) - cross-event state
+- [Tracking/Metrics](#trackingmetrics-functions) - counters and aggregations
+- [File Output](#file-output-functions) - writing files
+- [Event Manipulation](#event-manipulation) - fan-out, field removal, `absorb_*`
+- [Span Context](#span-context-span-close-only) - per-span metadata and rollups
 
 ---
 
@@ -28,285 +29,261 @@ Complete reference for all 150+ built-in Rhai functions available in Kelora. Fun
 
 !!! note "Nothing found is `""`, not `()`"
     Every function in this section returns an empty string when there is no match
-    (an empty array for the plural forms) — it does **not** return `()`. That is the
-    opposite of the parser [type annotations](formats.md#regex-format), where a value
-    that cannot satisfy its declared type becomes `()`.
+    (an empty array for the plural forms), not `()`. That is the opposite of the
+    parser [type annotations](formats.md#regex-format), where a value that cannot
+    satisfy its declared type becomes `()`.
 
-    Chain [`or_empty()`](#valueor_empty) when you want the absent convention: it
-    turns `""` into `()`, which removes the field on assignment, so `!= ()` filters
-    and `--freq` skip those events instead of counting an empty value.
+    Chain [`or_empty()`](#valueor_empty) for the absent convention: it turns `""`
+    into `()`, which removes the field on assignment, so `!= ()` filters and
+    `--freq` skip those events instead of counting an empty value.
 
     ```rhai
-    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1)             // ip = "" if no match
-    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty()  // no ip field at all
-    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty() ?? "unknown"
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1);                      // "" if no match
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty();           // no ip field at all
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty() ?? "unknown";
     ```
 
 #### `text.extract_regex(pattern [, group])`
-Extract first regex match or capture group. Returns `""` if the pattern does not
-match, or if the requested group did not participate in the match.
+First regex match, or capture group `group` of it. Returns `""` if the pattern does not match or the group did not participate.
 
 ```rhai
-e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1)       // "ERR-404" → "404"
-e.full_match = e.line.extract_regex(#"\d{3}"#)                 // First 3-digit number
-e.code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty()  // absent when no match
+e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1);     // "ERR-404" → "404"
+e.first_num = e.line.extract_regex(#"\d{3}"#);                // whole match
 ```
 
 #### `text.extract_regexes(pattern [, group])`
-Extract all regex matches as array. Returns an empty array if nothing matches.
+All matches as an array. With `group`, one string per match; without it and with capture groups in the pattern, one array of groups per match.
 
 ```rhai
-e.numbers = e.line.extract_regexes(#"\d+"#)                       // All numbers
-e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1)             // All error codes
-e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1).or_empty()  // () when none
+e.numbers = e.line.extract_regexes(#"\d+"#);                  // ["123", "4567"]
+e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1);        // ["404", "500"]
 ```
 
 #### `text.extract_regex_maps(pattern, field)`
-Extract regex matches as an array of maps for fan-out with `emit_each()`. Each match
-becomes a **single-field** map, named by `field` and holding capture group 1 (or the
-whole match if the pattern captures nothing). Named groups are not turned into fields
-— the name is only documentation for the reader.
+Matches as an array of **single-field** maps for `emit_each()`. The field is named `field` and holds capture group 1 (or the whole match if the pattern has no groups). Named groups do not become fields.
 
 ```rhai
-// One event per error code found in the message
-let errors = e.log.extract_regex_maps(#"(ERR-\d+)"#, "error_code");
-emit_each(errors)  // → {"error_code": "ERR-404"}, {"error_code": "ERR-500"}, …
+emit_each(e.log.extract_regex_maps(#"(ERR-\d+)"#, "error_code"));
+// → {"error_code": "ERR-404"}, {"error_code": "ERR-500"}
 ```
 
-For several fields per match, take the groups as an array and build the map yourself —
-`extract_regexes()` with no group argument returns one array of capture groups per
-match:
+For several fields per match, build the maps from `extract_regexes()`:
 
 ```rhai
-emit_each(e.log.extract_regexes(#"(ERR-\d+): ([^\n]+)"#).map(|g| #{code: g[0], msg: g[1]}))
+emit_each(e.log.extract_regexes(#"(ERR-\d+): ([^\n]+)"#).map(|g| #{code: g[0], msg: g[1]}));
 // → {"code": "ERR-404", "msg": "not found"}, …
 ```
 
-To promote named groups into fields of the *current* event rather than fanning out,
-use [`absorb_regex()`](#eabsorb_regexfield-pattern-options).
+To turn named groups into fields of the *current* event, use [`absorb_regex()`](#eabsorb_regexfield-pattern-options).
 
-#### `text.extract_ip([nth])`
-Extract IP address from text (nth: 1=first, -1=last).
-
-```rhai
-e.client_ip = e.headers.extract_ip()                  // First IP
-e.origin_ip = e.forwarded.extract_ip(-1)              // Last IP
-```
-
-#### `text.extract_ips()`
-Extract all IP addresses as array.
+#### `text.extract_ip([nth])` / `text.extract_ips()`
+IPv4 address(es) found in text (`nth`: 1=first, -1=last). IPv6 addresses are not matched.
 
 ```rhai
-e.all_ips = e.headers.extract_ips()                   // ["192.168.1.1", "10.0.0.1"]
+e.client_ip = e.headers.extract_ip();            // first
+e.origin_ip = e.forwarded.extract_ip(-1);        // last
+e.all_ips = e.headers.extract_ips();             // ["10.0.0.1", "192.168.1.1"]
 ```
 
 #### `text.extract_url([nth])`
-Extract URL from text (nth: 1=first, -1=last).
+URL found in text (`nth`: 1=first, -1=last).
 
 ```rhai
-e.link = e.message.extract_url()                      // First URL
+e.link = e.message.extract_url();                // "https://api.example.com/path?x=1"
 ```
 
-#### `text.extract_email([nth])`
-Extract email address from text (nth: 1=first, -1=last).
+#### `text.extract_email([nth])` / `text.extract_emails()`
+Email address(es) found in text (`nth`: 1=first, -1=last).
 
 ```rhai
-e.contact = e.message.extract_email()                 // First email
-e.sender = e.log.extract_email(1)                     // First email
-e.recipient = e.log.extract_email(-1)                 // Last email
-```
-
-#### `text.extract_emails()`
-Extract all email addresses as array.
-
-```rhai
-e.all_contacts = e.message.extract_emails()           // ["alice@example.com", "bob@test.org"]
+e.sender = e.log.extract_email();                // first
+e.recipient = e.log.extract_email(-1);           // last
+e.all = e.log.extract_emails();                  // ["alice@example.com", "bob@test.org"]
 ```
 
 #### `text.extract_domain()`
-Extract domain from URL or email address.
+Host part of a URL, or domain part of an email address.
 
 ```rhai
-e.domain = "https://api.example.com/path".extract_domain()  // "example.com"
-e.mail_domain = "user@corp.example.com".extract_domain()    // "corp.example.com"
+e.host = "https://api.example.com/path".extract_domain();   // "api.example.com"
+e.mail_domain = "user@corp.example.com".extract_domain();   // "corp.example.com"
+```
+
+#### `text.extract_json([nth])` / `text.extract_jsons()`
+Find JSON objects or arrays embedded in text. `extract_json()` returns the `nth` one (1=first, -1=last) already **parsed** into a map or array (`""` if none); `extract_jsons()` returns all of them as an array of JSON **strings**.
+
+```rhai
+// 'pre {"a":1} mid [1,2] end {"b":2}'
+e.data = e.msg.extract_json();                   // #{a: 1}
+e.last = e.msg.extract_json(-1);                 // #{b: 2}
+e.raw = e.msg.extract_jsons();                   // ["{\"a\":1}", "[1,2]", "{\"b\":2}"]
 ```
 
 ### String Slicing and Position
 
-#### `text.before(delimiter [, nth])`
-Text before occurrence of delimiter (nth: 1=first, -1=last).
+#### `text.before(delimiter [, nth])` / `text.after(delimiter [, nth])`
+Text before/after an occurrence of `delimiter` (`nth`: 1=first, -1=last).
 
 ```rhai
-e.user = e.email.before("@")                          // "user@host.com" → "user"
-e.path = e.url.before("?")                            // Strip query string
-```
-
-#### `text.after(delimiter [, nth])`
-Text after occurrence of delimiter (nth: 1=first, -1=last).
-
-```rhai
-e.extension = e.filename.after(".")                   // "file.txt" → "txt"
-e.domain = e.email.after("@")                         // "user@host.com" → "host.com"
+e.user = e.email.before("@");                    // "user@host.com" → "user"
+e.path = e.url.before("?");                      // strip query string
+e.ext = e.file.after(".", -1);                   // "app.tar.gz" → "gz"
 ```
 
 #### `text.between(start, end [, nth])`
-Text between start and end delimiters (nth: 1=first, -1=last).
-
-**Note:** `text.between(left, right, nth)` is equivalent to `text.after(left, nth).before(right)`.
+Text between two delimiters; same as `text.after(start, nth).before(end)`.
 
 ```rhai
-e.quoted = e.line.between('"', '"')                   // Extract quoted string
-"[a][b][c]".between("[", "]", 2)                      // "b" - same as .after("[", 2).before("]")
+e.quoted = e.line.between("\"", "\"");           // first quoted string
+e.second = "[a][b][c]".between("[", "]", 2);     // "b"
 ```
 
-#### `text.starting_with(prefix [, nth])`
-Return substring from prefix to end (nth: 1=first, -1=last).
+#### `text.starting_with(prefix [, nth])` / `text.ending_with(suffix [, nth])`
+Substring from `prefix` to the end, or from the start through `suffix`.
 
 ```rhai
-e.from_error = e.log.starting_with("ERROR:")          // "INFO: ok ERROR: bad" → "ERROR: bad"
-```
-
-#### `text.ending_with(suffix [, nth])`
-Return substring from start to end of suffix (nth: 1=first, -1=last).
-
-```rhai
-e.up_to_end = e.log.ending_with(".txt")               // "file.txt more" → "file.txt"
+e.err = e.log.starting_with("ERROR:");           // "INFO: ok ERROR: bad" → "ERROR: bad"
+e.file = e.log.ending_with(".txt");              // "file.txt more" → "file.txt"
 ```
 
 #### `text.slice(spec)`
-Slice text using Python notation (e.g., "1:5", ":3", "-2:").
+Python-style slice: `"1:5"`, `":3"`, `"-2:"`, `"::2"`.
 
 ```rhai
-e.first_three = e.code.slice(":3")                    // "ABCDEF" → "ABC"
-e.last_two = e.code.slice("-2:")                      // "ABCDEF" → "EF"
-e.middle = e.code.slice("2:5")                        // "ABCDEF" → "CDE"
+e.head = e.code.slice(":3");                     // "ABCDEF" → "ABC"
+e.tail = e.code.slice("-2:");                    // "EF"
+e.mid = e.code.slice("2:5");                     // "CDE"
+```
+
+#### `text.sub_string(start [, length])`
+Rhai builtin: substring from 0-based character position `start`.
+
+```rhai
+e.rest = e.code.sub_string(2);                   // "ABCDEF" → "CDEF"
+e.part = e.code.sub_string(1, 3);                // "BCD"
 ```
 
 ### Column Extraction
 
-#### `text.col(spec [, separator])`
-Extract columns by index/range/list (e.g., '0', '0,2,4', '1:4'). Indices are 0-based.
+#### `text.col(spec [, separator [, out_separator]])`
+Select whitespace-separated (or `separator`-separated) columns by 0-based index, list or range (`"0"`, `"0,2,4"`, `"1:4"`, `":2"`). Multiple columns are joined with a space, or with `out_separator`.
 
 ```rhai
-e.first = e.line.col("0")                             // First column (0-indexed)
-e.cols = e.line.col("0,2,4")                          // Columns 0, 2, 4
-e.range = e.line.col("1:4", "\t")                     // Columns 1-3, tab-separated
+e.first = e.line.col("0");
+e.picked = e.line.col("0,2,4");                  // "a c e"
+e.range = e.line.col("1:4", "\t");               // columns 1-3 of a tab-separated line
+e.csvish = e.line.col("0,2", "|", ",");          // "a|b|c" → "a,c"
 ```
 
-#### `text.cols(col1, col2 [, col3, ...] [, separator])`
-Extract multiple columns as an array. Supports up to 6 column indices (0-indexed). Returns an array of column values.
+#### `text.cols(col1, col2 [, ...] [, separator])`
+Up to six 0-based column indices, returned as an array.
 
 ```rhai
-// Extract columns 0, 2, 4 as array
-let values = e.line.cols(0, 2, 4)                     // ["value0", "value2", "value4"]
-e.user = values[0]
-e.action = values[1]
+let parts = e.line.cols(0, 2, 4);                // ["a", "c", "e"]
+e.user = parts[0];
+let tabbed = e.line.cols(1, 3, "\t");
+```
 
-// With custom separator
-let data = e.line.cols(1, 3, "\t")                    // Tab-separated columns
+#### `text.parse_cols(spec [, separator])` / `array.parse_cols(spec [, join_sep])`
+Map columns to named fields with the same spec language as `-f 'cols:<spec>'` (see [Column Format](formats.md#column-format)): `name` takes one column, `name(N)` joins N columns, `-` / `-(N)` skips, and a final `*name` keeps the rest of the line verbatim. Missing columns become `()` (an error under `--strict`). The array form applies the spec to values you already split; `join_sep` joins multi-column fields (default space). Type suffixes like `age:int` are not supported here.
 
-// Practical example: Apache log parsing
-let parts = e.log.cols(0, 3, 6, 8)                    // IP, timestamp, path, status
-e.ip = parts[0]
-e.timestamp = parts[1]
-e.path = parts[2]
-e.status = parts[3]
+```rhai
+// "2025-09-22 12:33:44 -- INFO hello   world"
+e += e.line.parse_cols("ts(2) - level *msg");    // ts="2025-09-22 12:33:44", level="INFO", msg="hello   world"
+let m = e.raw.parse_cols("host - status *rest", "|");
+let n = ["a", "b"].parse_cols("x y z");          // #{x: "a", y: "b", z: ()}
 ```
 
 ### Parsing Functions
 
+Each `parse_*` returns a map you can index or merge into the event (`e += text.parse_logfmt()`). On input they cannot parse they return an empty map — except `parse_json()`, which raises an error. To parse a field and merge it into the event in one step, with a status report, see the [`absorb_*` functions](#event-manipulation).
+
 #### `text.parse_json()`
-Parse JSON string into map/array.
+Parse a JSON string into a map or array. Invalid JSON is a runtime error.
 
 ```rhai
-e.data = e.payload.parse_json()
-e.value = e.data["key"]
+e.data = e.payload.parse_json();
+e.value = e.data["key"];
 ```
 
 #### `text.parse_logfmt()`
-Parse logfmt line into structured fields.
+Parse a logfmt line; quote-aware, and numbers and booleans are typed.
 
 ```rhai
-let fields = e.line.parse_logfmt()
-e.level = fields["level"]
+let f = e.line.parse_logfmt();                   // 'level=info msg="hi there" n=3'
+e.level = f["level"];                            // n is the integer 3
 ```
 
 #### `text.parse_syslog()`
-Parse syslog line into structured fields.
+Parse an RFC 3164/5424 syslog line. Keys: `pri`, `facility`, `severity`, `level`, `ts`, `host`, `prog`, `pid`, `msg` (5424 adds `version`, `msgid`).
 
 ```rhai
-let syslog = e.line.parse_syslog()
-e.priority = syslog["priority"]
-e.message = syslog["message"]
+let s = e.line.parse_syslog();
+e.prog = s["prog"];                              // "su"
+e.message = s["msg"];
 ```
 
 #### `text.parse_combined()`
-Parse Apache/Nginx combined log line.
+Parse an Apache/Nginx combined log line. Keys: `ip`, `user`, `ts`, `request`, `method`, `path`, `protocol`, `status` (int), `bytes` (int), `referer`, `user_agent`.
 
 ```rhai
-let access = e.line.parse_combined()
-e.ip = access["ip"]
-e.status = access["status"]
+let a = e.line.parse_combined();
+e.ip = a["ip"];
+e.status = a["status"];
 ```
 
 #### `text.parse_cef()`
-Parse Common Event Format line into fields.
+Parse a Common Event Format line. Header keys: `cefver`, `vendor`, `product`, `version`, `eventid`, `event`, `severity`; extension keys are added as-is.
 
 ```rhai
-let cef = e.line.parse_cef()
-e.severity = cef["severity"]
+let cef = e.line.parse_cef();
+e.severity = cef["severity"];
 ```
 
 #### `text.parse_kv([sep [, kv_sep]])`
-Split key-value pairs from text. Only extracts tokens containing the key-value separator; tokens without the separator are skipped (e.g., prose words or unpaired values).
-
-This is a simple splitter and is **not quote-aware**: it does not strip surrounding quotes from values and will split on a separator that appears *inside* a quoted value. For `key="value with spaces"` input (logfmt-style logs), use [`parse_logfmt()`](#textparse_logfmt) instead, which handles quoting and infers numeric/boolean types.
+Split `key=value` pairs (defaults: whitespace and `=`). Tokens without `kv_sep` are skipped. **Not quote-aware**: quotes stay on values and a separator inside quotes splits the value; use [`parse_logfmt()`](#textparse_logfmt) for `key="value with spaces"`.
 
 ```rhai
-e.params = e.query.parse_kv("&", "=")                 // "a=1&b=2" → {a: "1", b: "2"}
-e.fields = e.msg.parse_kv()                           // "Payment timeout order=1234" → {order: "1234"}
-// e.msg.parse_kv() on 'err="connection refused"' would split mid-value — use parse_logfmt()
+e.params = e.query.parse_kv("&", "=");           // "a=1&b=2" → {a: "1", b: "2"}
+e.fields = e.msg.parse_kv();                     // "Payment timeout order=1234" → {order: "1234"}
 ```
 
 #### `text.parse_url()`
-Parse URL into structured components.
+Parse a URL. Keys: `scheme`, `user`, `host`, `port`, `path`, `query`, `query_map`, `fragment` (present when the URL has them).
 
 ```rhai
-let url = e.request.parse_url()
-e.scheme = url["scheme"]
-e.host = url["host"]
-e.path = url["path"]
+let u = e.request.parse_url();
+e.host = u["host"];
+e.id = u["query_map"]["id"];
 ```
 
 #### `text.parse_query_params()`
-Parse URL query string into map.
+Parse a query string (leading `?` optional) into a map.
 
 ```rhai
-e.params = e.query_string.parse_query_params()        // "a=1&b=2" → {a: "1", b: "2"}
+e.params = e.query_string.parse_query_params();  // "a=1&b=2" → {a: "1", b: "2"}
 ```
 
 #### `text.parse_email()`
-Parse email address into parts.
+Split a bare address into `local` and `domain`. Display-name forms like `Name <addr>` return an empty map.
 
 ```rhai
-let email = "User Name <user@example.com>".parse_email()
-e.name = email["name"]       // "User Name"
-e.address = email["address"] // "user@example.com"
+let m = "user@example.com".parse_email();
+e.local = m["local"];                            // "user"
+e.domain = m["domain"];                          // "example.com"
 ```
 
 #### `text.parse_user_agent()`
-Parse common user-agent strings into components.
+Parse common user-agent strings. Keys: `agent_family`, `agent_version`, `os_family`, `os_version`, `device`.
 
 ```rhai
-let ua = e.user_agent.parse_user_agent()
-e.browser = ua["browser"]
-e.os = ua["os"]
+let ua = e.user_agent.parse_user_agent();
+e.browser = ua["agent_family"];                  // "Chrome"
+e.os = ua["os_family"];                          // "Windows"
 ```
 
 #### `text.parse_jwt()`
-Parse a JWT into `header` and `claims` (the decoded payload) without verification. Also returns `signature_b64u` plus `alg`/`kid`/`typ` when present in the header. The standard NumericDate claims `exp`, `iat`, and `nbf` are additionally exposed as datetime values under `expires_at`, `issued_at`, and `not_before`, so they compose with `now()` and datetime arithmetic.
-
-The decoded datetimes pair with their source claims as follows (the raw integers remain available under `claims`):
+Decode a JWT **without verifying** it. Returns `header`, `claims` (the payload), `signature_b64u`, plus `alg`/`kid`/`typ` when the header has them. The NumericDate claims are also exposed as datetime values:
 
 | Datetime field | Source claim | Meaning |
 | --- | --- | --- |
@@ -314,325 +291,284 @@ The decoded datetimes pair with their source claims as follows (the raw integers
 | `issued_at` | `claims.iat` | Issued-at time |
 | `not_before` | `claims.nbf` | Not-valid-before time |
 
-A field is present only when its claim is present and a valid numeric date.
-
-These three are real **datetime values, not strings**: `expires_at < now()` is a chronological comparison and `expires_at - issued_at` yields a duration, whereas `claims.exp` is the raw integer (Unix seconds) straight from the token. To render a datetime back to text, call `.to_iso()` or `.format("%Y-%m-%d")` — never compare it as a string, since lexical and chronological order can disagree.
+Each is present only when its claim is a valid numeric date. They compare chronologically and subtract to durations; the raw integers stay under `claims`. Render with `.to_iso()` or `.format()` rather than comparing as strings.
 
 ```rhai
-let jwt = e.token.parse_jwt()
-e.user_id = jwt["claims"]["sub"]
-e.expired = jwt.expires_at < now()                 // bool (chronological)
-e.lifetime = (jwt.expires_at - jwt.issued_at).to_string()
-e.exp_iso = jwt.expires_at.to_iso()                // datetime -> string
-e.exp_raw = jwt.claims.exp                          // raw int, e.g. 1735689600
+let jwt = e.token.parse_jwt();
+e.user_id = jwt["claims"]["sub"];
+e.expired = jwt.expires_at < now();                         // bool
+e.lifetime = (jwt.expires_at - jwt.issued_at).to_string();  // "1h"
+e.exp_iso = jwt.expires_at.to_iso();                        // "2025-01-01T00:00:00+00:00"
+e.exp_raw = jwt.claims.exp;                                 // 1735689600
 ```
 
 #### `text.parse_path()`
-Parse filesystem path into components.
+Parse a filesystem path. Keys: `input`, `root`, `parent`, `file_name`, `stem`, `extension`, `components`, `is_absolute`, `is_relative`, `has_root`.
 
 ```rhai
-let path = "/var/log/app.log".parse_path()
-e.dir = path["dir"]          // "/var/log"
-e.file = path["file"]        // "app.log"
+let p = "/var/log/app.log".parse_path();
+e.dir = p["parent"];                             // "/var/log"
+e.file = p["file_name"];                         // "app.log"
 ```
 
 #### `text.parse_media_type()`
-Parse media type tokens and parameters.
+Parse a media type into `type`, `subtype` and `params`.
 
 ```rhai
-let mt = "text/html; charset=utf-8".parse_media_type()
-e.type = mt["type"]          // "text"
-e.subtype = mt["subtype"]    // "html"
+let mt = "text/html; charset=utf-8".parse_media_type();
+e.subtype = mt["subtype"];                       // "html"
+e.charset = mt["params"]["charset"];             // "utf-8"
 ```
 
 #### `text.parse_content_disposition()`
-Parse Content-Disposition header parameters.
+Parse a Content-Disposition header into `disposition`, `params`, and `filename` when present.
 
 ```rhai
-let cd = e.header.parse_content_disposition()
-e.filename = cd["filename"]
+let cd = e.header.parse_content_disposition();   // 'attachment; filename="report.pdf"'
+e.filename = cd["filename"];                     // "report.pdf"
 ```
 
 ### Encoding and Hashing
 
 #### `text.encode_b64()` / `text.decode_b64()`
-Base64 encoding/decoding.
+Base64. Decoding invalid input is a runtime error.
 
 ```rhai
-e.encoded = e.data.encode_b64()
-e.decoded = e.payload.decode_b64()
+e.encoded = e.data.encode_b64();                 // "hello world" → "aGVsbG8gd29ybGQ="
+e.decoded = e.payload.decode_b64();
 ```
 
 #### `text.encode_hex()` / `text.decode_hex()`
-Hexadecimal encoding/decoding.
+Hexadecimal.
 
 ```rhai
-e.hex = e.bytes.encode_hex()
-e.bytes = e.hex_string.decode_hex()
+e.hex = e.data.encode_hex();                     // "hello" → "68656c6c6f"
+e.text = e.hex_string.decode_hex();
 ```
 
 #### `text.encode_url()` / `text.decode_url()`
-URL percent encoding/decoding.
+URL percent-encoding.
 
 ```rhai
-e.encoded = e.param.encode_url()                      // "hello world" → "hello%20world"
-e.decoded = e.url_param.decode_url()
+e.encoded = e.param.encode_url();                // "hello world" → "hello%20world"
+e.decoded = e.url_param.decode_url();
 ```
 
 #### `text.escape_json()` / `text.unescape_json()`
-JSON escape sequence handling.
+JSON string escapes (`\"`, `\n`, …).
 
 ```rhai
-e.escaped = e.text.escape_json()
-e.unescaped = e.json_string.unescape_json()
+e.escaped = e.text.escape_json();
+e.unescaped = e.json_string.unescape_json();
 ```
 
 #### `text.escape_html()` / `text.unescape_html()`
-HTML entity escaping/unescaping.
+HTML entities for `&`, `<`, `>`, `"`, `'`.
 
 ```rhai
-e.safe = e.user_input.escape_html()                   // "<script>" → "&lt;script&gt;"
-e.text = e.html_entity.unescape_html()
+e.safe = e.user_input.escape_html();             // "<script>" → "&lt;script&gt;"
+e.text = e.html_entity.unescape_html();
 ```
 
 #### `text.hash([algo])`
-Hash with algorithm (default: sha256, also: xxh3). One-way digest to redact or anonymize
-a value; for stable, correlatable aliases use [`pseudonym(value, domain)`](#pseudonymvalue-domain) instead.
+Hex digest; `algo` is `"sha256"` (default) or `"xxh3"` (fast, non-cryptographic). Any other name is an error. The hash is unkeyed, so low-entropy values (IPs, user names) can be recovered by hashing candidates; [`pseudonym()`](#pseudonymvalue-domain) is keyed.
 
 ```rhai
-e.checksum = e.content.hash()                         // SHA-256
-e.fast = e.data.hash("xxh3")                          // Fast non-crypto hash
+e.checksum = e.content.hash();                   // SHA-256, 64 hex chars
+e.fast = e.data.hash("xxh3");                    // 16 hex chars
 ```
 
 #### `text.bucket()`
-Fast hash for sampling/grouping (returns INT for modulo operations).
+Fast integer hash for deterministic sampling and sharding. The result can be negative, so compare `% n` against `0` rather than expecting `0..n-1`.
 
 ```rhai
-// Sample 10% of events
-if e.user_id.bucket() % 10 == 0 {
-    e.sampled = true
+if e.user_id.bucket() % 10 == 0 {               // same ~10% of users on every run
+    e.sampled = true;
 }
 ```
 
 ### IP Address Functions
 
 #### `text.is_ipv4()` / `text.is_ipv6()`
-Check if text is a valid IP address.
+Whether text is a valid IPv4/IPv6 address.
 
 ```rhai
-if e.addr.is_ipv4() {
-    e.ip_version = 4
-}
+if e.addr.is_ipv4() { e.ip_version = 4 }
 ```
 
 #### `text.is_private_ip()`
-Check if IP is in private/internal ranges.
-
-Includes RFC1918 IPv4, IPv6 unique local (`fc00::/7`), IPv6 link-local (`fe80::/10`), and loopback addresses.
+True for RFC 1918 IPv4, loopback, IPv6 unique local (`fc00::/7`) and link-local (`fe80::/10`). IPv4 link-local (`169.254.0.0/16`) is not counted.
 
 ```rhai
-if e.ip.is_private_ip() {
-    e.internal = true
-}
+if e.ip.is_private_ip() { e.internal = true }
 ```
 
 #### `text.is_in_cidr(cidr)`
-Check if IP address is in CIDR network.
+Whether the address is inside a CIDR network.
 
 ```rhai
-if e.ip.is_in_cidr("10.0.0.0/8") {
-    e.corp_network = true
-}
+if e.ip.is_in_cidr("10.0.0.0/8") { e.corp_network = true }
 ```
 
 #### `text.mask_ip([octets])`
-Mask the host portion of an IP address while preserving the network prefix.
+Zero the last `octets` IPv4 octets (default 1) or the last `octets` IPv6 groups. Non-IP text is returned unchanged.
 
 ```rhai
-e.masked_ip = e.client_ip.mask_ip()                   // "192.168.1.100" → "192.168.1.0"
-e.partial = e.ip.mask_ip(2)                           // "192.168.1.100" → "192.168.0.0"
-e.ipv6_masked = e.ip.mask_ip(2)                       // "2001:db8:1:2:3:4:5:6" → "2001:db8:1:2:3:4::"
+e.masked = e.client_ip.mask_ip();                // "192.168.1.100" → "192.168.1.0"
+e.net16 = e.client_ip.mask_ip(2);                // "192.168.1.100" → "192.168.0.0"
+e.v6 = e.ip6.mask_ip(2);                         // "2001:db8:1:2:3:4:5:6" → "2001:db8:1:2:3:4::"
 ```
 
 ### Pattern Normalization
 
-#### `text.normalized([patterns])`
-Replace variable patterns with placeholders (e.g., `<ipv4>`, `<email>`).
-
-Useful for identifying unique log patterns by normalizing variable data like IP addresses, UUIDs, and email addresses to fixed placeholders.
+#### `text.normalized([patterns])` / `map.normalized([patterns])`
+Replace variable data with placeholders such as `<ipv4>` or `<email>`, to group messages by shape. `patterns` is a CSV string or an array. On a map, every string value is normalized and other values are left alone.
 
 ```rhai
-// Default patterns (IPs, emails, UUIDs, hashes, etc.)
-e.pattern = e.message.normalized()
+e.pattern = e.message.normalized();
 // "User user@test.com from 192.168.1.5" → "User <email> from <ipv4>"
-
-// CSV-style pattern list
-e.simple = e.message.normalized("ipv4,email")
-
-// Array-style pattern list
-e.custom = e.message.normalized(["uuid", "sha256", "url"])
+e.simple = e.message.normalized("ipv4,email");
+e.pii = e.message.normalized(["credit_card", "ssn", "phone"]);
+let clean = e.normalized();                      // every string field
 ```
 
-**Default patterns** (when no argument provided):
-`ipv4_port`, `ipv4`, `ipv6`, `email`, `url`, `fqdn`, `uuid`, `mac`, `md5`, `sha1`, `sha256`, `path`, `oauth`, `function`, `hexcolor`, `version`
+**Default patterns:** `ipv4_port`, `ipv4`, `ipv6`, `email`, `url`, `fqdn`, `uuid`, `mac`, `md5`, `sha1`, `sha256`, `path`, `oauth`, `function`, `hexcolor`, `version`
 
-**Available patterns** (opt-in):
-`hexnum`, `duration`, `num`, `credit_card`, `ssn`, `phone`
+**Opt-in patterns:** `hexnum`, `duration`, `num`, `credit_card`, `ssn`, `phone`. The PII ones are off by default on purpose:
 
-PII-oriented patterns are opt-in on purpose:
+- `credit_card` - Luhn-validated card numbers
+- `ssn` - US SSNs in strict `XXX-XX-XXXX` form (hyphens required); rejects area 000, 666, 900–999, group 00 and serial 0000
+- `phone` - NANP-aware for US/CA numbers, permissive for other international numbers
 
-- `credit_card` - Luhn-validated payment card numbers
-- `ssn` - US Social Security numbers in strict `XXX-XX-XXXX` format (hyphens required; spaces/dots not matched); rejects SSA-invalid area codes (000, 666, 900–999), group 00, and serial 0000
-- `phone` - NANP-aware validation for US/CA numbers, with permissive support for other international numbers
-
-**Common use case** - Pattern discovery:
-```bash
-# Recommended alias for easy pattern discovery
-kelora --save-alias patterns \
-  --exec 'track_unique("patterns", e.message.normalized())' \
-  --metrics -q
-
-# Usage
-kelora -a patterns app.log
-```
-
-**Output with many patterns:**
-```
-patterns     (127 unique):
-  User <email> from <ipv4>
-  Request to <url> failed
-  Error <uuid> occurred
-  Connection <ipv4_port> established
-  Processing <fqdn> with <sha256>
-  [+122 more. Use --metrics-file or --end script for full list]
-```
-
-For custom analysis, access full data in `--end` scripts or `--metrics-file`.
+Count message shapes with `kelora -j app.jsonl -q -e 'track_freq("pattern", e.message.normalized())' --metrics`, or let `--drain` mine templates.
 
 ### String Manipulation
 
+!!! warning "`replace()` and `trim()` change the string in place and return `()`"
+    These two Rhai builtins mutate the variable or field they are called on and
+    return nothing. `e.clean = e.msg.trim()` rewrites `e.msg` and leaves `e.clean`
+    unset. Call them as statements (`e.msg.trim();`), or use the functions below
+    that return a new string: [`strip()`](#textstripchars-textlstripchars-textrstripchars)
+    instead of `trim()`, [`replace_regex()`](#textreplace_regexpattern-replacement)
+    instead of `replace()`.
+
 #### `text.strip([chars])` / `text.lstrip([chars])` / `text.rstrip([chars])`
-Remove whitespace or specified characters.
+New string with whitespace, or any of the characters in `chars`, removed from both ends / the left / the right.
 
 ```rhai
-e.clean = e.text.strip()                              // Remove leading/trailing whitespace
-e.trimmed = e.line.lstrip("# ")                       // Remove "# " from left
-e.path = e.filename.rstrip("/")                       // Remove trailing slashes
+e.clean = e.text.strip();                        // "  hi  " → "hi"
+e.body = e.line.lstrip("# ");                    // "# # comment" → "comment"
+e.dir = e.path.rstrip("/");                      // "/a/b//" → "/a/b"
 ```
 
 #### `text.clip()` / `text.lclip()` / `text.rclip()`
-Remove non-alphanumeric characters from edges.
+Remove non-alphanumeric characters from both ends / the left / the right.
 
 ```rhai
-e.word = "'hello!'".clip()                            // → "hello"
-e.left = "...start".lclip()                           // → "start"
-e.right = "end...".rclip()                            // → "end"
+e.word = "'hello!'".clip();                      // "hello"
+e.left = "...start".lclip();                     // "start"
+e.right = "end...".rclip();                      // "end"
 ```
 
-#### `text.upper()` / `text.lower()`
-Case conversion. **Note:** Both `upper()`/`lower()` and `to_upper()`/`to_lower()` are available - use whichever you prefer (Rhai builtins vs Python-style).
+#### `text.to_upper()` / `text.to_lower()` / `text.upper()` / `text.lower()`
+Case conversion; returns a new string. `upper()`/`lower()` are aliases.
 
 ```rhai
-e.normalized = e.country_code.upper()                 // "us" → "US"
-e.also_upper = e.code.to_upper()                      // Same as upper()
-e.lowercase = e.name.lower()                          // "Hello" → "hello"
-e.also_lower = e.name.to_lower()                      // Same as lower()
+e.cc = e.country_code.to_upper();                // "us" → "US"
+e.name = e.name.lower();                         // "Hello" → "hello"
 ```
 
-#### `text.replace(pattern, replacement)`
-Replace all occurrences of pattern.
+#### `text.replace_regex(pattern, replacement)`
+New string with every regex match replaced. `$1` or `${name}` in `replacement` refer to capture groups.
 
 ```rhai
-e.cleaned = e.text.replace("ERROR", "WARN")
+e.masked = e.msg.replace_regex(#"\d+"#, "#");            // "a1b22" → "a#b#"
+e.tagged = e.msg.replace_regex(#"(\d+)"#, "<$1>");       // "a1b22" → "a<1>b<22>"
+e.level = e.level.replace_regex("ERROR", "WARN");        // plain words work as patterns
+```
+
+#### `text.replace(find, replacement)` / `text.trim()`
+Rhai builtins that modify the string **in place** (literal replace of all occurrences; trim surrounding whitespace) and return `()`. See the warning above.
+
+```rhai
+e.msg.replace("ERROR", "WARN");                 // rewrites e.msg
+e.msg.trim();
 ```
 
 #### `text.split(separator)` / `text.split_regex(pattern)`
-Split string into array.
+Split into an array on a literal separator or a regex. (The old `split_re`, `replace_re` and `extract_re_maps` names were removed.)
 
 ```rhai
-e.parts = e.path.split("/")
-e.tokens = e.line.split_regex(#"\s+"#)               // Split on whitespace
+e.parts = e.path.split("/");
+e.tokens = e.line.split_regex(#"\s+"#);          // "a  b\tc" → ["a", "b", "c"]
 ```
 
 ### String Testing
 
-#### `text.contains(pattern)`
-Check if text contains pattern.
+#### `text.contains(substring)`
+Literal substring test.
 
 ```rhai
-if e.message.contains("timeout") {
-    e.timeout_error = true
-}
+if e.message.contains("timeout") { e.timeout_error = true }
 ```
 
-#### `text.like(pattern)`
-Glob match (anchored) with `*` and `?`.
+#### `text.like(pattern)` / `text.ilike(pattern)`
+Glob match against the **whole** string with `*` and `?`. `ilike()` is case-insensitive with Unicode folding (`"STRASSE".ilike("*straße*")` is true).
 
 ```rhai
-if e.message.like("ERROR * timeout") {
-    e.timeout_error = true
-}
-```
-
-#### `text.ilike(pattern)`
-Case-insensitive glob match with Unicode folding.
-
-```rhai
-if e.message.ilike("*straße*") {
-    e.locale = "de"
-}
+if e.message.like("ERROR * timeout") { e.timeout_error = true }
+if e.city.ilike("*straße*") { e.locale = "de" }
 ```
 
 #### `text.matches(pattern)`
-Regex search with cached compilation. Invalid patterns raise errors.
+Unanchored regex search; compiled patterns are cached per thread. An invalid pattern is an error.
 
 ```rhai
-if e.path.matches(#"^/api/[^/]+/details$"#) {
-    e.route = "details"
-}
+if e.path.matches(#"^/api/[^/]+/details$"#) { e.route = "details" }
 ```
 
-#### Text Matching Functions Comparison
+| Function | Anchored | Invalid pattern | Case handling |
+|----------|----------|-----------------|---------------|
+| `like()` | Yes | n/a (glob) | Exact |
+| `ilike()`| Yes | n/a (glob) | Unicode fold |
+| `matches()` | No | Error | Regex-driven (`(?i)` for insensitive) |
 
-| Function | Anchored | Errors on invalid pattern | Case handling | Use case |
-|----------|----------|---------------------------|---------------|----------|
-| `like()` | Yes      | N/A (glob syntax)         | Exact         | Simple wildcard matching |
-| `ilike()`| Yes      | N/A                       | Unicode fold  | Case-insensitive glob |
-| `matches()` | No   | Yes                       | Regex-driven  | Full regex search with caching |
-
-> ⚠️ Regex performance tips: avoid nested quantifiers like `(.*)*`, prefer anchored patterns when possible, and reuse patterns to benefit from the per-thread cache.
+Avoid nested quantifiers like `(.*)*` in hot paths.
 
 #### `text.is_digit()`
-Check if text contains only digits.
+True if text is non-empty and all ASCII digits (`"-1"` and `""` are false).
 
 ```rhai
-if e.status.is_digit() {
-    e.status_code = e.status.to_int()
-}
+if e.status.is_digit() { e.status_code = e.status.to_int() }
 ```
 
-#### `text.count(pattern)`
-Count occurrences of pattern in text.
+#### `text.count(substring)`
+Number of non-overlapping literal occurrences.
 
 ```rhai
-e.error_count = e.log.count("ERROR")
+e.error_count = e.log.count("ERROR");
 ```
 
 #### `text.edit_distance(other)`
-Compute Levenshtein edit distance between two strings.
+Levenshtein distance.
 
 ```rhai
-if e.message.edit_distance("connection reset") <= 3 {
-    e.is_connection_issue = true
-}
+if e.message.edit_distance("connection reset") <= 3 { e.is_connection_issue = true }
 ```
 
 #### `text.index_of(substring [, start])`
-Find 0-based position of literal substring (-1 if not found). Optional `start` parameter specifies where to begin searching.
+0-based position of a literal substring, or -1. `start` sets where the search begins.
 
 ```rhai
-e.at_pos = e.url.index_of("?")                        // Find first "?"
-e.second = e.text.index_of("test", 10)                // Search starting at position 10
+e.q = e.url.index_of("?");
+e.next = e.text.index_of("test", 10);
+```
+
+#### `text.len`
+Length in characters (a property, no parentheses).
+
+```rhai
+if e.msg.len > 200 { e.long = true }
 ```
 
 ---
@@ -641,115 +577,91 @@ e.second = e.text.index_of("test", 10)                // Search starting at posi
 
 ### Sorting and Filtering
 
-#### `array.sorted()`
-Return new sorted array (numeric/lexicographic).
+#### `array.sorted()` / `array.sort()`
+`sorted()` returns a new array sorted numerically or lexicographically. The builtin `sort()` sorts **in place** and returns `()`.
 
 ```rhai
-e.sorted_scores = sorted(e.scores)                    // [3, 1, 2] → [1, 2, 3]
-e.sorted_names = sorted(e.names)                      // Alphabetical
+e.ordered = e.scores.sorted();                  // [3, 1, 2] → [1, 2, 3]
+e.scores.sort();                                // e.scores is now sorted
 ```
 
 #### `array.sorted_by(field)`
-Sort array of objects by field name.
+New array of maps sorted ascending by `field`.
 
 ```rhai
-let sorted_users = sorted_by(e.users, "age")
-e.oldest = sorted_users[-1]
+e.oldest = e.users.sorted_by("age")[-1];
 ```
 
 #### `array.reversed()`
-Return new array in reverse order.
+New array in reverse order.
 
 ```rhai
-e.reversed = reversed(e.items)
+e.newest_first = e.items.reversed();
 ```
 
 #### `array.slice(spec)`
-Slice array using Python notation (e.g., `"1:5"`, `":3"`, `"-2:"`).
+Python-style slice (`"1:5"`, `":3"`, `"-2:"`, `"0::2"`).
 
 ```rhai
-e.top_three = e.values.slice(":3")                   // [9, 8, 7, 6] → [9, 8, 7]
-e.tail = e.values.slice("-2:")                       // [9, 8, 7, 6] → [7, 6]
-e.every_other = e.values.slice("0::2")               // [9, 8, 7, 6] → [9, 7]
+e.top3 = e.values.slice(":3");                   // [9, 8, 7, 6] → [9, 8, 7]
+e.tail = e.values.slice("-2:");                  // [7, 6]
+e.every_other = e.values.slice("0::2");          // [9, 7]
 ```
 
 #### `array.unique()`
-Remove all duplicate elements (preserves first occurrence).
+Remove duplicates, keeping first occurrences.
 
 ```rhai
-e.unique_tags = unique(e.tags)                        // [1, 2, 1, 3] → [1, 2, 3]
+e.tags = e.tags.unique();                        // [1, 2, 1, 3] → [1, 2, 3]
 ```
 
 #### `array.filter(|item| condition)`
-Keep elements matching condition.
+Keep elements for which the closure returns true.
 
 ```rhai
-e.errors = e.logs.filter(|log| log.level == "ERROR")
+e.errors = e.logs.filter(|log| log.level == "ERROR");
 ```
 
 ### Aggregation
 
+`max`, `min`, `sum`, `mean`, `variance` and `stddev` reject mixed-type arrays and do not convert strings to numbers; `pluck_as_nums()` gives clean numbers.
+
 #### `array.max()` / `array.min()`
-Find maximum/minimum value in array.
+Largest/smallest value; `()` for an empty or mixed-type array.
 
 ```rhai
-e.max_score = e.scores.max()
-e.min_time = e.times.min()
+e.max_score = e.scores.max();
 ```
 
 #### `array.percentile(pct)`
-Calculate percentile of numeric array.
+Interpolated percentile, `pct` on a 0–100 scale (unlike `track_percentiles()`, which takes 0–1). Numeric strings are converted. An empty array is an error.
 
 ```rhai
-e.p95 = e.latencies.percentile(95)
-e.median = e.values.percentile(50)
+e.p95 = e.latencies.percentile(95);
+e.median = e.latencies.percentile(50);
 ```
 
 #### `array.sum()`
-Calculate sum of all numeric values (int, float) in array. All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected and return `()`. No automatic string-to-number coercion. Returns `()` for empty arrays.
+Sum as a float; `()` for an empty or mixed-type array.
 
 ```rhai
-e.total_bytes = e.requests.pluck_as_nums("bytes").sum()
-e.total_errors = [10, 20, 30].sum()                    // 60.0
-[10, 20.5, 30].sum()                                   // 60.5
-[10, "20", 30].sum()                                   // () - mixed types rejected
-[].sum()                                               // () - empty array
+e.total = [10, 20.5, 30].sum();                  // 60.5
+e.bad = [10, "20"].sum();                        // () — field not set
 ```
 
-#### `array.mean()`
-Calculate arithmetic mean (average) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
+#### `array.mean()` / `array.variance()` / `array.stddev()`
+Arithmetic mean, population variance, population standard deviation. Unlike `sum()`, an empty or mixed-type array is a **runtime error**.
 
 ```rhai
-e.avg_latency = e.latencies.mean()
-e.avg_score = [10, 20, 30].mean()                      // 20.0
-[10, "20", 30].mean()                                  // ERROR - mixed types rejected
-```
-
-#### `array.variance()`
-Calculate population variance of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
-
-```rhai
-e.latency_variance = e.latencies.variance()
-if e.latency_variance > 100.0 {
-    print("High variance detected")
-}
-```
-
-#### `array.stddev()`
-Calculate standard deviation (population) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
-
-```rhai
-e.latency_stddev = e.latencies.stddev()
-if e.latency_stddev > 10.0 {
-    print("High variation: " + e.latency_stddev)
-}
+e.avg = [10, 20, 30].mean();                     // 20.0
+e.sd = e.latencies.stddev();
 ```
 
 #### `array.reduce(|acc, item| expr, init)`
-Aggregate array into single value.
+Fold into one value.
 
 ```rhai
-e.total = e.amounts.reduce(|sum, x| sum + x, 0)
+e.total = e.amounts.reduce(|sum, x| sum + x, 0);
 ```
 
 ### Transformation
@@ -758,119 +670,74 @@ e.total = e.amounts.reduce(|sum, x| sum + x, 0)
 Transform each element.
 
 ```rhai
-e.doubled = e.numbers.map(|n| n * 2)
-e.names = e.users.map(|u| u.name)
+e.doubled = e.numbers.map(|n| n * 2);
 ```
 
 #### `array.pluck(field)` / `array.pluck_as_nums(field)` {#arraypluckfield--arraypluck_as_numsfield}
-Extract a single field from each element in an array of maps/objects, returning a new array of just those field values.
-
-**`pluck(field)`** - Extract field values as-is, skipping elements where the field is missing or `()`.
-
-**`pluck_as_nums(field)`** - Extract and convert field values to `f64` numbers, skipping elements where conversion fails or the field is missing.
+Pull one field out of each map. `pluck()` skips elements where it is missing or `()`; `pluck_as_nums()` also converts to float and skips values that do not convert. (`map(|x| x.field)` keeps `()` placeholders instead.)
 
 ```rhai
-// Given array of event objects
-let events = [
-    #{status: 200, time: "1.5"},
-    #{status: 404, time: "0.3"},
-    #{status: 200, time: "2.1"}
-]
-
-// Extract field values
-let statuses = events.pluck("status")        // [200, 404, 200]
-let times = events.pluck_as_nums("time")     // [1.5, 0.3, 2.1] (converted to numbers)
-
-// Compare to manual approach
-let manual = events.map(|e| e.status)        // Same result, but errors if field missing
+let events = [#{status: 200, time: "1.5"}, #{status: 404, time: "0.3"}, #{time: "x"}];
+let statuses = events.pluck("status");           // [200, 404]
+let times = events.pluck_as_nums("time");        // [1.5, 0.3]
+e.avg_time = times.mean();
 ```
-
-**Common use cases:**
-
-```rhai
-// Calculate average response time
-let times = events.pluck_as_nums("response_time")
-let avg = times.reduce(|sum, x| sum + x, 0) / times.len()
-
-// Find most common status codes
-let codes = events.pluck("status")
-for code in codes {
-    track_freq("code", code)
-}
-
-// With window for rolling analysis (requires --window)
-let recent_times = window.pluck_as_nums("response_time")
-e.avg_recent = recent_times.reduce(|sum, x| sum + x, 0) / recent_times.len()
-e.spike = recent_times.filter(|t| t > 1000).len()
-```
-
-**Why use `pluck()` vs `map()`:**
-
-- Safe: Automatically skips missing fields instead of erroring
-- Clear intent: Explicitly shows you're extracting one field
-- Type conversion: `pluck_as_nums()` handles string-to-number conversion
 
 #### `array.flattened([style [, max_depth]])`
-Flatten nested arrays/objects.
+Flatten nested arrays/maps into a single-level map. See [`map.flattened()`](#mapflattenedstyle-max_depth) for styles.
 
 ```rhai
-e.flat = [[1, 2], [3, 4]].flattened()                 // Returns flat map
-e.fields = e.nested.flattened("dot", 2)               // Flatten to dot notation
+e.flat = [[1, 2], [3, 4]].flattened();           // {"[0][0]": 1, "[0][1]": 2, "[1][0]": 3, "[1][1]": 4}
 ```
 
 ### Testing
 
 #### `array.contains(value)`
-Check if array contains value.
+Whether the array holds `value`.
 
 ```rhai
-if e.roles.contains("admin") {
-    e.is_admin = true
-}
+if e.roles.contains("admin") { e.is_admin = true }
 ```
 
-#### `array.contains_any(search_array)`
-Check if array contains any search values.
+#### `array.contains_any(values)`
+Whether any of `values` is in the array.
 
 ```rhai
-if e.tags.contains_any(["error", "critical"]) {
-    e.alert = true
-}
+if e.tags.contains_any(["error", "critical"]) { e.alert = true }
 ```
 
-#### `array.starts_with_any(search_array)`
-Check if array starts with any search values.
+#### `array.starts_with_any(values)`
+Whether the **first element** equals any of `values`.
 
 ```rhai
-if e.path_parts.starts_with_any(["/api", "/v1"]) {
-    e.api_call = true
-}
+if e.path_parts.starts_with_any(["api", "v1"]) { e.api_call = true }
 ```
 
 #### `array.all(|item| condition)` / `array.some(|item| condition)`
-Check if all/any elements match condition.
+Whether every / at least one element matches.
 
 ```rhai
-e.all_valid = e.scores.all(|s| s >= 0)
-e.has_errors = e.logs.some(|l| l.level == "ERROR")
+e.all_valid = e.scores.all(|s| s >= 0);
+e.has_errors = e.logs.some(|l| l.level == "ERROR");
 ```
 
 ### Other Operations
 
 #### `array.join(separator)`
-Join array elements with separator.
+Join string elements. **Non-string elements are dropped**, so convert first.
 
 ```rhai
-e.path = e.parts.join("/")
-e.csv = e.values.join(",")
+e.path = e.parts.join("/");
+e.csv = e.codes.map(|c| c.to_string()).join(",");  // [1, 2] → "1,2"
 ```
 
-#### `array.push(item)` / `array.pop()`
-Add/remove items from array.
+#### `array.push(item)` / `array.pop()` / `array.len`
+Append in place; remove and return the last item; length.
 
 ```rhai
-e.tags.push("new_tag")
-let last = e.items.pop()
+e.tags.push("new_tag");
+let last = e.items.pop();
+e.n = e.items.len;
 ```
 
 ---
@@ -879,574 +746,413 @@ let last = e.items.pop()
 
 ### Field Access
 
-#### `map.get_path("field.path" [, default])`
-Safe nested field access with fallback.
+#### `map.get("key" [, default])`
+Top-level field, or `default` when it is missing or `()` (`()` without a default).
 
 ```rhai
-e.user_name = e.get_path("user.profile.name", "unknown")
-e.score = e.get_path("stats.score", 0)
+e.user = e.get("user", "anonymous");
+```
+
+#### `map.get_path("field.path" [, default])`
+Nested access with a fallback. Array elements use brackets: `"items[0].id"`.
+
+```rhai
+e.user_name = e.get_path("user.profile.name", "unknown");
+e.second = e.get_path("metadata.tags[1]");
 ```
 
 #### `map.has_path("field.path")`
-Check if nested field path exists.
+Whether a nested path exists.
 
 ```rhai
-if e.has_path("error.details.code") {
-    e.detailed_error = true
-}
+if e.has_path("error.details.code") { e.detailed_error = true }
 ```
 
 #### `map.path_equals("path", value)`
-Safe nested field comparison.
+Nested comparison that is false (not an error) when the path is missing.
 
 ```rhai
-if path_equals(e, "user.role", "admin") {
-    e.elevated = true
-}
+if e.path_equals("user.role", "admin") { e.elevated = true }
 ```
 
-#### `map.has("key")`
-Check if map contains key with non-unit value.
+#### `map.has("key")` / `map.contains("key")`
+`has()` is true when the key exists and its value is not `()`; the builtin `contains()` ignores the value.
 
 ```rhai
-if e.has("error_code") {
-    // Field exists and has a value
-}
+if e.has("error_code") { e.failed = true }
 ```
 
 ### Field Manipulation
 
-#### `map.keep(["field1", ...])`
-Return a new map containing only selected top-level fields that exist.
+#### `map.keep(["field1", ...])` / `map.drop(["field1", ...])`
+New map with only / without the listed top-level fields. Names match exactly (no paths or wildcards); missing names are ignored; `e` itself is not changed.
 
 ```rhai
-let shaped = e.keep(["service", "level", "msg"])
-// Missing fields are ignored; result contains only existing selected keys
+e = e.keep(["service", "level", "msg"]);
+let trimmed = e.drop(["password", "token"]);
 ```
-
-#### `map.drop(["field1", ...])`
-Return a new map containing all top-level fields except selected ones.
-
-```rhai
-let trimmed = e.drop(["_raw", "_file", "_offset"])
-// Missing fields are ignored; empty list returns a copy of the original map
-```
-
-Both methods are pure: they return a new top-level map and do not mutate `e`.
-Field names are matched exactly as strings (no path traversal or wildcards).
 
 #### `map.rename_field("old", "new")`
-Rename a field, returns true if successful.
+Rename in place; returns `true` if `old` existed.
 
 ```rhai
-e.rename_field("old_name", "new_name")
+e.rename_field("old_name", "new_name");
 ```
 
-#### `map.merge(other_map)`
-Merge another map into this one (overwrites existing keys).
+#### `map.merge(other)` / `map.enrich(other)`
+Copy keys from `other` into the map in place. `merge()` overwrites existing keys; `enrich()` only adds missing ones. `e += other` is the same as `merge()`.
 
 ```rhai
-e.merge(#{status: "ok", timestamp: now()})
-```
-
-#### `map.enrich(other_map)`
-Merge another map, inserting only missing keys (does not overwrite).
-
-```rhai
-e.enrich(#{user: "default", level: "info"})  // Only adds if keys don't exist
+e.merge(#{status: "ok"});
+e.enrich(#{user: "default", level: "info"});
 ```
 
 #### `map.flattened([style [, max_depth]])`
-Flatten nested object to dot notation.
+New single-level map. `style` is `"bracket"` (default: `a.b` for maps, `a[0]` for arrays), `"dot"` (`a.b.0`) or `"underscore"` (`a_b_0`). `max_depth` caps how many key levels are joined (0 = unlimited); deeper values stay nested.
 
 ```rhai
-let flat = e.nested.flattened("dot")                  // {a: {b: 1}} → {"a.b": 1}
-let flat = e.nested.flattened("dot", 2)               // With max depth
+let flat = e.nested.flattened();                 // {a: {b: [1]}} → {"a.b[0]": 1}
+let two = e.nested.flattened("dot", 2);          // {a: {b: {c: 1}}} → {"a.b": {c: 1}}
 ```
 
 #### `map.flatten_field("field_name")`
-Flatten just one specific field from the map.
+Flatten one nested field into dotted keys prefixed with the field name; the rest of the map is not included.
 
 ```rhai
-let flat = e.flatten_field("metadata")                // Flattens only e.metadata
+e.flat_user = e.flatten_field("user");          // {user: {a: {b: 1}, c: 2}} → {"user.a.b": 1, "user.c": 2}
 ```
 
 #### `map.unflatten([separator])`
-Reconstruct nested object from flat keys.
+Rebuild nesting from flat keys (default separator `"_"`).
 
 ```rhai
-let nested = e.flat.unflatten(".")                    // {"a.b": 1} → {a: {b: 1}}
+e.nested = e.flat.unflatten(".");                // {"a.b": 1, "a.c": 2} → {a: {b: 1, c: 2}}
 ```
 
 ### Format Conversion
 
-#### `map.to_json([pretty])`
-Convert map to JSON string.
+#### `map.to_json([indent])`
+JSON string; `indent` > 0 pretty-prints with that many spaces.
 
 ```rhai
-e.payload = e.data.to_json()
-e.readable = e.data.to_json(true)                     // Pretty-printed
+e.json = e.to_json();
+e.readable = e.details.to_json(2);
 ```
 
 #### `map.to_logfmt()`
-Convert map to logfmt format string.
+Logfmt string; values with spaces are quoted.
 
 ```rhai
-e.formatted = e.fields.to_logfmt()                    // {a: 1, b: 2} → "a=1 b=2"
+e.line = e.fields.to_logfmt();                   // {a: 1, b: "x y"} → 'a=1 b="x y"'
 ```
 
 #### `map.to_kv([sep [, kv_sep]])`
-Convert map to key-value string with separators.
+`key=value` string (defaults: space and `=`).
 
 ```rhai
-e.query = e.params.to_kv("&", "=")                    // {a: 1, b: 2} → "a=1&b=2"
+e.query = e.params.to_kv("&", "=");              // {a: 1, b: 2} → "a=1&b=2"
 ```
 
 #### `map.to_syslog()` / `map.to_cef()` / `map.to_combined()`
-Convert map to specific log format.
+Render a map as a log line, with defaults for missing parts. The key names they read differ from what the matching `parse_*` functions produce:
+
+- `to_syslog()`: `priority`, `timestamp`, `hostname`/`host`, `tag`/`program`/`ident`, `message`/`msg`/`content`
+- `to_cef()`: `deviceVendor`/`device_vendor`, `deviceProduct`, `deviceVersion`, `signatureId`/`event_id`, `name`/`event_name`/`message`, `severity`/`level`; all other keys become extensions
+- `to_combined()`: `ip`/`remote_addr`/`client_ip`, `user`, `timestamp`, `request` or `method`+`path`+`protocol`, `status`, `bytes`, `referer`, `user_agent`, `request_time`
 
 ```rhai
-e.syslog_line = e.fields.to_syslog()
-e.cef_line = e.security_event.to_cef()
-e.access_log = e.request.to_combined()
+e.syslog_line = e.to_syslog();                   // "<13>Oct 07 08:21:57 h kelora: hello"
+e.access_log = e.to_combined();
 ```
 
 ---
 
 ## DateTime Functions
 
+The event's own timestamp is already parsed: **`meta.parsed_ts`** is a UTC datetime (or `()` if the event has none). Event fields like `e.timestamp` are plain strings; convert other fields with `to_datetime()`. Assigning a datetime to a field stores it as an ISO 8601 string. `type_of()` returns a Rust type path ending in `DateTimeWrapper` / `DurationWrapper`.
+
 ### Creation
 
 #### `now()`
-Current timestamp (UTC).
+Current time (UTC).
 
 ```rhai
-e.timestamp = now()
+e.processed_at = now();
 ```
 
 #### `to_datetime(text [, fmt [, tz]])`
-Convert string into datetime value with optional hints.
+Parse a string into a datetime. Without `fmt` the format is auto-detected; with `fmt` (chrono syntax, see [Time Reference](time-reference.md)) only that format is tried. Unparseable text is a runtime error. `tz` is the zone a time without an offset was recorded in (default UTC): `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "Europe/Berlin")` is 10:30 Berlin time, 09:30 UTC. A time with an offset keeps it.
 
 ```rhai
-e.parsed = to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "UTC")
-e.auto = to_datetime("2024-01-15T10:30:00Z")          // Auto-detect format
+e.start = to_datetime(e.start_time);                       // auto-detect
+e.parsed = to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S");
 ```
 
-#### `to_duration("1h30m")`
-Convert duration string into duration value.
+#### `to_duration(text)`
+Parse a duration such as `"5m"`, `"1h30m"`, `"2d"` or `"1 hour 30 minutes"`.
 
 ```rhai
-let timeout = to_duration("5m")
-e.deadline = now() + timeout
+e.deadline = now() + to_duration("5m");
 ```
 
-#### `duration_from_seconds(n)`, `duration_from_minutes(n)`, etc.
-Create duration from specific units.
+#### `duration_from_seconds(n)` / `_minutes` / `_hours` / `_days` / `_milliseconds` / `_nanoseconds`
+Duration from an integer count of that unit (`duration_from_seconds(90)`, …). Floats are not accepted.
 
 ```rhai
-let hour = duration_from_hours(1)
-let day = duration_from_days(1)
+let hour = duration_from_hours(1);
+let ms = duration_from_milliseconds(1500);
 ```
 
 ### Formatting
 
 #### `dt.to_iso()`
-Convert datetime to ISO 8601 string.
+ISO 8601 / RFC 3339 string with a numeric offset.
 
 ```rhai
-e.iso_timestamp = e.timestamp.to_iso()                // "2024-01-15T10:30:00Z"
+e.iso = meta.parsed_ts.to_iso();                 // "2024-01-15T10:34:56+00:00"
 ```
 
 #### `dt.format("format_string")`
-Format datetime using custom format string (see `--help-time`).
+Format with chrono `%` codes (see `--help-time`).
 
 ```rhai
-e.date = e.timestamp.format("%Y-%m-%d")               // "2024-01-15"
-e.time = e.timestamp.format("%H:%M:%S")               // "10:30:00"
+e.date = meta.parsed_ts.format("%Y-%m-%d");      // "2024-01-15"
+e.time = meta.parsed_ts.format("%H:%M:%S");      // "10:34:56"
+```
+
+#### `dt.ts_nanos()`
+Unix timestamp in nanoseconds (int).
+
+```rhai
+e.ns = meta.parsed_ts.ts_nanos();                // 1705314896000000000
 ```
 
 ### Component Extraction
 
-#### `dt.year()`, `dt.month()`, `dt.day()`
-Extract date components.
+#### `dt.year()`, `dt.month()`, `dt.day()`, `dt.hour()`, `dt.minute()`, `dt.second()`
+Integer components in the datetime's own timezone.
 
 ```rhai
-e.year = e.timestamp.year()
-e.month = e.timestamp.month()
-e.day = e.timestamp.day()
-```
-
-#### `dt.hour()`, `dt.minute()`, `dt.second()`
-Extract time components.
-
-```rhai
-e.hour = e.timestamp.hour()
+e.hour = meta.parsed_ts.hour();
+e.local_hour = meta.parsed_ts.to_timezone("America/New_York").hour();
 ```
 
 ### Timezone Conversion
 
-#### `dt.to_utc()` / `dt.to_local()`
-Convert timezone.
+#### `dt.to_utc()` / `dt.to_local()` / `dt.to_timezone("tz_name")`
+Same instant in UTC, the system's local zone, or a named IANA zone.
 
 ```rhai
-e.utc_time = e.local_timestamp.to_utc()
-e.local_time = e.utc_timestamp.to_local()
-```
-
-#### `dt.to_timezone("tz_name")`
-Convert to named timezone.
-
-```rhai
-e.ny_time = e.timestamp.to_timezone("America/New_York")
+e.ny_time = meta.parsed_ts.to_timezone("America/New_York");  // "2024-01-15T05:34:56-05:00"
+e.local = meta.parsed_ts.to_local();
 ```
 
 #### `dt.timezone_name()`
-Get timezone name as string.
+Zone name, e.g. `"UTC"` or `"America/New_York"`.
 
 ```rhai
-e.tz = e.timestamp.timezone_name()                    // "UTC"
+e.tz = meta.parsed_ts.timezone_name();
 ```
 
 ### Time Bucketing
 
-#### `dt.round_to("interval")`
-Round timestamp down to the nearest interval. Useful for grouping events into time buckets for histograms and time-series analysis.
-
-Accepts duration strings like `"5m"`, `"1h"`, `"1d"`, etc.
+#### `dt.round_to("interval")` / `dt.ceil_to("interval")`
+Round down / up to an interval boundary (`"5m"`, `"1h"`, `"1d"`, …). A timestamp already on a boundary stays unchanged.
 
 ```rhai
-// Group events into 5-minute buckets
-let timestamp = to_datetime(e.timestamp);
-e.bucket = timestamp.round_to("5m").to_iso();
-track_freq("requests_per_5min", e.bucket);
-
-// Hourly buckets
-e.hour_bucket = to_datetime(e.time).round_to("1h").format("%Y-%m-%d %H:00");
-
-// Daily buckets
-e.day = timestamp.round_to("1d").format("%Y-%m-%d");
-```
-
-**Common intervals:**
-- `"1m"`, `"5m"`, `"15m"` - Minute-level bucketing
-- `"1h"`, `"6h"`, `"12h"` - Hour-level bucketing
-- `"1d"`, `"7d"` - Day/week-level bucketing
-
-#### `dt.ceil_to("interval")`
-Round timestamp up to the next interval boundary. If the timestamp is already exactly on a boundary, it stays unchanged.
-
-Useful for computing bucket end-times or "next window" boundaries.
-
-```rhai
-let ts = to_datetime(e.timestamp);
-e.bucket_start = ts.round_to("1h").to_iso();
-e.bucket_end = ts.ceil_to("1h").to_iso();
-
-// 12:34:56 ceil to 5m → 12:35:00
-// 12:30:00 ceil to 5m → 12:30:00 (already on boundary)
+e.bucket = meta.parsed_ts.round_to("5m");                      // 10:34:56 → 10:30:00
+e.bucket_end = meta.parsed_ts.ceil_to("1h");                   // 10:34:56 → 11:00:00
+track_freq("per_hour", meta.parsed_ts.round_to("1h"));
+e.day = to_datetime(e.created).round_to("1d").format("%Y-%m-%d");
 ```
 
 ### Arithmetic and Comparison
 
-#### `dt + duration`, `dt - duration`
-Add/subtract duration from datetime.
+#### `dt + duration`, `dt - duration`, `dt1 - dt2`
+Shift a datetime, or get the duration between two. `dt1 - dt2` is always non-negative regardless of order.
 
 ```rhai
-e.future = now() + duration_from_hours(1)
-e.past = now() - duration_from_days(7)
+e.expires = meta.parsed_ts + duration_from_hours(1);
+e.elapsed_ms = (meta.parsed_ts - to_datetime(e.start_time)).as_milliseconds();
 ```
 
-#### `dt1 - dt2`
-Get duration between datetimes.
+#### `==`, `!=`, `<`, `>`, `<=`, `>=`
+Compare datetimes with datetimes, durations with durations.
 
 ```rhai
-let elapsed = now() - e.start_time
-e.duration_ms = elapsed.as_milliseconds()
-```
-
-#### `dt1 == dt2`, `dt1 > dt2`, etc.
-Compare datetimes.
-
-```rhai
-if e.timestamp > to_datetime("2024-01-01") {
-    e.this_year = true
-}
+if meta.parsed_ts > to_datetime("2024-01-01") { e.recent = true }
+if to_duration("90m") > to_duration("1h") { e.long = true }
 ```
 
 ### Duration Operations
 
-#### `duration.as_seconds()`, `duration.as_milliseconds()`, etc.
-Convert duration to specific units.
+#### `duration.as_seconds()` / `as_milliseconds()` / `as_nanoseconds()` / `as_minutes()` / `as_hours()` / `as_days()`
+Whole units as an integer (truncated: 90 minutes `.as_hours()` is 1).
 
 ```rhai
-e.seconds = duration.as_seconds()
-e.ms = duration.as_milliseconds()
-e.hours = duration.as_hours()
+let d = to_duration("1h30m");
+e.secs = d.as_seconds();                         // 5400
+e.mins = d.as_minutes();                         // 90
+```
+
+#### `duration + duration`, `duration - duration`
+Add or subtract; subtraction always returns a non-negative duration.
+
+```rhai
+e.total = (to_duration("1h30m") + to_duration("30m")).to_string();  // "2h"
 ```
 
 #### `duration.to_string()` / `humanize_duration(ms)`
-Format duration as human-readable string.
+Compact text with at most two units, truncated to whole seconds (`"1h 30m"`, `"1m 30s"`, `"0s"` for 250 ms). `humanize_duration()` takes milliseconds.
 
 ```rhai
-e.readable = duration.to_string()                     // "1h 30m"
-e.humanized = humanize_duration(5400000)              // "1h 30m"
+e.readable = to_duration("90m").to_string();     // "1h 30m"
+e.humanized = humanize_duration(5400000);        // "1h 30m"
 ```
 
 #### `duration.to_debug()`
-Format duration with full precision for debugging. Useful for inspecting exact duration values.
-
-```rhai
-e.debug_duration = duration.to_debug()                // Full precision debug output
-```
+Currently identical to `to_string()`. Use `as_milliseconds()` or `as_nanoseconds()` for exact values.
 
 ---
 
 ## Math Functions
 
 #### `abs(x)`
-Absolute value of number.
+Absolute value (int or float).
 
 ```rhai
-e.magnitude = abs(e.value)
+e.magnitude = abs(e.delta);
 ```
 
 #### `clamp(value, min, max)`
-Constrain value to be within min/max range.
+Constrain to a range. All three arguments must be ints, or all floats.
 
 ```rhai
-e.bounded = clamp(e.score, 0, 100)
+e.bounded = clamp(e.score, 0, 100);
+e.ratio = clamp(e.r, 0.0, 1.0);
 ```
 
 #### `floor(x)` / `round(x)`
-Rounding operations.
+Rhai builtins for **floats only**; they return a float. Integer input is an error ("Function not found"); add `.to_int()` to get an integer back.
 
 ```rhai
-e.floored = floor(e.value)
-e.rounded = round(e.value)
+e.floored = floor(e.latency);                    // -3.7 → -4.0
+e.rounded = round(e.latency).to_int();           // 2.5 → 3
 ```
 
 #### `mod(a, b)` / `a % b`
-Modulo operation with division-by-zero protection.
+Integer remainder. `mod(a, 0)` returns 0; the `%` operator raises an error on zero.
 
 ```rhai
-e.bucket = e.id % 10
+e.shard = mod(e.id, 10);
 ```
 
 #### `rand()` / `rand_int(min, max)`
-Random number generation.
+Random float in [0, 1), or integer in [min, max] inclusive.
 
 ```rhai
-e.random_id = rand_int(1000, 9999)                    // Random ID assignment
-
-// For sampling, prefer sample_every() instead:
-// if sample_every(10) { e.sampled = true }           // Better: counter-based
+e.random_id = rand_int(1000, 9999);
 ```
 
-Set the `KELORA_SEED` environment variable to a non-negative integer to make `rand()`, `rand_int()`, and `sample_prob()` reproducible (e.g. for tests or repeatable sampling). Reproducibility holds in sequential mode; under `--parallel`, thread scheduling still affects which worker consumes which value.
+Set `KELORA_SEED` to a non-negative integer to make `rand()`, `rand_int()` and `sample_prob()` reproducible. This holds in sequential mode; under `--parallel`, scheduling still decides which worker draws which value.
 
 #### `sample_every(n)`
-Sample every Nth event - returns `true` on calls N, 2N, 3N, etc.
-
-Fast counter-based sampling (thread-local, approximate in parallel mode). Each unique N value maintains its own counter. For deterministic sampling across parallel threads, use `bucket()` instead.
+True on the Nth, 2Nth, 3Nth… call. Each distinct `n` has its own counter; counters are per thread, so the rate is approximate under `--parallel`.
 
 ```rhai
-// Keep only every 100th event (1% sampling)
-if !sample_every(100) { skip() }
-
-// Keep every 10th event (10% sampling)
-if sample_every(10) {
-    e.sampled = true
-}
-
-// Different N values have independent counters
-sample_every(10)    // Returns true on calls 10, 20, 30...
-sample_every(100)   // Returns true on calls 100, 200, 300...
+if !sample_every(100) { skip() }                // keep every 100th event
 ```
-
-**Comparison with `bucket()`:**
-- `sample_every(n)` - Fast counter, approximate in parallel mode, non-deterministic
-- `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads, slightly slower
 
 #### `sample_prob(p)`
-Probabilistic sampling — returns `true` with probability `p` (0.0–1.0). Useful for "keep ~N% of events" without manual `rand()` checks.
+True with probability `p` (0.0–1.0).
 
 ```rhai
-// Keep ~1% of events
-if !sample_prob(0.01) { skip() }
-
-// 10% sampling for metrics
-if sample_prob(0.10) {
-    track_sum("sampled_errors", 1)
-}
+if !sample_prob(0.01) { skip() }                // keep ~1%
 ```
 
-**Comparison with other sampling methods:**
-- `sample_prob(p)` - Probabilistic, ~p fraction kept, non-deterministic
-- `sample_every(n)` - Counter-based, exact 1/n fraction, approximate in parallel
-- `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads
+| Method | Kept fraction | Same events on every run? |
+|---|---|---|
+| `sample_every(n)` | exactly 1/n (approximate in parallel) | yes, sequentially |
+| `sample_prob(p)` | about p | only with `KELORA_SEED` |
+| `e.field.bucket() % n == 0` | about 1/n, per field value | yes, also in parallel |
 
 ---
 
 ## Output Formatting Functions
 
-String-returning helpers for rendering numbers in human-readable form. Useful
-in inline event output, `eprint`, and end-of-stream summary reports.
+String-returning helpers for `print`, `eprint`, inline fields and `--end` reports.
 
-#### `human_bytes(n)`
-Format byte count with binary/IEC units (1024-based): `B`, `KiB`, `MiB`, `GiB`, `TiB`, `PiB`, `EiB`.
-
-```rhai
-human_bytes(1536)                                     // "1.5 KiB"
-human_bytes(1073741824)                               // "1.0 GiB"
-e.size_h = human_bytes(e.bytes)
-```
-
-#### `human_bytes_si(n)`
-Format byte count with decimal/SI units (1000-based): `B`, `KB`, `MB`, `GB`, `TB`, `PB`, `EB`.
+#### `human_bytes(n)` / `human_bytes_si(n)`
+Byte counts with binary units (1024: `KiB`, `MiB`, …) or SI units (1000: `KB`, `MB`, …).
 
 ```rhai
-human_bytes_si(1500)                                  // "1.5 KB"
-human_bytes_si(1_500_000_000)                         // "1.5 GB"
-e.size_h = human_bytes_si(e.bytes)
+e.size = human_bytes(1536);                      // "1.5 KiB"
+e.size_si = human_bytes_si(1_500_000_000);       // "1.5 GB"
 ```
 
 #### `format_decimals(value, decimals)`
-Format a number as a string with exactly N digits after the decimal point.
-Negative `decimals` is treated as 0; very large values are clamped to 20.
+Exactly N decimals. Negative `decimals` counts as 0; values above 20 are clamped.
 
 ```rhai
-format_decimals(1.0 / 3.0, 3)                         // "0.333"
-format_decimals(1.0, 2)                               // "1.00"
-format_decimals(42.987, 0)                            // "43"
+e.third = format_decimals(1.0 / 3.0, 3);         // "0.333"
+e.whole = format_decimals(42.987, 0);            // "43"
 ```
 
 #### `format_percent(ratio, decimals)`
-Format a ratio (0.0–1.0) as a percentage string with N decimals and `%` suffix.
-The input is multiplied by 100, so `0.042` renders as `"4.2%"`.
+Ratio × 100 with N decimals and `%`. Divide as floats: `3 / 100` is integer division and gives `0`.
 
 ```rhai
-format_percent(0.042, 1)                              // "4.2%"
-format_percent(0.5, 0)                                // "50%"
-format_percent(e.errors.to_float() / e.total, 2)      // "3.14%"
+e.rate = format_percent(0.042, 1);                              // "4.2%"
+e.err_rate = format_percent(e.errors.to_float() / e.total, 2);  // 3 of 100 → "3.00%"
 ```
 
 ### Padding & Alignment
 
-All padding and shortening helpers are **Unicode-width aware** — CJK / wide
-characters count as 2 columns, zero-width combining marks as 0. Use these for
-aligned columns in summary tables and inline output.
+Widths are display columns: wide (CJK) characters count 2, combining marks 0. `fill` and `marker` are strings, so use double quotes (`"."`, not `'.'`).
 
-#### `text.ljust(n)` / `text.ljust(n, fill)`
-Left-justify by padding the right side with spaces (or `fill`) to reach display
-width `n`. Strings already at or beyond `n` are returned unchanged.
+#### `text.ljust(n [, fill])` / `text.rjust(n [, fill])` / `text.center(n [, fill])`
+Pad to width `n` (default fill: space). Longer text is returned unchanged. `center()` puts the odd extra column on the right.
 
 ```rhai
-"hi".ljust(5)                                         // "hi   "
-"ERROR".ljust(8, '.')                                 // "ERROR..."
+e.a = "ERROR".ljust(8, ".");                     // "ERROR..."
+e.b = "42".rjust(5, "0");                        // "00042"
+e.c = " TITLE ".center(20, "=");                 // "====== TITLE ======="
 ```
 
-#### `text.rjust(n)` / `text.rjust(n, fill)`
-Right-justify by padding the left side. Common for numeric columns and zero
-padding.
+#### `text.shorten(n [, marker])` / `text.shorten_middle(n [, marker])`
+If wider than `n`, keep the start (or both ends) and insert `marker` (default `"…"`). `""` truncates hard.
 
 ```rhai
-"42".rjust(5)                                         // "   42"
-"42".rjust(5, '0')                                    // "00042"
-```
-
-#### `text.center(n)` / `text.center(n, fill)`
-Center within width `n`. If the remaining pad is odd, the extra column goes on
-the right.
-
-```rhai
-"hi".center(6)                                        // "  hi  "
-" TITLE ".center(20, '=')                             // "====== TITLE ======="
-```
-
-#### `text.shorten(n)` / `text.shorten(n, marker)`
-If `text` exceeds display width `n`, keep the start and append `marker`
-(default `"…"`, 1 column). Pass `""` for a hard truncate, or `"..."` for an
-ASCII-only marker.
-
-```rhai
-"hello world".shorten(8)                              // "hello w…"
-"hello world".shorten(8, "...")                       // "hello..."
-"hello world".shorten(5, "")                          // "hello"
-```
-
-#### `text.shorten_middle(n)` / `text.shorten_middle(n, marker)`
-If `text` exceeds display width `n`, keep both ends and insert `marker` in the
-middle. Ideal for paths, URLs, UUIDs, and fully-qualified names where the
-distinguishing info lives at the end.
-
-```rhai
-let path = "/home/user/projects/kelora/src/rhai_functions/formatting.rs";
-path.shorten_middle(30)                               // "/home/user/proj…formatting.rs"
-path.shorten_middle(30, "...")                        // ASCII marker
+e.a = "hello world".shorten(8);                  // "hello w…"
+e.b = "hello world".shorten(8, "...");           // "hello..."
+e.c = e.path.shorten_middle(30);                 // "/home/user/proj…/formatting.rs"
 ```
 
 ### Colors & Styles
 
-ANSI escape-sequence helpers that wrap the string with a color or style code
-and a reset. When colors are disabled (output is not a TTY, `NO_COLOR` is set,
-or `--no-color` was passed), these functions return the string **unchanged**,
-so scripts work transparently whether output is piped to a file or a
-terminal. No flag detection needed inside scripts.
-
-#### `text.red()` / `.green()` / `.yellow()` / `.blue()` / `.cyan()` / `.magenta()`
-Wrap `text` with the corresponding ANSI foreground color. The palette matches
-Kelora's existing logfmt output (bright red/green/yellow/magenta, regular
-blue/cyan).
+#### `text.red()` / `.green()` / `.yellow()` / `.blue()` / `.cyan()` / `.magenta()` / `.bold()` / `.dim()`
+Wrap text in an ANSI color or style. When colors are off (non-TTY output, `NO_COLOR`, `--no-color`) the text is returned unchanged, so scripts need no checks. Calls chain.
 
 ```rhai
-"ERROR".red()
-"OK".green()
-"WARN".yellow()
-e.level = e.level.yellow()
-```
-
-#### `text.bold()` / `text.dim()`
-Apply bold or dim styling.
-
-```rhai
-"header".bold()
-e.timestamp = e.timestamp.dim()
-```
-
-Color and style helpers are chainable — they compose by stacking SGR codes:
-
-```rhai
-"CRITICAL".bold().red()                               // bold red
-"meta".dim().cyan()                                   // dim cyan
+print("CRITICAL".bold().red());
+print(`${"OK".green()} ${e.msg}`);
 ```
 
 ### Charts & Sparklines
 
 #### `bar(value, max, width)`
-Render a fixed-width Unicode bar showing `value / max`.
-
-This is the single, unambiguous form. For a pre-normalized ratio, pass `max`
-as `1` (e.g. `bar(0.42, 1, 10)`).
-
-- Uses eighth-block characters for sub-cell resolution
-- Clamps values outside `0..max`
-- Returns spaces when `max <= 0`
+A bar exactly `width` columns wide showing `value / max`, with eighth-block resolution. Values outside `0..max` are clamped; `max <= 0` gives spaces. For ratios use `max = 1`.
 
 ```rhai
-bar(7, 10, 10)                                        // "███████   "
-bar(3, 8, 4)                                          // "█▌  "
-bar(0.42, 1, 10)                                      // "████▏     "
+print(bar(7, 10, 10));                          // "███████   "
+print(bar(0.42, 1, 10));                        // "████▎     "
 ```
 
 #### `sparkline(array)`
-Render an array of numbers as a single-line sparkline using `▁▂▃▄▅▆▇█`.
-
-- Scales values from `0..max(array)`
-- Negative and non-numeric values render as spaces
-- Empty arrays return `""`
+One-line chart with `▁▂▃▄▅▆▇█`, scaled to `0..max(array)`. Negative and non-numeric values render as spaces; `[]` gives `""`.
 
 ```rhai
-sparkline([1, 4, 2, 8, 5, 7])                         // "▁▄▂█▅▇"
+print(sparkline([1, 4, 2, 8, 5, 7]));           // "▁▄▂█▅▇"
 ```
 
 ---
@@ -1454,113 +1160,37 @@ sparkline([1, 4, 2, 8, 5, 7])                         // "▁▄▂█▅▇"
 ## Type Conversion Functions
 
 #### `to_int(value)` / `to_float(value)` / `to_bool(value)`
-Convert value to type (returns `()` on error).
+Convert, or return `()` on failure (so the assigned field is removed and `track_*` skips it). `to_int(3.9)` truncates to 3, but `to_int("3.9")` fails. `to_bool` accepts `true/false`, `yes/no`, `on/off`, `1/0` (any case) and numbers (non-zero is true).
 
 ```rhai
-e.status = to_int(e.status_string)
-e.score = to_float(e.score_string)
+e.status = to_int(e.status_str);
+e.score = e.score_str.to_float();
 ```
 
-#### `to_int(value, thousands_sep)` / `to_float(value, thousands_sep, decimal_sep)`
-Parse formatted numbers with explicit separators.
-
-**Parameters:**
-- `thousands_sep` - The thousands/grouping separator (single char or empty string)
-- `decimal_sep` - The decimal separator (single char or empty string)
-
-**Examples:**
+#### `to_int(value, thousands)` / `to_float(value, thousands, decimal)`
+Parse formatted numbers. Every character in `thousands` is removed; `decimal` is one character or `""`. Pass strings in double quotes; single-quoted chars are not accepted.
 
 ```rhai
-// US format (comma thousands, dot decimal)
-e.price = "1,234.56".to_float(',', '.')     // → 1234.56
-e.count = "1,234,567".to_int(',')           // → 1234567
-
-// EU format (dot thousands, comma decimal)
-e.price = "1.234,56".to_float('.', ',')     // → 1234.56
-e.count = "1.234.567".to_int('.')           // → 1234567
-
-// French format (space thousands, comma decimal)
-e.price = "1 234,56".to_float(' ', ',')     // → 1234.56
-e.count = "2 000 000".to_int(' ')           // → 2000000
-
-// No thousands separator (empty string)
-e.price = "1234.56".to_float("", '.')       // → 1234.56
+e.price = "1,234.56".to_float(",", ".");         // 1234.56
+e.price = "1.234,56".to_float(".", ",");         // 1234.56 (EU)
+e.count = "2 000 000".to_int(" ");               // 2000000
 ```
 
 #### `to_int_or(value, default)` / `to_float_or(value, default)` / `to_bool_or(value, default)`
-Convert value to type with fallback.
+Same conversions with a fallback instead of `()`. Separator forms: `to_int_or(value, thousands, default)`, `to_float_or(value, thousands, decimal, default)`.
 
 ```rhai
-e.status = e.status_string.to_int_or(0)
-e.score = e.score_string.to_float_or(0.0)
-```
-
-#### `to_int_or(value, thousands_sep, default)` / `to_float_or(value, thousands_sep, decimal_sep, default)`
-Parse formatted numbers with separators and fallback.
-
-```rhai
-// With error handling
-e.amount = e.value.to_float_or(',', '.', 0.0)   // Default to 0.0 if invalid
-e.count = e.total.to_int_or(',', 0)             // Default to 0 if invalid
+e.status = e.status_str.to_int_or(0);
+e.amount = e.value.to_float_or(",", ".", 0.0);
 ```
 
 #### `value.or_empty()`
-Convert empty values to Unit `()` for removal/filtering.
+Turn `""`, `[]` and `#{}` into `()`; `()` passes through. Assigning the result removes the field, and `track_*()` skips it. Numbers and booleans are not accepted (error).
 
-Converts conceptually "empty" values to Unit, which:
-
-- Removes the field when assigned (e.g., `e.field = value.or_empty()`)
-- Gets skipped by `track_*()` functions
-- Works with missing fields (passes Unit through unchanged)
-
-**Supported empty values:**
-
-- Empty string: `""` → `()`
-- Empty array: `[]` → `()`
-- Empty map: `#{}` → `()`
-- Unit itself: `()` → `()` (pass-through)
-
-**String extraction:**
 ```rhai
-// Extract only when prefix exists, otherwise remove field
-e.name = e.message.after("prefix:").or_empty()
-
-// Same for regex extraction: no match → no field, so --freq and != () skip it
-e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty()
-
-// Track only non-empty values
-track_unique("names", e.extracted.or_empty())
-```
-
-**Array filtering:**
-```rhai
-// Only assign tags if array is non-empty
-e.tags = e.tags.or_empty()  // [] becomes (), field removed
-
-// Track only events with items
-track_freq("item_count", e.items.len())
-if e.items.len() == 0 {
-    e.items = e.items.or_empty()  // Remove empty array
-}
-```
-
-**Map filtering:**
-```rhai
-// Only keep non-empty metadata
-e.metadata = e.parse_json().or_empty()  // {} becomes (), field removed
-
-// Safe chaining with missing fields
-e.optional = e.maybe_field.or_empty()  // Works even if maybe_field is ()
-```
-
-**Common pattern - conditional extraction and tracking:**
-```rhai
-e.extracted = e.message.after("User:").or_empty()
-track_unique("users", e.extracted)  // Only tracks when extraction succeeds
-
-// Filter events with no data
-e.results = e.search_results.or_empty()
-track_unique("result_sets", e.results)  // Skips empty arrays and ()
+e.name = e.message.after("User:").or_empty();    // no name field when "User:" is absent
+e.tags = e.tags.or_empty();                      // drop an empty array
+track_unique("users", e.message.after("User:").or_empty());
 ```
 
 ---
@@ -1568,674 +1198,331 @@ track_unique("result_sets", e.results)  // Skips empty arrays and ()
 ## Utility Functions
 
 #### `get_env(var [, default])`
-Get environment variable with optional default.
+Environment variable; `default` (or `""`) when unset.
 
 ```rhai
-e.branch = get_env("CI_BRANCH", "main")
-e.build_id = get_env("BUILD_ID")
+e.branch = get_env("CI_BRANCH", "main");
 ```
 
 #### `pseudonym(value, domain)`
-Generate a domain-separated pseudonym — use this to redact, anonymize, or mask a value
-with a stable, reproducible alias.
-
-Set the `KELORA_SECRET` environment variable to produce stable pseudonyms that match
-across separate runs (e.g. correlating the same IP between two batches processed on
-different days). Without `KELORA_SECRET`, kelora falls back to an **ephemeral per-run
-key**: pseudonymization still works, but the values change on every run and will not
-correlate across runs. In ephemeral mode kelora prints a one-time warning to stderr
-(suppressed by `--silent`/`--no-diagnostics`).
+Stable, keyed alias for a value, separated by `domain` (the same value in two domains gives unrelated aliases). Set `KELORA_SECRET` to get the same aliases across runs; without it kelora uses an ephemeral per-run key and prints a one-time notice (hidden by `--silent` or `--no-diagnostics`).
 
 ```rhai
-e.user_alias = pseudonym(e.username, "users")
-e.ip_alias = pseudonym(e.client_ip, "ips")
+e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZCeH"
+e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-See also (redaction / anonymization / masking): `text.hash([algo])` for one-way hashing,
-`text.mask_ip([octets])` for masking IP octets, and `text.normalized([patterns])` for
-replacing sensitive patterns with placeholders.
+Related: `hash()` (one-way digest), `mask_ip()`, `normalized()`. Recipes: [Cookbook → Privacy](../cookbook.md#privacy).
 
 #### `read_file(path)` / `read_lines(path)`
-Read file contents.
+File contents as one string, or as an array of lines. **Only allowed in `--begin`**; keep the result in `state` for later stages.
 
 ```rhai
-e.config = read_file("config.json")
-e.lines = read_lines("data.txt")
+// --begin
+state.blocklist = read_lines("blocked_ips.txt");
 ```
 
 #### `drain_template(text [, options])`
-Add a line to the Drain template model and return `{template, count, is_new}`. Sequential mode only.
+Add a line to the Drain template model and return `{template, template_id, count, is_new, sample}` (plus `first_line`/`last_line` when `line_num` is given). Sequential mode only.
 
 ```rhai
-let r = drain_template(e.message);
+let r = drain_template(e.message, #{line_num: meta.line_num});
 e.template = r.template;
 ```
 
-Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, hexcolor, version, hexnum, duration,
-timestamp, date, time, num.
-`function` is **not** in the default set: it replaced the identifier along with
-the parentheses, so `Intel(R)` and `packet(s)` both mined as `<function>`. Ask
-for it with `filters: ["%{KELORA_FUNCTION:function}", ...]`. (It is unrelated to
-`normalized()`'s `function` pattern, which stays on by default.)
-`timestamp` also covers calendar dates that span several tokens — ctime/asctime
-(`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
-(`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
-Sizes with units mask as one `<size_kb>`-style token however they were spelled
-(`18.4 KB`, `10MB`), and spaced durations (`took 5 seconds`) as `<duration>`, so
-a value spanning several tokens stays one token.
-Only the matched span is masked, so the literal part of a token survives:
-`uid=0` → `uid=<num>`, `worker-3` → `worker-<num>`, `GET /api/v1/users?id=5` →
-`GET <path>?id=<num>`. A digit inside a word belongs to the word and is left
-alone, so `ssh2`, `utf8` and `sha256` stay as they are.
-What no filter catches, Drain itself generalizes: a position the events in one
-template disagree on is reported as `<*>`, with `sample` giving a real line —
-including across token counts, so an optional segment (`(1.13 KB)`) or a value
-of varying width (`lifetime 00:03` / `lifetime <1 sec`) folds into one template
-whose `<*>` covers the varying stretch.
-An explicit `filters` list masks exactly those patterns, without the multi-token
-collapses.
-For lightweight normalization without Drain, use `normalized()` on the field instead.
+Options:
 
-Optional `options` map keys:
+- `depth` (int, default 2) — leading tokens used as clustering keys. This is the count itself, not the Drain paper's `depth` (whose 4 means one keyed token). Never more than one below a message's token count.
+- `max_children` (int, default 100) — distinct keys per tree node before further values share a wildcard branch.
+- `similarity` (float, default 0.8) — fraction of positions that must match for a line to join a template.
+- `filters` (CSV string or array of grok patterns) — replaces the default masking set; an explicit list masks exactly those patterns, without the multi-token collapses below.
+- `line_num` (int) — record line numbers.
 
-- `depth` (int) — leading tokens used as clustering keys (default 2). This is the
-  count itself, not the Drain paper's `depth` (whose 4 means one keyed token).
-  Raising it separates messages that differ early; lowering it groups more.
-  Never more than one below a message's token count, so a position is always left
-  for `<*>`.
-- `max_children` (int) — distinct keys allowed at one tree node (default 100)
-  before further values share a wildcard branch.
-- `similarity` (float) — fraction of positions that must match exactly for a line
-  to join an existing template (default 0.8). With few keyed tokens this is what
-  keeps unrelated messages apart, so it is well above the paper's 0.4.
-- `filters` (string CSV or array of grok patterns)
+The defaults were measured on the 16 [loghub](https://github.com/logpai/loghub) `_2k` datasets (`just drain-accuracy`, baseline in `dev/drain-accuracy-baseline.json`). Prefer changing the mined field (or pre-masking with `normalized()`) over tuning them.
 
-The defaults come from measuring all 16 [loghub](https://github.com/logpai/loghub)
-`_2k` datasets against their ground truth (`just drain-accuracy`), not from the
-paper's defaults — see `dev/drain-accuracy-baseline.json`. Prefer changing the
-mined field (or `normalized()`) over tuning these.
+Default filters: `ipv4_port`, `ipv4`, `ipv6`, `email`, `url`, `fqdn`, `uuid`, `mac`, `md5`, `sha1`, `sha256`, `path`, `oauth`, `hexcolor`, `version`, `hexnum`, `duration`, `timestamp`, `date`, `time`, `num`. Masking behaviour:
 
-Per-line results are provisional: a template is rewritten as its cluster
-generalizes, and near-identical templates are merged once input ends. So the
-`template` this returns mid-stream is the model *so far*, while `--drain` and
-`drain_templates()` report the finished set.
+- `function` is off (it masked the identifier too, so `Intel(R)` and `packet(s)` became `<function>`); opt in with `filters: ["%{KELORA_FUNCTION:function}", ...]`. `normalized()` keeps its own `function` pattern on.
+- `timestamp` also covers multi-token dates: ctime/asctime (`Mon Jun 13 03:55:15 2005`, year optional) and syslog (`Jun 13 03:55:15`).
+- Sizes with units (`18.4 KB`, `10MB`) mask as one `<size_kb>`-style token, spaced durations (`took 5 seconds`) as `<duration>`.
+- Only the matched span is masked: `uid=0` → `uid=<num>`, `worker-3` → `worker-<num>`, `GET /api/v1/users?id=5` → `GET <path>?id=<num>`. Digits inside words stay (`ssh2`, `utf8`, `sha256`).
+- No PII patterns; pre-mask with `normalized(["credit_card", "ssn", "phone"])`.
+
+Positions where a template's events disagree become `<*>`, also across token counts, so an optional segment (`(1.13 KB)`) or a value of varying width folds into one template. Per-line results are provisional: templates are rewritten as clusters generalize and near-identical ones are merged at end of input, so `--drain` and `drain_templates()` report the final set.
 
 #### `drain_templates()`
-Return array of `{template, count}` from the current Drain model. Sequential mode only.
+Array of templates from the current model, with the same fields as `drain_template()` minus `is_new`. Sequential mode only.
 
 ```rhai
-let templates = drain_templates();
+// --end
+for t in drain_templates() { print(`${t.count}\t${t.template}`) }
 ```
 
 #### `print(message)` / `eprint(message)`
-Print to stdout/stderr (suppressed with `--no-script-output` or data-only modes).
+Write to stdout / stderr. Suppressed by `--no-script-output`, `--silent` and the data-only modes (`-s`, `-m`, `--freq`, …) unless `--script-output` is given.
 
 ```rhai
-print("Processing event: " + e.id)
-eprint("Warning: " + e.error)
+print("Processing event: " + e.id);
+eprint("Warning: " + e.error);
 ```
 
 #### `exit(code)`
-Exit kelora with given exit code.
+Stop kelora with the given exit code. The current event is not output.
 
 ```rhai
-if e.critical {
-    exit(1)
-}
+if e.level == "FATAL" { exit(1) }
 ```
 
 #### `skip()`
-Skip the current event, mark it as filtered, and continue with the next one. Downstream stages and output for the skipped event do not run.
+Drop the current event: later stages and output do not run for it, and it counts as filtered.
 
 ```rhai
-if e.endpoint == "/health" {
-    skip();
-}
+if e.endpoint == "/health" { skip() }
 ```
 
-#### `status_class(status_code)`
-Convert HTTP status code to class string ("1xx", "2xx", "3xx", "4xx", "5xx", or "unknown").
+#### `status_class(code)`
+HTTP status class `"1xx"`…`"5xx"`, or `"unknown"` outside 100–599. Takes an **integer**; convert string fields first.
 
 ```rhai
-e.status_category = status_class(e.status)            // 404 → "4xx", 200 → "2xx"
-e.is_error = status_class(e.code) == "5xx"
-
-// Track errors by class
-track_freq("status_class", status_class(e.status))
-
-// Group status codes for analysis
-e.status_group = status_class(e.response_code)        // 503 → "5xx"
+e.class = status_class(e.status);                // 404 → "4xx"
+track_freq("status_class", status_class(e.code.to_int()));
 ```
 
 #### `type_of(value)`
-Get type name as string.
+Type name: `"i64"`, `"f64"`, `"string"`, `"bool"`, `"array"`, `"map"`, `"()"`.
 
 ```rhai
-e.value_type = type_of(e.value)                       // "string", "int", "array", etc.
+if type_of(e.status) == "string" { e.status = e.status.to_int() }
 ```
 
 #### `window.pluck(field)` / `window.pluck_as_nums(field)`
-Extract field values from the sliding window array (requires `--window`). See [`array.pluck()`](#arraypluckfield--arraypluck_as_numsfield) for detailed documentation.
-
-The `window` variable is an array containing the N most recent events, making `pluck()` especially useful for rolling calculations and burst detection.
+With `--window N`, `window` is an array of the most recent events, newest first (`window[0]` is the current event). [`pluck()`](#arraypluckfield--arraypluck_as_numsfield) works on it like on any array.
 
 ```rhai
-// Rolling average of response times
-let recent_times = window.pluck_as_nums("response_time")
-e.avg_recent = recent_times.reduce(|sum, x| sum + x, 0) / recent_times.len()
-
-// Detect error bursts
-let recent_statuses = window.pluck("status")
-e.error_burst = recent_statuses.filter(|s| s >= 500).len() >= 3
-
-// Compare current vs recent average
-let recent_vals = window.pluck_as_nums("value")
-e.spike = e.value > (recent_vals.reduce(|s, x| s + x, 0) / recent_vals.len()) * 2
+e.avg_recent = window.pluck_as_nums("response_time").mean();
+e.error_burst = window.pluck("status").filter(|s| s >= 500).len() >= 3;
 ```
 
 ---
 
 ## State Management Functions
 
-The global `state` object provides a mutable map for tracking information across events. **Only available in sequential mode** - accessing `state` in `--parallel` mode will raise an error.
+`state` is a mutable map shared across all events and stages in **sequential mode**. Under `--parallel`, any access to `state` is an error; use `track_*()` for parallel-safe aggregation. Background: [Script Variables → state](script-variables.md#state).
 
-!!! warning "Parallel Mode"
-    State management is **not available** when using `--parallel`. All state operations will raise errors. Use `--metrics` tracking functions for parallel-safe aggregation.
-
-### Basic Operations
-
-#### `state["key"]` / `state[key] = value`
-Get or set values using indexer syntax.
+#### `state["key"]` / `state["key"] = value`
+Indexer access. Nested values can be modified in place.
 
 ```rhai
-// Initialize counter
-state["count"] = 0
-
-// Increment counter
-state["count"] = state["count"] + 1
-
-// Track unique IPs
-if !state.contains("seen_ips") {
-    state["seen_ips"] = []
-}
-state["seen_ips"].push(e.ip)
+if !state.contains("seen_ips") { state["seen_ips"] = [] }
+state["seen_ips"].push(e.ip);
 ```
 
-#### `state.get(key)` / `state.get(key, default)` / `state.set(key, value)`
-Get or set values using method syntax. `get(key)` returns `()` if the key doesn't
-exist. `get(key, default)` returns `default` when the key is missing or holds `()`,
-mirroring `map.get(key, default)`.
+#### `state.get(key [, default])` / `state.set(key, value)`
+`get(key)` returns `()` if missing; `get(key, default)` returns `default` when missing or `()`.
 
 ```rhai
-let count = state.get("count")                        // Returns () if not found
-state.set("total_bytes", 0)
-
-// Default-arg form, equivalent to the `??` idiom below
-let current = state.get("count", 0)
-state.set("count", current + 1)
-
-// `??` remains the recommended idiom for inline use
-state.set("count", (state.get("count") ?? 0) + 1)
+state.set("count", state.get("count", 0) + 1);
 ```
 
 #### `state.contains(key)`
-Check if a key exists in state.
+Whether the key exists.
 
 ```rhai
-if !state.contains("initialized") {
-    state["initialized"] = true
-    state["start_time"] = now()
-}
+if !state.contains("start") { state["start"] = meta.parsed_ts }
 ```
 
-### Map Operations
-
-#### `state.keys()` / `state.values()`
-Get arrays of all keys or values.
+#### `state.keys()` / `state.values()` / `state.len()` / `state.is_empty()`
+Keys, values, entry count, emptiness.
 
 ```rhai
-let all_keys = state.keys()                           // ["count", "total", "seen_ips"]
-let all_values = state.values()                       // [42, 1024, [...]]
-
-// Iterate over all state entries
-for key in state.keys() {
-    print(key + ": " + state[key].to_string())
-}
+for key in state.keys() { print(key + ": " + state[key]) }
 ```
 
-#### `state.len()` / `state.is_empty()`
-Get number of entries or check if empty.
+#### `state.remove(key)` / `state.clear()`
+Remove one key (returning its value, or `()`), or everything.
 
 ```rhai
-if state.is_empty() {
-    state["initialized"] = true
-}
-
-let num_keys = state.len()                            // Number of entries
+let old = state.remove("temp");
 ```
 
-#### `state.remove(key)`
-Remove a key from state and return its value (or `()` if not found).
+#### `state.mixin(map)` / `state += map` / `state.fill_with(map)`
+Merge a map in (overwriting keys), or replace the whole state.
 
 ```rhai
-let old_value = state.remove("temp_data")             // Remove and get value
-state.remove("cache")                                 // Just remove
+state.mixin(#{count: 0, total_bytes: 0});
+state.fill_with(#{count: 0});
 ```
-
-#### `state.clear()`
-Remove all entries from state.
-
-```rhai
-// Reset state
-state.clear()
-```
-
-### Bulk Operations
-
-#### `state.mixin(map)`
-Merge a map into state, overwriting existing keys.
-
-```rhai
-// Initialize multiple values
-state.mixin(#{
-    count: 0,
-    total_bytes: 0,
-    seen_users: []
-})
-
-// Merge new data
-state.mixin(e.metadata)                               // Add all metadata fields
-```
-
-#### `state.fill_with(map)`
-Replace entire state with a new map.
-
-```rhai
-// Reset state with new values
-state.fill_with(#{
-    count: 0,
-    start_time: now()
-})
-```
-
-#### `state += map`
-Operator form of `mixin()` - merge map into state.
-
-```rhai
-state += #{ new_field: 42, another: "value" }
-```
-
-### Conversion
 
 #### `state.to_map()`
-Convert state to a regular map for use with other functions.
+Copy into a regular map, e.g. for `to_json()`.
 
 ```rhai
-// Export state as JSON
-let state_json = state.to_map().to_json()
-print(state_json)
-
-// Export as logfmt
-let state_logfmt = state.to_map().to_logfmt()
-
-// Use in conditions
-let snapshot = state.to_map()
-if snapshot.contains("error_count") && snapshot["error_count"] > 100 {
-    exit(1)
-}
+print(state.to_map().to_json());
 ```
 
-### Practical Examples
+**Deduplicate by ID:**
 
-**Counter Pattern:**
 ```rhai
-// Initialize on first event
-if state.is_empty() {
-    state["event_count"] = 0
-    state["error_count"] = 0
-}
-
-// Increment counters
-state["event_count"] = state["event_count"] + 1
-if e.level == "ERROR" {
-    state["error_count"] = state["error_count"] + 1
-}
-
-// Output summary at end
---end 'print("Events: " + state["event_count"] + ", Errors: " + state["error_count"])'
+let id = e.request_id.to_string();              // map keys must be strings
+if !state.contains("seen") { state["seen"] = #{} }
+if state["seen"].contains(id) { skip() }
+state["seen"][id] = true;
 ```
 
-**Deduplication Pattern:**
+**Per-session counters** — update through the full `state[...]` path; `let s = state["sessions"][sid]` is a copy, and changes to it are lost:
+
 ```rhai
-// Initialize seen set
-if !state.contains("seen_ids") {
-    state["seen_ids"] = #{}  // Use map as set
-}
-
-// Skip duplicates
-if state["seen_ids"].contains(e.request_id) {
-    skip()
-}
-state["seen_ids"][e.request_id] = true
-```
-
-**Session Tracking:**
-```rhai
-// Track active sessions
-if !state.contains("sessions") {
-    state["sessions"] = #{}
-}
-
-let session_id = e.session_id
-if !state["sessions"].contains(session_id) {
-    state["sessions"][session_id] = #{
-        start: e.timestamp,
-        events: 0
-    }
-}
-
-// Update session
-let session = state["sessions"][session_id]
-session["events"] = session["events"] + 1
-session["last_seen"] = e.timestamp
+let sid = e.session_id;
+if !state.contains("sessions") { state["sessions"] = #{} }
+if !state["sessions"].contains(sid) { state["sessions"][sid] = #{start: meta.parsed_ts, events: 0} }
+state["sessions"][sid].events += 1;
 ```
 
 ---
 
 ## Tracking/Metrics Functions
 
-All tracking functions require the `--metrics` flag.
+`track_*()` calls record metrics in any stage. `--metrics` prints them at the end, `--metrics-file` writes them as JSON, and `--end` scripts read them from the `metrics` map.
 
-Shared conventions across the `track_*()` family:
+Shared rules:
 
-- **Unit values are skipped.** Missing fields and failed conversions produce Unit `()`, which every `track_*()` function skips instead of erroring. Skips are counted per metric and surfaced via `--diagnostics`, so a field-name typo is detectable.
-- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, bools, and timestamps; non-string values are stringified (`track_freq("status", e.status)` just works). A timestamp keys as ISO 8601 — byte-identical to `.to_iso()` — so time bucketing needs no explicit conversion: `track_freq("hour", meta.parsed_ts.round_to("1h"))`.
-- **One metric name, one function.** Using the same metric name with two different `track_*()` functions is an error — the aggregation strategies are incompatible. In `--parallel` runs a conflict between `--begin` and the event stages is reported as a warning at merge time instead of a per-call error. Known limitation: the check is per *aggregation*, so a `track_stats("lat", ...)` suffix key (`lat_min`, `lat_sum`, ...) can silently share a name with a standalone call of the matching function (e.g. `track_min("lat_min", ...)`) — keep `track_stats` base names distinct.
-- **`__kelora_*` and `__op_*` metric names are reserved.** Kelora uses these prefixes for internal bookkeeping and hides them from all metrics output.
+- **`()` is skipped.** Missing fields and failed conversions produce `()`, which every `track_*()` skips instead of erroring. Skips are counted per metric; a metric that never recorded a value triggers a hint, so a field-name typo is visible.
+- **Categorical arguments accept any scalar.** Strings, numbers, bools and datetimes are stringified; a datetime keys as ISO 8601 (as `.to_iso()` renders it): `track_freq("hour", meta.parsed_ts.round_to("1h"))`.
+- **One metric name, one function.** Using a name with two different `track_*()` functions is an error. Under `--parallel`, a conflict between `--begin` and the event stages is a warning at merge time. Known gap: `track_stats("lat", …)` suffix keys (`lat_min`, …) can collide silently with a standalone `track_min("lat_min", …)`.
+- **`__kelora_*` and `__op_*` names are reserved** and hidden from output.
 
 ### Tracking Functions {#tracking-functions}
 
-#### `track_avg(key, value)`
-Track average of numeric values for key. Automatically computes the average during output. Skips Unit `()` values. Works correctly in parallel mode.
-
-```rhai
-track_avg("avg_latency", e.response_time)
-track_avg(e.endpoint, e.duration_ms)
-
-// Safe with conversions that may fail
-let latency = e.latency_str.to_float()  // Returns () on error
-track_avg("avg_ms", latency)            // Skips () values
-```
-
 #### `track_freq(name, value)`
-Build a frequency table: count occurrences of each distinct value under the metric `name`. The result is a nested map `{name: {value: count}}`. Values may be strings, numbers, or bools (stringified into the map key, so no `to_string()` is needed); Unit `()` values are skipped. `track_freq` is the full-distribution sibling of `track_top`/`track_bottom`, which keep only the most/least frequent N.
+Frequency table: count each distinct value, stored as `{name: {value: count}}`.
 
 ```rhai
-track_freq("service", e.service)        // Count events per service
-track_freq("status", e.status)          // Numeric values just work
-track_freq("level", e.level)            // {level: {ERROR: 12, INFO: 3041}}
-
-// A histogram "bucket" is just a value you computed yourself:
-track_freq("status_class", e.status / 100 * 100)        // 200/300/400/500
-track_freq("latency_ms", floor(e.response_time / 100) * 100)
-
-// For a single running counter, use track_inc (or track_sum):
-track_inc("total")                      // same as track_sum("total", 1)
+track_freq("level", e.level);                      // {level: {ERROR: 12, INFO: 3041}}
+track_freq("status_class", e.status / 100 * 100);  // 200/400/500 (integer division)
+track_freq("latency_bucket", (e.latency_ms / 100).to_int() * 100);
 ```
 
 !!! note "Changed in kelora 2.0"
-    The categorical counter was named `track_count` in earlier 2.0 previews (and `track_count(value)` / `track_bucket(key, bucket)` in 1.x). It is now `track_freq(name, value)`, because "count" was ambiguous between a per-value frequency table and a plain scalar counter. Use `track_freq(name, value)` for frequency tables and `track_inc(name)` / `track_sum(name, 1)` for running counters. `track_count` and `track_bucket` were removed and error with a migration hint.
+    `track_count` (and 1.x `track_bucket`) were removed; calling them errors with a migration hint. Use `track_freq(name, value)` for per-value counts and `track_inc(name)` for a plain counter.
 
 #### `track_inc(name)`
-Increment a running counter by 1 — readable sugar for `track_sum(name, 1)`. Shares the additive sum operation, so it merges identically across parallel workers and span windows.
+Add 1 to a counter; same as `track_sum(name, 1)`.
 
 ```rhai
-track_inc("events")                     // total event count
-if e.level == "ERROR" {
-    track_inc("errors")                 // conditional counter
-}
+track_inc("events");
+if e.level == "ERROR" { track_inc("errors") }
 ```
 
-#### `track_sum(key, value)`
-Accumulate numeric values for key. Skips Unit `()` values.
+#### `track_sum(name, value)`
+Running total.
 
 ```rhai
-track_sum("total_bytes", e.bytes)
-track_sum(e.endpoint, e.response_time)
-
-// Safe with conversions that may fail
-let score = e.score_str.to_int()  // Returns () on error
-track_sum("total_score", score)   // Skips () values
+track_sum("total_bytes", e.bytes);
 ```
 
-#### `track_min(key, value)` / `track_max(key, value)`
-Track minimum/maximum value for key. Skips Unit `()` values.
+#### `track_avg(name, value)`
+Mean of the recorded values (kept as sum and count, so it merges across `--parallel` workers).
 
 ```rhai
-track_min("fastest", e.response_time)
-track_max("slowest", e.response_time)
+track_avg("avg_latency", e.response_time);
 ```
 
-#### `track_unique(key, value)`
-Track unique values for key. Skips Unit `()` values.
+#### `track_min(name, value)` / `track_max(name, value)`
+Smallest / largest value.
 
 ```rhai
-track_unique("users", e.user_id)
-track_unique("ips", e.client_ip)
-
-// Combined with .or_empty() for conditional tracking
-track_unique("names", e.message.after("User:").or_empty())
+track_min("fastest", e.response_time);
+track_max("slowest", e.response_time);
 ```
 
-#### `track_cardinality(key, value)` / `track_cardinality(key, value, error_rate)`
-Estimate unique count using HyperLogLog algorithm. Uses ~12KB of memory regardless of cardinality, with ~1% standard error by default. Skips Unit `()` values. Works correctly in parallel mode.
-
-**When to use:** For high-cardinality data (millions of unique values) where `track_unique()` would consume too much memory. Use `track_unique()` when you need the actual values or have low cardinality.
+#### `track_unique(name, value)`
+Exact set of distinct values. Memory grows with the set; kelora warns past 100,000 values.
 
 ```rhai
-// Basic usage - ~1% standard error, ~12KB memory
-track_cardinality("unique_ips", e.client_ip)
-track_cardinality("unique_sessions", e.session_id)
-
-// Custom error rate for higher precision (uses more memory)
-track_cardinality("unique_users", e.user_id, 0.005)  // 0.5% error
-
-// Safe with optional fields
-track_cardinality("unique_emails", e.email.or_empty())
+track_unique("users", e.user_id);
 ```
 
-**Output format:** Shows `≈` prefix in text output to indicate approximate value:
-```
-unique_ips   ≈ 1234567
+#### `track_cardinality(name, value [, error_rate])`
+Approximate distinct count with HyperLogLog: about 12 KB per metric, ~1% standard error by default. `error_rate` ranges 0.001–0.26 (lower costs more memory). Reported as a whole number, never above the number of values seen; the terminal output marks it with `≈`.
+
+```rhai
+track_cardinality("unique_ips", e.client_ip);
+track_cardinality("unique_users", e.user_id, 0.005);
 ```
 
-**Error rate bounds:** 0.001 (0.1%) to 0.26 (26%). Lower error = more memory.
-
-!!! tip "track_cardinality vs track_unique"
-    | | `track_unique()` | `track_cardinality()` |
-    |-|------------------|----------------------|
-    | Memory | O(n) - grows with cardinality | O(1) - fixed ~12KB |
-    | Accuracy | Exact | ~1% error (configurable) |
-    | Scale | Thousands | Billions |
-    | Values stored | Yes (can list them) | No (count only) |
+| | `track_unique()` | `track_cardinality()` |
+|-|------------------|----------------------|
+| Memory | grows with distinct values | fixed ~12 KB |
+| Accuracy | exact | ~1% (configurable) |
+| Values listed | yes | no, count only |
 
 #### `track_top(name, item [, n])` / `track_bottom(name, item [, n])`
-Track the N most (`track_top`) or least (`track_bottom`) **frequent** items. `n` defaults to 10. Items may be strings, numbers, or bools; Unit `()` items are skipped.
+The `n` (default 10) most / least **frequent** items. Output: `[{key, count}, …]`, sorted by count, ties alphabetical.
 
 ```rhai
-// Top 10 most common errors (default n)
-track_top("common_errors", e.error_type)
-
-// Top 5 most active users
-track_top("active_users", e.user_id, 5)
-
-// Bottom 5 rarest errors
-track_bottom("rare_errors", e.error_type, 5)
+track_top("common_errors", e.error_type);
+track_bottom("rare_errors", e.error_type, 5);
 ```
-
-**Output format:** `[{key: "item", count: 42}, ...]`, sorted by count (descending for top, ascending for bottom), ties broken alphabetically by key.
 
 #### `track_top_by(name, item, score [, n])` / `track_bottom_by(name, item, score [, n])`
-Track the N items with the highest (`track_top_by`) or lowest (`track_bottom_by`) **score**. Each item keeps its best score (max for top, min for bottom). `n` defaults to 10. Unit `()` items or scores are skipped.
+The `n` (default 10) items with the highest / lowest **score**; each item keeps its maximum (top) or minimum (bottom) score. Output: `[{key, value}, …]`.
 
 ```rhai
-// Top 10 slowest endpoints by latency
-track_top_by("slowest_endpoints", e.endpoint, e.latency_ms)
-
-// Top 5 biggest requests by bytes
-track_top_by("heavy_requests", e.request_id, e.bytes, 5)
-
-// 10 fastest endpoints by latency
-track_bottom_by("fastest_endpoints", e.endpoint, e.latency_ms)
-
-// Handles missing values gracefully
-track_top_by("cpu_hogs", e.process, e.cpu_time.or_empty())  // Skips ()
+track_top_by("slowest_endpoints", e.endpoint, e.latency_ms);
+track_bottom_by("fastest_endpoints", e.endpoint, e.latency_ms, 5);
 ```
-
-**Output format:** `[{key: "item", value: 123.4}, ...]`, sorted by score (descending for top, ascending for bottom), ties broken alphabetically by key.
 
 !!! note "Changed in kelora 2.0"
-    In 1.x, score-based ranking was the 4-argument form `track_top(key, item, n, value)`. It is now its own function with the score in the natural position and `n` optional: `track_top_by(name, item, score [, n])`.
+    The 1.x form `track_top(key, item, n, value)` is now `track_top_by(name, item, score [, n])`.
 
-!!! tip "Memory Efficiency"
-    `track_top()` and `track_bottom()` use bounded memory (O(N) per key) unlike `track_unique()` (which stores every distinct value) or `track_freq()` (one map entry per distinct category). For high-cardinality fields, prefer top/bottom tracking.
+Top/bottom lists use bounded memory per metric; under `--parallel` the worker lists are merged, re-sorted and trimmed, with deterministic results.
 
-!!! note "Parallel Mode Behavior"
-    In parallel mode, each worker maintains its own top/bottom N. During merge, the lists are combined, re-sorted, and trimmed to N. Final results are deterministic.
-
-#### `track_percentiles(key, value [, [percentiles]])`
-Track streaming percentiles using the t-digest algorithm for memory-efficient percentile estimation. Automatically creates suffixed metrics for each percentile (e.g., `latency_p50`, `latency_p95`, `latency_p99.9`). **This is the only `track_*()` function that auto-suffixes** because percentiles are inherently multi-valued. Skips Unit `()` values. Works correctly in parallel mode.
-
-**Default percentiles:** `[0.50, 0.95, 0.99]` when no array provided.
-
-**Percentile notation:** Use 0.0-1.0 range (quantile notation):
-- `0.50` = 50th percentile (median) → creates `key_p50`
-- `0.95` = 95th percentile → creates `key_p95`
-- `0.999` = 99.9th percentile → creates `key_p99.9`
-
-**Memory efficiency:** Uses ~4KB per metric regardless of event count (vs. storing all values). Suitable for millions of events.
-
-**Accuracy:** ~1-2% relative error, suitable for operational monitoring.
+#### `track_percentiles(name, value [, percentiles])`
+Streaming percentile estimates (t-digest). Creates one metric per percentile, named with a `_pNN` suffix; `percentiles` are quantiles in 0–1 (default `[0.50, 0.95, 0.99]`).
 
 ```rhai
-// Default percentiles [0.50, 0.95, 0.99]
-track_percentiles("api_latency", e.response_time)
-// Creates: api_latency_p50, api_latency_p95, api_latency_p99
-
-// Custom percentiles
-track_percentiles("latency", e.duration_ms, [0.50, 0.95, 0.99])
-// Creates: latency_p50, latency_p95, latency_p99
-
-// High-precision percentiles
-track_percentiles("latency", e.duration_ms, [0.999, 0.9999])
-// Creates: latency_p99.9, latency_p99.99
-
-// Per-endpoint tracking
-track_percentiles("latency_" + e.endpoint, e.response_time, [0.95, 0.99])
-
-// Safe with conversions that may fail
-let latency = e.latency_str.to_float()  // Returns () on error
-track_percentiles("api_p95", latency)   // Skips () values
+track_percentiles("api_latency", e.response_time);        // api_latency_p50, _p95, _p99
+track_percentiles("latency", e.duration_ms, [0.999]);     // latency_p99.9
 ```
 
-!!! tip "When to Use Percentiles vs. Average"
-    Use `track_percentiles()` instead of `track_avg()` when:
+The t-digest keeps at most a few hundred centroids, so memory is flat and the results are estimates — typically within 0.5% of the exact value, most accurate in the tails. Sequential runs are reproducible; `--parallel` runs merge per-worker digests and can differ slightly.
 
-    - You need tail latency metrics (p95, p99) for SLO monitoring
-    - Data has outliers that would skew the average
-    - You need multiple percentile values (median, p95, p99)
-    - Working with latency, response time, or duration metrics
-
-!!! note "Estimates, not exact percentiles"
-    The t-digest is a sketch: it keeps at most a few hundred centroids per metric, so cost and memory stay flat no matter how many events you feed it, and the reported percentiles are estimates — typically within 0.5% of the exact value, and most accurate in the tails you usually care about (p95, p99). For an exact percentile on a dataset small enough to hold, collect the values in a script and sort them.
-
-!!! note "Parallel Mode Behavior"
-    In parallel mode, each worker maintains its own t-digest and the digests are combined with the t-digest merge algorithm at the end. Because the sketch is compressed as it grows, which values land in which worker affects the estimate slightly: parallel runs can differ from each other and from a sequential run within the error bar above. Sequential runs are reproducible — the same input always gives the same numbers.
-
----
-
-#### `track_stats(key, value [, [percentiles]])`
-**Convenience function** that tracks comprehensive statistics in a single call: min, max, avg, count, sum, and percentiles. Automatically creates suffixed metrics for each statistic. Ideal for getting the complete statistical picture of a metric without calling multiple `track_*()` functions. Skips Unit `()` values. Works correctly in parallel mode.
-
-**Auto-created metrics:**
-- `{key}_min` - Minimum value
-- `{key}_max` - Maximum value
-- `{key}_avg` - Average (stored as sum+count for parallel merging)
-- `{key}_count` - Total count
-- `{key}_sum` - Total sum
-- `{key}_p50`, `{key}_p95`, `{key}_p99` - Percentiles (default)
-
-**Default percentiles:** `[0.50, 0.95, 0.99]` when no array provided.
-
-**Percentile notation:** Same as `track_percentiles()` - use 0.0-1.0 range (quantile notation).
+#### `track_stats(name, value [, percentiles])`
+Shorthand for `name_min`, `name_max`, `name_avg`, `name_count`, `name_sum` and the percentile metrics (default p50/p95/p99) in one call.
 
 ```rhai
-// Default percentiles [0.50, 0.95, 0.99]
-track_stats("response_time", e.duration_ms)
-// Creates: response_time_min, response_time_max, response_time_avg,
-//          response_time_count, response_time_sum,
-//          response_time_p50, response_time_p95, response_time_p99
-
-// Custom percentiles
-track_stats("latency", e.duration, [0.50, 0.90, 0.99, 0.999])
-// Creates all basic stats plus: latency_p50, latency_p90, latency_p99, latency_p99.9
-
-// Per-endpoint comprehensive tracking
-track_stats("api_" + e.endpoint, e.response_time)
-
-// Safe with conversions that may fail
-let duration = e.duration_str.to_float()  // Returns () on error
-track_stats("request_ms", duration)        // Skips () values
+track_stats("response_time", e.duration_ms);
+track_stats("latency", e.duration_ms, [0.5, 0.9, 0.999]);  // …, latency_p50, latency_p90, latency_p99.9
 ```
 
-!!! tip "When to Use track_stats() vs. Individual Functions"
-    **Use `track_stats()`** when:
-
-    - You want the complete statistical picture (min, max, avg, percentiles)
-    - Analyzing latency, response time, or duration metrics
-    - Building dashboards that need multiple statistical views
-    - Prototyping or exploring data characteristics
-
-    **Use individual `track_min/max/avg/percentiles`** when:
-
-    - You only need specific statistics (performance optimization)
-    - Fine-grained control over which metrics are tracked
-    - Minimizing memory usage (percentiles use ~4KB per metric)
-
-!!! note "Performance Considerations"
-    `track_stats()` internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric, and the `_pNN` values are estimates — see `track_percentiles()` above). If you don't need percentiles, use `track_min()`, `track_max()`, and `track_avg()` instead.
-
-!!! note "Parallel Mode Behavior"
-    All generated metrics use existing merge operations (min, max, avg, count, sum, percentiles), so `track_stats()` works correctly in parallel mode with no special handling required.
+If you do not need percentiles, `track_min/max/avg` are cheaper.
 
 ---
 
 ## File Output Functions
 
-All file output functions require the `--allow-fs-writes` flag.
+All of these need `--allow-fs-writes`; without it the call is an error.
 
 #### `append_file(path, text_or_array)`
-Append line(s) to file; arrays append one line per element.
+Append one line, or one line per array element.
 
 ```rhai
-append_file("errors.log", e.message)
-append_file("batch.log", [e.line1, e.line2, e.line3])
+append_file("errors.log", e.message);
+append_file("batch.log", [e.id, e.message]);
 ```
 
 #### `truncate_file(path)`
-Create or zero-length a file for fresh output.
+Create the file or empty it.
 
 ```rhai
-truncate_file("output.log")
+truncate_file("output.log");
 ```
 
 #### `mkdir(path [, recursive])`
-Create directory (set recursive=true to create parents).
+Create a directory; `recursive = true` also creates parents (otherwise a missing parent is an error).
 
 ```rhai
-mkdir("logs")
-mkdir("deep/nested/path", true)
+mkdir("out/2024/01", true);
 ```
 
 ---
@@ -2243,274 +1530,189 @@ mkdir("deep/nested/path", true)
 ## Event Manipulation
 
 #### `emit_each(array [, base_map])`
-Fan out array elements as separate events (returns emitted count).
+Emit each map in `array` as its own event and drop the original (even when nothing is emitted). Fields of `base_map` are added where the item lacks them. Non-map items are skipped with a warning. Returns the number emitted. Only in `--exec`/`--filter`, not `--begin`/`--end`.
 
 ```rhai
-emit_each(e.users)                                    // Each user becomes an event
-emit_each(e.items, #{batch_id: e.batch_id})           // Add batch_id to each
-
-// Use return value to track emission count
-let count = emit_each(e.batch_items, #{batch_id: e.id})
-track_sum("items_emitted", count)
+let n = emit_each(e.items, #{batch_id: e.batch_id});
+track_sum("items_emitted", n);
 ```
 
 #### `e = ()`
-Clear entire event (remove all fields).
+Remove every field; the event is not output.
 
 ```rhai
-if e.should_drop {
-    e = ()  // Event is filtered out
-}
+if e.should_drop { e = () }
 ```
 
 #### `e.field = ()`
-Remove individual field from event.
+Remove one field.
 
 ```rhai
-e.password = ()                                       // Remove sensitive field
-e.temp_data = ()                                      // Clean up temporary field
+e.password = ();
 ```
+
+### Absorbing fields
+
+The `absorb_*` functions parse one string field, merge the result into the event, and return a status map:
+
+| Key | Meaning |
+|---|---|
+| `status` | `"applied"`, `"empty"` (nothing extracted), `"missing_field"`, `"not_string"`, `"parse_error"` |
+| `data` | every parsed pair (also those skipped by `overwrite: false`) |
+| `written` | whether any field was written |
+| `remainder` | `absorb_kv` only: the unparsed text, else `()` |
+| `removed_source` | whether the source field was deleted |
+| `error` | parse error message, else `()` |
+
+Common options: `keep_source` (default `false`: the source field is consumed) and `overwrite` (default `true`; `false` keeps existing event fields). Options a function does not use (`sep` for JSON, say) are accepted and ignored. A parsed key with the same name as the source field survives: absorbing `msg` = `{"msg": "inner"}` leaves `e.msg == "inner"`.
+
+An **unknown option key** is a script error, not a status: in `--exec` the event rolls back and stderr reports `Exec errors: N total, affecting every event` (exit 0, transforms are best-effort); `--strict` aborts. So `status = "invalid_option"` never reaches a script without `try`/`catch`.
 
 #### `e.absorb_kv(field [, options])`
-Parse inline `key=value` tokens from a string field, merge the pairs into the event, and get a status report back. Returns a map with `status`, `data`, `written`, `remainder`, `removed_source`, and `error` so scripts can branch without guessing.
+Merge `key=value` tokens. Extra options: `sep` (default whitespace; `()` also means whitespace) and `kv_sep` (default `"="`). Tokens without `kv_sep` form the `remainder`; unless `keep_source` is set, the field is replaced by the remainder, or deleted when nothing remains (a parsed key with the source's name is then overwritten by the remainder). **Not quote-aware**; use `absorb_logfmt()` for `err="connection refused"`.
 
 ```rhai
-let res = e.absorb_kv("msg", #{ sep: ",", kv_sep: "=", keep_source: true });
-if res.status == "applied" {
-    e.cleaned_msg = res.remainder ?? "";
-    // Parsed keys now live on the event; res.data mirrors the inserted pairs
-}
+// msg = "Payment timeout order=1234 user=bob"
+let res = e.absorb_kv("msg");
+// e.order == "1234", e.user == "bob", e.msg == "Payment timeout"
+let res2 = e.absorb_kv("params", #{sep: ",", kv_sep: ":", keep_source: true});
 ```
-
-Options:
-
-- `sep`: string or `()` (default whitespace) – token separator; `()` normalizes whitespace.
-- `kv_sep`: string (default `"="`) – separator between key and value.
-- `keep_source`: bool (default `false`) – leave the original field untouched; use `remainder` for cleaned text.
-- `overwrite`: bool (default `true`) – allow parsed keys to overwrite existing event fields; set `false` to skip conflicts.
-
-An unknown option key is a **script error**, not a status: the call is discarded, so it is raised (naming the keys that would have worked) instead of being reported only in a return value that working scripts ignore. In `--exec` that means the event rolls back and stderr gets `Exec errors: N total, affecting every event` (exit 0, since transforms are best-effort); `--strict` aborts on the first one. `status = "invalid_option"` therefore never reaches a script that does not `try`/`catch`.
-
-`absorb_kv` is a simple splitter and is **not quote-aware** — it keeps surrounding quotes on values and splits on separators inside quoted values. For logfmt-style fields with quoted values (e.g. `err="connection refused"`), use `absorb_logfmt()` instead.
 
 #### `e.absorb_logfmt(field [, options])`
-Parse a logfmt string field, merge its keys into the event, and return the same status map as `absorb_kv()`. Unlike `absorb_kv()`, this is quote-aware (surrounding quotes are stripped and quoted values may contain spaces) and infers numeric/boolean types. It is all-or-nothing like `absorb_json()`: a bare, unpaired token makes the whole field a `parse_error` (no partial extraction), so `remainder` is always `()`. On success the source field is deleted unless `keep_source` is true.
+Merge a logfmt string: quote-aware, with numbers and booleans typed. All-or-nothing: a bare token makes the whole field a `parse_error`.
 
 ```rhai
-// 'pod="kube-system/foo" err="connection refused" replicas=3'
+// msg = 'pod="kube-system/foo" err="connection refused" replicas=3'
 let res = e.absorb_logfmt("msg");
-if res.status == "applied" {
-    // e.pod == "kube-system/foo", e.err == "connection refused", e.replicas == 3 (int)
-} else if res.status == "parse_error" {
-    eprint(`not logfmt: ${res.error}`);
-}
+if res.status == "parse_error" { eprint(`not logfmt: ${res.error}`) }
+// e.pod == "kube-system/foo", e.replicas == 3 (int), msg deleted
 ```
 
-Options:
-
-- `keep_source`: bool (default `false`) – keep the original logfmt string instead of deleting the field.
-- `overwrite`: bool (default `true`) – allow parsed keys to replace existing event fields (`false` skips conflicts).
-
-Other absorb options (like `sep`/`kv_sep`) are accepted for consistency but ignored — logfmt has a fixed syntax.
-
 #### `e.absorb_json(field [, options])`
-Parse a JSON object from a string field, merge its keys into the event, and return the same status map as `absorb_kv()`. On success the source field is deleted unless `keep_source` is true, and `remainder` is always `()`.
+Merge a JSON **object** (arrays and invalid JSON are a `parse_error` and leave the event untouched).
 
 ```rhai
 let res = e.absorb_json("payload");
-if res.status == "applied" {
-    e.actor = e.actor ?? e.user;      // merged from payload
-} else if res.status == "parse_error" {
-    eprint(`bad payload: ${res.error}`);
-}
+if res.status == "applied" { e.actor = e.actor ?? e.user }
 ```
-
-Options:
-
-- `keep_source`: bool (default `false`) – keep the original JSON string instead of deleting the field.
-- `overwrite`: bool (default `true`) – allow parsed keys to replace existing event fields (`false` skips conflicts).
-
-Other absorb options (like `sep`) are accepted for consistency but ignored. JSON parsing is all-or-nothing: invalid JSON or non-object payloads set `status = "parse_error"` and leave the event untouched.
 
 #### `e.absorb_jwt(field [, options])`
-Parse a JWT from a string field and merge its **claims** (the decoded payload) into the event, returning the same status map as `absorb_kv()`. The header and signature are ignored — only the claims are flattened, mirroring how `absorb_json()` flattens a JSON object. Signatures are **not** verified, so this is for debugging / trusted tokens only. On success the source field is deleted unless `keep_source` is true, and `remainder` is always `()`.
+Merge a JWT's claims (header and signature ignored, **no verification**). Time claims stay integers; use [`parse_jwt()`](#textparse_jwt) for datetime `exp`/`iat`/`nbf`.
 
 ```rhai
-// e.token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiJ9.sig"
 let res = e.absorb_jwt("token");
-if res.status == "applied" {
-    // e.sub == "alice", e.role == "admin", e.exp == 1735689600 (int), ...
-} else if res.status == "parse_error" {
-    eprint(`bad token: ${res.error}`);
-}
+// e.sub == "alice", e.role == "admin", e.exp == 1735689600
 ```
-
-Options:
-
-- `keep_source`: bool (default `false`) – keep the original token string instead of deleting the field.
-- `overwrite`: bool (default `true`) – allow claims to replace existing event fields (`false` skips conflicts).
-
-Other absorb options (like `sep`) are accepted for consistency but ignored — a JWT's structure is fixed. Parsing is all-or-nothing: a malformed token sets `status = "parse_error"` and leaves the event untouched. The time claims land as raw integers; for datetime-typed `exp`/`iat`/`nbf` (e.g. to compare against `now()`), use [`parse_jwt()`](#textparse_jwt) instead.
 
 #### `e.absorb_regex(field, pattern [, options])`
-Extract named capture groups from a string field using a regular expression pattern, merge the extracted values into the event, and return a status map (same structure as `absorb_kv()` and `absorb_json()`).
+Merge the **named** capture groups (`(?P<name>...)`) of the first match. Numbered groups are ignored. A pattern that does not compile is a script error, like an unknown option. On no match the status is `"empty"` and the event is left unchanged.
 
-The pattern must use **named capture groups** (`(?P<name>...)`) to define which parts of the text to extract. Only named captures become event fields; numbered groups are ignored.
-
-```rhai
-// Extract user and IP from log message
-let res = e.absorb_regex("msg", #"User (?P<user>\w+) logged in from (?P<ip>[\d.]+)"#);
-if res.status == "applied" {
-    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
-}
-
-// Parse structured log line with multiple fields
-let pattern = #"(?P<date>[\d-]+) (?P<level>\w+) (?P<file>[\w.]+):(?P<line>\d+) (?P<message>.+)"#;
-e.absorb_regex("line", pattern);
-// Now e.date, e.level, e.file, e.line, e.message are all populated
-```
-
-**Options:**
-
-- `keep_source`: bool (default `false`) – preserve the original field instead of removing it after extraction
-- `overwrite`: bool (default `true`) – allow extracted fields to overwrite existing event fields (`false` skips conflicts)
-
-**Status values:**
-
-- `"applied"` – pattern matched and fields were extracted
-- `"empty"` – pattern didn't match (no captures)
-- `"missing_field"` – source field doesn't exist
-- `"not_string"` – source field is not a string
-
-Two failures are *determinate* — they depend on the script, not the data, so no input can make the call work — and are raised as errors rather than returned as a status: an unknown option key (`"invalid_option"`) and a pattern that does not compile (`"parse_error"`). See [`absorb_kv()`](#eabsorb_kvfield-options) for how the error surfaces.
-
-All extracted values are **strings**, including all-digit captures — a regex carries no type information to infer from, unlike `absorb_json()` and `absorb_logfmt()`. So a captured `status` compares as text, and mixing types is quietly false rather than an error: `e.status >= 500` evaluates to `false` for *every* event, including `"503"`. Convert what you need to compare numerically:
+Values are always **strings**, even all-digit ones, so convert before comparing numbers (`"503" >= 500` is quietly `false`):
 
 ```rhai
-e.absorb_regex("line", #"(?P<status>\d{3}) (?P<bytes>\d+)$"#);
-e.status = e.status.to_int();   // now e.status >= 500 works
+e.absorb_regex("line", #"(?P<status>\d{3}) (?P<bytes>\d+)$"#, #{keep_source: true});
+e.status = e.status.to_int();
 e.bytes = e.bytes.to_int();
 ```
 
-**When to use:**
+For whole-line parsing at input time, `-f 'regex:...'` is usually simpler ([Regex Format](formats.md#regex-format)).
 
-- **absorb_regex()** – Extract structured data from unstructured text with custom patterns
-- **absorb_kv()** – Parse `key=value` pairs (simpler, faster)
-- **absorb_json()** – Parse JSON objects (type-aware)
-- **Regex input format** (`-f regex`) – Use for whole-log parsing at input time
-
-```rhai
-// Complex example: parse Apache access log format
-let apache_pattern = r#"(?P<ip>\S+) \S+ \S+ \[(?P<timestamp>[^\]]+)\] "(?P<method>\S+) (?P<path>\S+)[^"]*" (?P<status>\d+) (?P<bytes>\d+)"#;
-e.absorb_regex("line", apache_pattern);
-
-// Keep source for debugging
-e.absorb_regex("raw_message", #"ERROR: (?P<error_code>\d+) - (?P<error_msg>.+)"#,
-               #{ keep_source: true });
-```
+---
 
 ## Span Context – `--span-close` Only
 
-A read-only `span` object is injected into scope whenever a `--span-close` script runs. Use it to emit per-span rollups after Kelora closes a count- or time-based window.
+A read-only `span` object exists while a `--span-close` script runs (with `--span` or `--span-idle`). See [Group into Spans](../guide/spans.md) and [Script Variables → span](script-variables.md#span).
 
 ### Span Identity
 
-`span.id` returns the current span identifier. Count-based spans use `#<index>` (zero-based). Time-based spans use `ISO_START/DURATION` (e.g. `2024-05-19T12:00:00Z/5m`).
+`span.id` identifies the span; `span.label` is what `--span-summary` prints, so a hook need not branch on the span mode.
+
+| Span mode | `span.id` | `span.label` |
+|---|---|---|
+| count (`--span 100`) | `#0`, `#1`, … | same as id |
+| time (`--span 5m`) | `2024-05-19T12:00:00Z/5m` | `2024-05-19T12:00:00Z` |
+| field (`--span service`) | the field value, e.g. `api` | same as id |
+| idle (`--span-idle 5m`) | `idle-#0-2024-05-19T12:01:00+00:00` | `2024-05-19T12:01:00Z` |
 
 ```rhai
-let id = span.id;  // "#0" or "2024-05-19T12:05:00Z/5m"
+print(span.label + ": " + span.size + " events");
 ```
 
 ### Span Boundaries
 
-`span.start` and `span.end` expose the half-open window bounds as `DateTime` values. Count-based spans return `()` for both fields.
+`span.start` and `span.end` are datetimes for time spans (half-open window) and idle spans (first and last event); `()` for count and field spans.
 
 ```rhai
-if span.start != () {
-    print(`Window: ${span.start} → ${span.end}`);
-}
+if span.start != () { print(`${span.start} → ${span.end}`) }
 ```
 
 ### Span Size and Events
 
-`span.size` reports how many events survived filters and were buffered in the span. `span.events` returns those events in arrival order. Each map includes span metadata fields (`span_status`, `span_id`, `span_start`, `span_end`) alongside the original event data.
+`span.size` is the number of events that passed the filters and entered the span. `span.events` holds them in arrival order, each with `line`, `line_num`, `filename`, `span_id`, `span_start`, `span_end` and `span_status` added.
 
 ```rhai
-let included = span.events
-    .filter(|evt| evt.span_status == "included")
-    .len();
+let rts = span.events.pluck_as_nums("rt");
+let max_rt = if rts.is_empty() { () } else { rts.max() };
 ```
 
 ### Metrics Snapshot
 
-`span.metrics` contains per-window values from `track_*` calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for **additive** aggregators: `track_count`, `track_sum`, `track_avg`, and `track_unique`.
+`span.metrics` maps metric names to what `track_*()` recorded while this span was open. Only additive trackers appear: `track_freq`, `track_sum`, `track_inc`, `track_avg` and `track_unique` (for `track_unique`, the values first seen in this span), plus the count/sum/avg parts of `track_stats`. Zero values are omitted.
 
-!!! warning "Non-additive aggregators are omitted"
-    `track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, and `track_bottom` accumulate global state that cannot be reduced to a single window (a t-digest or HLL has no subtraction, and a global max is not a per-window max). These keys are **omitted from `span.metrics`** and Kelora prints a one-time warning. Compute them per window by iterating `span.events` instead — e.g. `span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b > a { b } else { a })` for a per-window max.
+#### `span.metric(name)`
+
+Returns one per-span metric value, or `0` when the span recorded none; dotted names reach into `track_freq` tables (`span.metric("level.ERROR")`). Prefer it over indexing `span.metrics`, which yields `()` for an omitted zero and breaks arithmetic.
 
 ```rhai
-let metrics = span.metrics;
-let hits = metrics["events"];          // from track_sum("events", 1)
-let failures = metrics["failures"];    // from track_sum("failures", 1)
-let ratio = if hits > 0 { failures * 100 / hits } else { 0 };
-print(span.id + ": " + ratio.to_string() + "% failure rate");
+// -e 'track_inc("events"); if e.status >= 500 { track_inc("failures") }'
+let hits = span.metric("events");
+let ratio = if hits > 0 { span.metric("failures") * 100 / hits } else { 0 };
+print(`${span.label}: ${ratio}% failures`);
 ```
+
+!!! warning "Non-additive trackers are omitted"
+    `track_min`, `track_max`, `track_percentiles`, `track_cardinality`,
+    `track_top`/`track_bottom` and `track_top_by`/`track_bottom_by` (and those
+    parts of `track_stats`) have no per-window value. They are left out of
+    `span.metrics` with a one-time warning, and `span.metric()` returns `0` for
+    them. Compute them from `span.events`, as in the example above.
 
 ---
 
 ## Quick Reference by Use Case
 
-**Error Extraction:**
+**Error extraction:**
 ```rhai
-e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1)
+e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty();
 ```
 
-**IP Anonymization:**
+**IP anonymization:**
 ```rhai
-e.masked_ip = e.client_ip.mask_ip()
-e.ip_alias = pseudonym(e.client_ip, "ips")
+e.masked_ip = e.client_ip.mask_ip();
+e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-**Time Filtering:**
+**Time filtering** (or use `--since`/`--until`):
 ```rhai
-if e.timestamp > to_datetime("2024-01-01") {
-    // Process recent events
-}
+if meta.parsed_ts != () && meta.parsed_ts.hour() >= 22 { e.night = true }
+if to_datetime(e.created_at) > to_datetime("2024-01-01") { e.recent = true }
 ```
 
-**Metrics Tracking:**
+**Metrics:**
 ```rhai
-track_freq("service", e.service)
-track_sum("bytes", e.response_size)
-track_unique("users", e.user_id)
+track_freq("service", e.service);
+track_sum("bytes", e.response_size);
+track_unique("users", e.user_id);
 ```
 
-**Array Fan-Out:**
+**Fan-out:**
 ```rhai
-emit_each(e.users, #{batch_id: e.batch_id})
+emit_each(e.users, #{batch_id: e.batch_id});
 ```
 
-**Safe Field Access:**
+**Safe field access:**
 ```rhai
-e.user_name = e.get_path("user.profile.name", "unknown")
-if e.has_path("error.details.code") {
-    e.detailed = true
-}
+e.user_name = e.get_path("user.profile.name", "unknown");
 ```
 
----
-
-## See Also
-
-- [CLI Reference](cli-reference.md) - Command-line flags and options
-- [Rhai Cheatsheet](rhai-cheatsheet.md) - Rhai language syntax
-- [Advanced Scripting Tutorial](../tutorials/advanced-scripting.md) - Learn advanced scripting
-- [How-To: Sanitize Logs Before Sharing](../how-to/extract-and-mask-sensitive-data.md) - Practical examples
-
-For more details, run:
-```bash
-kelora --help-functions       # This reference in CLI form
-kelora --help-functions ip    # Search the catalogue by keyword (name/description)
-kelora --help-rhai            # Rhai language guide
-kelora --help-examples        # Common usage patterns
-```
+See also: [Scripting guide](../guide/scripting.md), [Rhai Cheatsheet](rhai-cheatsheet.md), [Script Variables](script-variables.md), `kelora --help-rhai`.

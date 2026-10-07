@@ -24,7 +24,7 @@ Basic date/time components:
 %S  Second as zero-padded decimal (00-59)
 
 Subsecond precision cheatsheet:
-%f   Microseconds (000000-999999)
+%f   Fraction as nanoseconds (000000000-999999999); prefer %.f, %3f, %6f
 %3f  Milliseconds (000-999)
 %6f  Microseconds (000000-999999)
 %9f  Nanoseconds (000000000-999999999)
@@ -71,7 +71,7 @@ Year policy (how the year is decided when the format has none):
     keeps the candidate nearest the current clock. That is right for recent logs
     and for logs crossing New Year's Eve, and wrong for archives: a 2005 capture
     is dated this year, and so are --since/--until, --span boundaries and
-    --merge-sorted ordering. kelora warns whenever it guessed.
+    --merge-sorted ordering. --stats reports when it guessed.
   - --input-year YYYY states the year instead of guessing it. Every year-less
     timestamp resolves into that year and the warning goes quiet.
   - --input-year auto is the default (useful to override an .kelora.ini default).

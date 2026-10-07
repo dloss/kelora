@@ -66,7 +66,7 @@ pub fn register_functions(engine: &mut Engine) {
     );
 
     // flatten_field(field_name) - flatten just one field from the map
-    engine.register_fn("flatten_field", |map: &Map, field_name: &str| -> Map {
+    engine.register_fn("flatten_field", |map: &mut Map, field_name: &str| -> Map {
         let mut result = Map::new();
 
         if let Some(field_value) = map.get(field_name) {

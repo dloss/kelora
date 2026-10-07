@@ -6,7 +6,7 @@ default:
 
 # Extract package version from Cargo.toml (used by release workflow)
 RELEASE_VERSION := `rg --max-count 1 --replace '$1' '^version\s*=\s*"([^"]+)"' Cargo.toml | tr -d '\r\n'`
-DOCS_UVX := "uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with markdown-exec[ansi]"
+DOCS_UVX := "uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects"
 
 # Format code
 fmt:
@@ -118,6 +118,7 @@ docs-serve:
     cargo build --release
     mkdir -p {{justfile_directory()}}/.uv/cache {{justfile_directory()}}/.uv/data {{justfile_directory()}}/.uv/tools
     PATH="{{justfile_directory()}}/target/release:${PATH}" \
+    DISABLE_MKDOCS_2_WARNING=true \
     KELORA_IGNORE_CONFIG=1 \
     FORCE_COLOR=1 \
     COLUMNS=80 \
@@ -131,13 +132,29 @@ docs-build:
     cargo build --release
     mkdir -p {{justfile_directory()}}/.uv/cache {{justfile_directory()}}/.uv/data {{justfile_directory()}}/.uv/tools
     PATH="{{justfile_directory()}}/target/release:${PATH}" \
+    DISABLE_MKDOCS_2_WARNING=true \
     KELORA_IGNORE_CONFIG=1 \
     FORCE_COLOR=1 \
     COLUMNS=80 \
     UV_CACHE_DIR={{justfile_directory()}}/.uv/cache \
     UV_DATA_DIR={{justfile_directory()}}/.uv/data \
     UV_TOOL_DIR={{justfile_directory()}}/.uv/tools \
-    {{DOCS_UVX}} mkdocs build
+    {{DOCS_UVX}} mkdocs build --strict
+
+# Check the docs quickly with a debug build: fails on broken links and on any
+# example command that exits unexpectedly
+docs-check:
+    cargo build
+    mkdir -p {{justfile_directory()}}/.uv/cache {{justfile_directory()}}/.uv/data {{justfile_directory()}}/.uv/tools
+    PATH="{{justfile_directory()}}/target/debug:${PATH}" \
+    DISABLE_MKDOCS_2_WARNING=true \
+    KELORA_IGNORE_CONFIG=1 \
+    FORCE_COLOR=1 \
+    COLUMNS=80 \
+    UV_CACHE_DIR={{justfile_directory()}}/.uv/cache \
+    UV_DATA_DIR={{justfile_directory()}}/.uv/data \
+    UV_TOOL_DIR={{justfile_directory()}}/.uv/tools \
+    {{DOCS_UVX}} mkdocs build --strict --site-dir {{justfile_directory()}}/target/docs-site
 
 # List published documentation versions (from gh-pages via mike)
 docs-list-versions:

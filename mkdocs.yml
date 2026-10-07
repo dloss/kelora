@@ -27,10 +27,14 @@ theme:
     - navigation.tracking # Update URL with scroll
     - navigation.tabs # Top-level tabs
     - navigation.sections # Expand sections
+    - navigation.footer # Previous/next links
     - search.suggest # Search suggestions
     - search.highlight # Highlight search terms
     - content.code.copy # Copy code blocks
     - content.code.annotate # Annotate code with numbers
+
+hooks:
+  - dev/docs_tty_hook.py
 
 plugins:
   - search:
@@ -40,6 +44,51 @@ plugins:
       alias_type: symlink
   - markdown-exec:
       ansi: required
+  - redirects:
+      redirect_maps:
+        quickstart.md: guide/explore.md
+        tutorials/index.md: guide/explore.md
+        tutorials/basics.md: guide/explore.md
+        tutorials/intro-to-rhai.md: guide/scripting.md
+        tutorials/working-with-time.md: guide/time.md
+        tutorials/metrics-and-tracking.md: guide/summarize.md
+        tutorials/begin-end-stages.md: guide/state.md
+        tutorials/advanced-scripting.md: guide/scripting.md
+        tutorials/parsing-custom-formats.md: guide/parse.md
+        tutorials/span-aggregation.md: guide/spans.md
+        tutorials/configuration-and-reusability.md: guide/config.md
+        tutorials/composed-pipelines.md: cookbook.md
+        how-to/index.md: cookbook.md
+        how-to/incident-response-playbooks.md: cookbook.md
+        how-to/debug-issues.md: reference/troubleshooting.md
+        how-to/find-errors-in-logs.md: cookbook.md
+        how-to/analyze-web-traffic.md: cookbook.md
+        how-to/monitor-application-health.md: cookbook.md
+        how-to/parse-syslog-files.md: cookbook.md
+        how-to/handle-multiline-stacktraces.md: reference/multiline.md
+        how-to/extract-and-mask-sensitive-data.md: cookbook.md
+        how-to/pseudonymize-identifiers-for-analytics.md: cookbook.md
+        how-to/process-csv-data.md: cookbook.md
+        how-to/fan-out-nested-structures.md: guide/scripting.md
+        how-to/build-streaming-alerts.md: cookbook.md
+        how-to/batch-process-archives.md: guide/files.md
+        how-to/merge-timestamp-sorted-files.md: guide/files.md
+        how-to/span-aggregation-cookbook.md: guide/spans.md
+        how-to/integrate-external-tools.md: guide/output.md
+        how-to/power-user-techniques.md: cookbook.md
+        how-to/stateful-processing.md: guide/state.md
+        concepts/index.md: how-it-works.md
+        concepts/pipeline-model.md: how-it-works.md
+        concepts/events-and-fields.md: guide/scripting.md
+        concepts/scripting-stages.md: how-it-works.md
+        concepts/error-handling.md: how-it-works.md
+        concepts/multiline-strategies.md: reference/multiline.md
+        concepts/performance-model.md: guide/files.md
+        concepts/performance-comparisons.md: reference/benchmarks.md
+        concepts/benchmark-results.md: reference/benchmarks.md
+        concepts/configuration-system.md: guide/config.md
+        reference/index.md: index.md
+        reference/common-errors.md: reference/troubleshooting.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -57,6 +106,10 @@ markdown_extensions:
   - toc:
       permalink: true
 
+validation:
+  links:
+    anchors: warn
+
 extra_css:
   - stylesheets/ansi-colors.css
 
@@ -69,62 +122,32 @@ extra:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: installation.md
-      - Quickstart: quickstart.md
-      - What's New in 2.0: whats-new-2.0.md
-  - Tutorials:
-      - Overview: tutorials/index.md
-      - Basics: tutorials/basics.md
-      - Introduction to Rhai: tutorials/intro-to-rhai.md
-      - Working with Time: tutorials/working-with-time.md
-      - Metrics and Tracking: tutorials/metrics-and-tracking.md
-      - Begin and End Stages: tutorials/begin-end-stages.md
-      - Advanced Scripting: tutorials/advanced-scripting.md
-      - Parsing Custom Formats: tutorials/parsing-custom-formats.md
-      - Span Aggregation: tutorials/span-aggregation.md
-      - Configuration and Reusability: tutorials/configuration-and-reusability.md
-      - Composed Pipelines: tutorials/composed-pipelines.md
-  - How-To Guides:
-      - Overview: how-to/index.md
-      - Incident Response Playbooks: how-to/incident-response-playbooks.md
-      - Debug Issues Systematically: how-to/debug-issues.md
-      - Triage Production Errors: how-to/find-errors-in-logs.md
-      - Analyze Web Traffic: how-to/analyze-web-traffic.md
-      - Build a Service Health Snapshot: how-to/monitor-application-health.md
-      - Investigate Syslog Sources: how-to/parse-syslog-files.md
-      - Choose a Multiline Strategy: how-to/handle-multiline-stacktraces.md
-      - Sanitize Logs Before Sharing: how-to/extract-and-mask-sensitive-data.md
-      - Pseudonymize Identifiers for Analytics: how-to/pseudonymize-identifiers-for-analytics.md
-      - Prepare CSV Exports for Analytics: how-to/process-csv-data.md
-      - Flatten Nested JSON for Analysis: how-to/fan-out-nested-structures.md
-      - Design Streaming Alerts: how-to/build-streaming-alerts.md
-      - Process Archives at Scale: how-to/batch-process-archives.md
-      - Merge Timestamp-Sorted Files: how-to/merge-timestamp-sorted-files.md
-      - Roll Up Logs with Span Windows: how-to/span-aggregation-cookbook.md
-      - Integrate Kelora with External Tools: how-to/integrate-external-tools.md
-      - Power-User Techniques: how-to/power-user-techniques.md
-      - Cross-Event Logic with state: how-to/stateful-processing.md
-  - Concepts:
-      - Overview: concepts/index.md
-      - Processing Architecture: concepts/pipeline-model.md
-      - Events and Fields: concepts/events-and-fields.md
-      - Scripting Stages: concepts/scripting-stages.md
-      - Error Handling: concepts/error-handling.md
-      - Multiline Strategies: concepts/multiline-strategies.md
-      - Performance Model: concepts/performance-model.md
-      - Performance Comparisons: concepts/performance-comparisons.md
-      - Benchmark Results: concepts/benchmark-results.md
-      - Configuration System: concepts/configuration-system.md
+  - Install: installation.md
+  - Guide:
+      - Explore a Log File: guide/explore.md
+      - Get Logs into Shape: guide/parse.md
+      - Filter: guide/filter.md
+      - Transform with Scripts: guide/scripting.md
+      - Summarize: guide/summarize.md
+      - Work with Time: guide/time.md
+      - Group into Spans: guide/spans.md
+      - Cross-Event Logic: guide/state.md
+      - Output and Integration: guide/output.md
+      - Big Files, Many Files: guide/files.md
+      - Configuration and Aliases: guide/config.md
+  - Cookbook: cookbook.md
+  - How It Works: how-it-works.md
   - Reference:
-      - Overview: reference/index.md
+      - CLI Options: reference/cli-reference.md
+      - Functions: reference/functions.md
+      - Formats: reference/formats.md
+      - Multiline: reference/multiline.md
+      - Time Formats: reference/time-reference.md
+      - Rhai Cheatsheet: reference/rhai-cheatsheet.md
+      - Script Variables: reference/script-variables.md
+      - Exit Codes: reference/exit-codes.md
+      - Troubleshooting: reference/troubleshooting.md
       - FAQ: faq.md
       - Glossary: glossary.md
-      - Common Errors: reference/common-errors.md
-      - CLI Reference: reference/cli-reference.md
-      - Format Reference: reference/formats.md
-      - Time Reference: reference/time-reference.md
-      - Function Reference: reference/functions.md
-      - Script Variables Reference: reference/script-variables.md
-      - Rhai Cheatsheet: reference/rhai-cheatsheet.md
-      - Exit Codes: reference/exit-codes.md
+      - Benchmarks: reference/benchmarks.md
+      - What's New in 2.0: whats-new-2.0.md

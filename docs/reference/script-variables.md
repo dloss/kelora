@@ -1,270 +1,129 @@
-# Script Variables Reference
+# Script Variables
 
-Kelora exposes several built-in variables to Rhai scripts. Their availability depends on which stage is executing (per-event filters/execs, span hooks, begin/end hooks, etc.). Use this page whenever you need to know which data is in scope.
+Which built-in variables a Rhai script can use, by stage. Language syntax and field-access idioms: [Rhai Cheatsheet](rhai-cheatsheet.md).
 
-## Stage Overview
+| Variable | `--begin` | `--filter`, `--exec`, `--exec-file` | `--span-close` | `--end` |
+|---|---|---|---|---|
+| `e` | empty | current event, writable | empty | empty |
+| `meta`, `line` | empty | current event | empty | empty |
+| `conf` | writable | read-only | read-only | read-only |
+| `state` | yes | yes | yes | yes |
+| `window` | – | yes (use `--window N`) | – | – |
+| `metrics` | – | – | read-only | read-only |
+| `span` | – | – | yes | – |
 
-| Stage / Feature | Variables Available | Notes |
-|-----------------|---------------------|-------|
-| `--filter`, `--exec`, `--exec-file` | `line`, `e`, `meta`, `conf`, `state` | Per-event context. `e` and `state` are writable; the others are read-only. `state` only in sequential mode. |
-| `--filter` / `--exec` with `--window` | `line`, `e`, `meta`, `conf`, `state`, `window` | Adds the sliding `window` array (current event at index `0`; read-only). `state` only in sequential mode. |
-| `--begin` | `conf`, `state` | Map to seed configuration before events arrive. `conf` is read-only; `state` is writable (sequential mode only). |
-| `--end` | `metrics`, `conf`, `state` | Inspect final tracker totals in `metrics` and final `state`; `conf` and `metrics` are read-only. `state` only in sequential mode. |
-| `--span-close` | `span`, `metrics`, `conf` | Summarises the closed span with per-span data (`span`) and cumulative totals (`metrics`). All read-only. |
+– means the name is undefined there and using it is a script error. `state` exists only in sequential mode: any access with `--parallel` is a script error in every stage. `track_*()` can be called in every stage.
 
-> Reading a variable that does not exist in the current stage raises a Rhai error. Variables listed here are populated with meaningful data (individual fields inside maps may still be `()`). Other globals such as `line`/`e` exist behind the scenes for compatibility but start empty in stages where they are not useful.
+Each `--filter`/`--exec` is a separate script: `let` variables and `fn` definitions do not carry to the next stage, changes to `e`, `state`, and tracked metrics do. See [Stages and their scope](../how-it-works.md#stages-and-their-scope).
 
-## Common Variables
+## `e`
 
-### `line`
-- Type: `String`
-- Snapshot of the text the parser captured for the current record. Structured formats strip trailing newlines before storing it, `-f raw` preserves every byte (including terminators), and `--multiline` reflects the chunk assembled by the multiline stage. Present in every stage and read-only.
-- You’ll also see the same text at `meta.line`; that copy travels with saved metadata (window snapshots, span hooks, cloned `meta` values) so the original record is still available later on.
+The current event as a map. Assigning a field sets it, assigning `()` removes it, `e = ()` drops the event. In `--exec` the changes are passed on to later stages and the output; if the stage fails, they are rolled back.
 
-### `e`
-- Type: `Map`
-- Event map during per-event stages. Mutating `e` inside `--exec` updates the emitted event; setting a field to `()` removes it; assigning `e = ()` clears the entire event. Writable.
+## `line`
 
-### `meta`
-- Type: `Map`
-- Metadata derived from the pipeline and span system. Attempting to mutate `meta` fields has no effect; use event fields on `e` for custom annotations instead. Read-only.
+The input text of the current event as a string: one line, or the assembled block with `--multiline`. The line terminator is stripped. Assigning to `line` changes only the script's local copy.
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `line` | `String` | Same as the standalone `line` variable. |
-| `line_num` | `Int` | 1-based line number when input comes from files. |
-| `filename` | `String` | Source filename, if known. |
-| `parsed_ts` | `DateTime` or `()` | Parsed UTC timestamp before any `--filter`/`--exec` scripts. Missing if the event had no timestamp. |
-| `span_status` | `String` | `"included"`, `"late"`, `"unassigned"`, or `"filtered"` when spans are enabled. Missing otherwise. |
-| `span_id` | `String` or `()` | Span identifier for the current event. |
-| `span_start` / `span_end` | `DateTime` or `()` | Span bounds for the current event. |
+## `meta`
 
-### `conf`
-- Type: `Map`
-- Configuration produced by `--begin` and CLI options; the map is frozen so mutation attempts are ignored. Read-only.
+Per-event metadata, filled in by Kelora. Assignments are visible only within the same script.
 
-### `state`
-- Type: `StateMap` (special wrapper, not a regular `Map`)
-- Mutable global map for complex state tracking across events. Available in all per-event stages (`--filter`, `--exec`, `--begin`, `--end`) **in sequential mode only**.
+| Key | Type | Value |
+|---|---|---|
+| `line` | string | same as `line` |
+| `line_num` | int | 1-based input line number |
+| `filename` | string or `()` | input file; `()` for stdin |
+| `parsed_ts` | datetime or `()` | the event's timestamp as parsed by Kelora, in UTC; `()` if none was found. Unlike the original string field (e.g. `e.timestamp`), it supports date arithmetic directly: `meta.parsed_ts.round_to("1h")`, `(meta.parsed_ts - other).as_seconds()` |
+| `span_id` | string | with `--span`/`--span-idle`: id of the event's span (see `span.id`) |
+| `span_start`, `span_end` | datetime or `()` | bounds of the event's span; `()` for count and field spans |
+| `span_status` | string | with spans: `"included"`, `"late"` (time span already closed), `"unassigned"`, or `"filtered"` |
 
-#### Mental Model
+Missing keys read as `()`.
 
-Think of `state` as a **persistent notebook** that travels with your log processor:
+## `conf`
 
-- Each event can READ from and WRITE to this notebook
-- Previous events can leave notes for future events
-- The notebook persists across all files in a single run
-- When processing ends, the notebook is discarded
-
-This differs from `track_*()` functions, which are **write-only counters** that accumulate metrics but can't influence per-event decisions.
-
-#### When to Use
-
-**Use `state` for:**
-
-- Deduplication (tracking seen IDs)
-- Cross-event dependencies and correlation
-- Storing complex objects (nested maps, arrays)
-- Conditional logic based on previous events
-- State machines and session reconstruction
-
-**Don't use `state` for:**
-
-- Simple counting or metrics → use `track_freq()`, `track_sum()`, etc.
-  - These work in parallel mode too
-  - More efficient (atomic operations vs RwLock)
-- Time-based or count-based batching → use [spans](../tutorials/span-aggregation.md)
-  - `--span 5m` for time windows, `--span 1000` for event batches
-  - Automatic per-window metrics with `span.metrics`
-
-**Comparison with `track_*()`:**
-
-| Feature | `state` | `track_*()` |
-|---------|---------|-------------|
-| **Purpose** | Complex stateful logic | Simple metrics & aggregations |
-| **Read access** | ✅ Yes (during processing) | ❌ No (write-only, read in `--end`) |
-| **Parallel mode** | ❌ Sequential only | ✅ Works in parallel |
-| **Storage** | Any Rhai value | Any value (strings, numbers, etc.) |
-| **Performance** | Slower (RwLock) | Faster (atomic/optimized) |
-| **Use for** | Deduplication, FSMs, correlation | Counting, unique tracking, bucketing |
-
-#### State Lifecycle
-
-State persists:
-
-- ✅ Across multiple input files in one invocation
-- ✅ From `--begin` through all events to `--end`
-- ✅ Between events within the same run
-
-State resets:
-
-- ❌ Between separate `kelora` invocations (no persistence to disk)
-- ❌ When using `state.clear()` explicitly
-- ❌ Not per-file or per-batch (common misconception)
-
-Example: Processing 3 files maintains one shared state:
-```bash
-# State persists across all 3 files
-kelora -j file1.json file2.json file3.json \
-  --exec 'state[e.user] = true'  # Deduplicates across ALL files
-```
-
-#### Operations
-
-**Direct operations** (no conversion needed):
-
-- Indexing: `state["key"]` for get/set, returns `()` if key doesn't exist
-- Methods: `contains(key)`, `get(key)`, `set(key, value)`, `len()`, `is_empty()`, `keys()`, `values()`, `clear()`, `remove(key)`
-- Operators: `+=`, `mixin(map)`, `fill_with(map)`
-
-**For other map functions**: Convert to regular map first using `state.to_map()`, then use any map function:
-```rhai
-// Convert state to use functions like to_logfmt(), to_kv(), etc.
-print(state.to_map().to_logfmt());
-let json_str = state.to_map().to_json();
-```
-
-#### Performance Considerations
-
-**Memory usage**: State grows with unique keys. For deduplication of millions of IDs, consider:
-
-```rhai
-// Periodic cleanup
-if state.len() > 100000 {
-    state.clear();
-}
-
-// Time-based expiration
-if !state.contains("cleanup_time") {
-    state["cleanup_time"] = now();
-}
-if (now() - state["cleanup_time"]).as_secs() > 3600 {
-    // Remove old entries
-    for key in state.keys() {
-        if should_expire(state[key]) {
-            state.remove(key);
-        }
-    }
-    state["cleanup_time"] = now();
-}
-```
-
-**Sequential processing**: State requires sequential mode, which processes one event at a time. For large files (100M+ events), consider:
-
-- Using `track_*()` functions with `--parallel` when possible
-- Filtering before stateful processing to reduce volume
-- Breaking into smaller files for distributed processing
-
-#### Debugging State
-
-Inspect state at any point:
+A map for settings and lookup tables. Fill it in `--begin`; in all later stages it is read-only.
 
 ```bash
-# Print state size periodically
-kelora -j logs.json \
-  --exec 'state["count"] = (state["count"] ?? 0) + 1;
-           if state["count"] % 1000 == 0 {
-             eprint("State size: " + state.len() + " keys");
-           }'
-
-# Dump final state as JSON
-kelora -j logs.json \
-  --exec 'state[e.user] = true' \
-  --end 'print(state.to_map().to_json())' -q > state_dump.json
-
-# Check state contents in --end stage
-kelora -j logs.json \
-  --exec 'state[e.level] = (state.get(e.level) ?? 0) + 1' \
-  --end 'eprint("Final state: " + state.to_map().to_kv())'
+kelora -j app.log \
+  --begin 'conf.env = get_env("ENVIRONMENT", "dev"); conf.slow_ms = 500' \
+  --filter 'e.duration_ms > conf.slow_ms'
 ```
 
-#### Parallel Mode Restriction
+More: [Lookups](../guide/scripting.md#lookups).
 
-Accessing `state` in `--parallel` mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency:
+## `state`
+
+A map that persists across all events and input files of one run, from `--begin` through `--end`. Use it when a decision about the current event depends on earlier events (deduplication, request/response pairing, sessions). For counts and totals, `track_*()` is simpler and also works with `--parallel`.
+
+| Operation | Syntax |
+|---|---|
+| read, write | `state[key]` (`()` if absent), `state[key] = value` |
+| read with default | `state.get(key, default)`, `state.get(key)` |
+| test, remove | `state.contains(key)`, `state.remove(key)` (returns the value) |
+| size, contents | `state.len()`, `state.is_empty()`, `state.keys()`, `state.values()` |
+| merge | `state += map`, `state.mixin(map)` (overwrite existing keys) |
+| replace all | `state.fill_with(map)` |
+| reset | `state.clear()` |
+| anything else | `state.to_map()` returns a plain map copy: `state.to_map().to_json()` |
+
+Keys must be strings: `state[e.id]` fails if `e.id` is a number; use `state[e.id.to_string()]`. Values can be anything. To change a nested value, read it, modify it, store it back:
+
+```rhai
+let u = state.get(e.user, #{count: 0});
+u.count += 1;
+state[e.user] = u;
+```
+
+`state` keeps everything until the run ends; remove entries you no longer need. Patterns: [Cross-Event Logic](../guide/state.md).
+
+## `window`
+
+With `--window N`, an array of the current event and up to N previous ones: `window[0]` is the current event, `window[1]` the one before. Entries are events as parsed, before any script changed them, and they include events that later filters drop. Each entry also carries `line`, `line_num`, and `filename` (if known) as fields.
+
+```rhai
+if window.len() > 1 { e.delta = e.value - window[1].value }
+window.pluck("latency")              // that field from every entry
+window.pluck_as_nums("latency")      // as numbers, skipping missing/invalid
+```
+
+Without `--window`, `window` contains only the current event.
+
+## `metrics`
+
+The values recorded by `track_*()` calls so far, as a read-only map keyed by metric name. In `--end` these are the final totals; in `--span-close` they are the running totals since the start of the run (per-span values are in `span.metrics`).
 
 ```bash
-# This will fail:
-kelora -j logs.jsonl --parallel \
-  --exec 'state["count"] += 1'
-# Error: 'state' is not available in --parallel mode
+kelora -j app.log -q \
+  -e 'track_freq("level", e.level); track_inc("total")' \
+  --end 'print(`${metrics.level.get("ERROR") ?? 0} errors in ${metrics.total} events`)'
 ```
 
-For parallel-safe tracking, use `track_*()` functions instead.
+## `span`
 
-#### Example Use Cases
+Only in `--span-close`, which runs once when a span (`--span`, `--span-idle`) closes. Read-only.
 
-**Deduplication - track seen IDs:**
+| Property | Type | Value |
+|---|---|---|
+| `span.id` | string | `#0`, `#1`, … for count spans; `2024-01-15T10:00:00Z/5m` for time spans; the field value for field spans; `idle-#0-<start>` for idle spans |
+| `span.label` | string | the window start for time and idle spans, otherwise `span.id` (what `--span-summary` prints) |
+| `span.start`, `span.end` | datetime or `()` | window bounds; `()` for count and field spans |
+| `span.size` | int | number of events that passed the filters and entered the span |
+| `span.events` | array of maps | those events, each with `line`, `line_num`, `filename`, `span_id`, `span_start`, `span_end`, `span_status` added as fields |
+| `span.metrics` | map | what `track_*()` recorded while the span was open; zero values are omitted |
+| `span.metric(name)` | value | one entry of `span.metrics`, `0` if absent; dotted names reach into `track_freq` maps: `span.metric("level.ERROR")` |
+
+```bash
+kelora -j app.log --span 5m -q \
+  -e 'track_inc("events"); if e.level == "ERROR" { track_inc("errors") }' \
+  --span-close 'print(`${span.label} ${span.metric("errors")}/${span.size}`)'
+```
+
+`span.metrics` contains only additive trackers: `track_freq`, `track_sum`, `track_inc`, `track_avg`, `track_unique`. Trackers that cannot be split per window (`track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`/`track_bottom`, `track_top_by`/`track_bottom_by`, and the min/max/percentile parts of `track_stats`) are omitted with a one-time warning, and `span.metric()` returns `0` for them. Compute those from `span.events`:
+
 ```rhai
-if !state.contains(e.request_id) {
-    state[e.request_id] = true;
-    // Process first occurrence
-} else {
-    // Skip duplicate
-    e = ();
-}
+let rts = span.events.pluck_as_nums("rt");
+let max_rt = if rts.is_empty() { () } else { rts.max() };
 ```
 
-**Store complex nested state:**
-```rhai
-if !state.contains(e.user) {
-    state[e.user] = #{login_count: 0, last_seen: (), errors: []};
-}
-let user_data = state[e.user];
-user_data.login_count += 1;
-user_data.last_seen = e.timestamp;
-if e.has("error") {
-    user_data.errors.push(e.error);
-}
-state[e.user] = user_data;
-```
-
-**State machines for protocol analysis:**
-```rhai
-if !state.contains(e.conn_id) {
-    state[e.conn_id] = "NEW";
-}
-let current_state = state[e.conn_id];
-
-// State transitions
-if current_state == "NEW" && e.event == "SYN" {
-    state[e.conn_id] = "SYN_SENT";
-} else if current_state == "SYN_SENT" && e.event == "SYN_ACK" {
-    state[e.conn_id] = "ESTABLISHED";
-} else {
-    e.protocol_error = true;  // Invalid transition
-}
-e.connection_state = state[e.conn_id];
-```
-
-See `examples/state_examples.rhai` for more patterns.
-
-## Span Hooks (`--span-close`)
-
-### `span`
-- Type: `Span` (custom Rhai type)
-- Binding available only in `--span-close`. Read-only.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `span.id` | `String` | Unique span identifier (`#0`, `#1`, ... for count spans; `2024-01-15T10:00:00Z/5m` for time spans). |
-| `span.start` / `span.end` | `DateTime` or `()` | Span boundary timestamps (time spans only). |
-| `span.size` | `Int` | Number of events that survived filters and entered the span. |
-| `span.events` | `Array<Map>` | Copy of each included event, with helper fields (`line`, `line_num`, `filename`, `span_status`, `span_id`, `span_start`, `span_end`). Read-only. |
-| `span.metrics` | `Map` | Per-window values computed from `track_*()` calls since the span opened, for **additive** aggregators only: `track_freq`, `track_sum`, `track_avg`, `track_unique`. Zero-delta keys are omitted. Read-only.
-
-> `--span-close` runs without a "current event", so `e` and `meta` are empty. Inspect `span.events` when you need per-event details from inside the close hook.
-
-> **Non-additive aggregators are not available per window.** `track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, and `track_bottom` accumulate global state (a t-digest or HLL cannot be "subtracted" back to a single window, and a global max is not a per-window max). These keys are **omitted from `span.metrics`** and Kelora prints a one-time warning. To get per-window min/max/percentiles, iterate `span.events` inside the close hook — e.g. `let mx = span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b > a { b } else { a });`.
-
-### `metrics` vs `span.metrics`
-- `span.metrics`: Only the delta accumulated while the span was open. After the hook runs, Kelora resets the baseline for the next span; mutations are discarded. Read-only.
-- `metrics`: The global tracker map used across the entire run (the same map exposed to `--end`). Values persist between spans and reflect cumulative totals; update via `track_*()` calls, not direct assignment. Read-only.
-
-## Windowed Scripts
-
-- `window`: Present when using `--window` features. It is an array of event maps representing the sliding window, with `window[0]` being the current event followed by prior events retained by the window manager. Read-only.
-
-## Begin / End Hooks
-
-- `--begin`: Runs before any event is parsed. `e` and `meta` start empty; use this stage for initialization and configuration population (`conf`).
-- `--end`: Receives the final `metrics` map so you can report overall totals after processing completes.
+`span.events` holds every event of the span in memory. More: [Group into Spans](../guide/spans.md).

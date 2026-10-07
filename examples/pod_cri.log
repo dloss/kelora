@@ -1,0 +1,7 @@
+2024-07-17T12:12:05.120394823Z stdout F {"level":"info","msg":"listening","port":8080}
+2024-07-17T12:12:09.448210001Z stdout F {"level":"info","msg":"request","path":"/cart","status":200,"ms":31}
+2024-07-17T12:12:10.002931552Z stdout F {"level":"warn","msg":"slow upstream","upstream":"inventory","ms":1840}
+2024-07-17T12:12:10.913322873Z stderr F panic: runtime error: invalid memory address or nil pointer dereference
+2024-07-17T12:12:10.913401201Z stderr F [signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x4b1c2a]
+2024-07-17T12:12:14.551003921Z stdout F {"level":"info","msg":"listening","port":8080}
+2024-07-17T12:12:15.700190044Z stdout F {"level":"error","msg":"request","path":"/checkout","status":502,"ms":5003}

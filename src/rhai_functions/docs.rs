@@ -39,7 +39,6 @@ text.extract_json([nth])             Extract JSON object/array from text (nth: 1
 text.extract_jsons()                 Extract all JSON objects/arrays from text as array of strings
 text.extract_regex_maps(pattern, field) Extract regex matches as one-field maps for fan-out
                                      (field holds capture group 1; named groups are not fields)
-text.extract_re_maps(pattern, field)    Deprecated alias for extract_regex_maps
 text.extract_regex(pattern [,group])    Extract regex match or capture group ("" if no match;
                                      add .or_empty() to get () instead)
 text.extract_url([nth])              Extract URL from text (nth: 1=first, -1=last)
@@ -81,13 +80,11 @@ text.parse_syslog()                  Parse syslog line into structured fields
 text.parse_url()                     Parse URL into structured components
 text.parse_user_agent()              Parse common user-agent strings into components
 text.rclip()                         Remove trailing non-alphanumeric characters (right side only)
-text.replace(pattern, replacement)   Replace all occurrences of pattern (builtin)
+text.replace(pattern, replacement)   Replace in place; returns () (builtin; use replace_regex() for a value)
 text.replace_regex(pattern, replacement) Replace all regex matches
-text.replace_re(pattern, replacement)    Deprecated alias for replace_regex
 text.rstrip([chars])                 Remove trailing whitespace or specified characters
 text.slice(spec)                     Slice text using Python notation (e.g., "1:5", ":3", "-2:")
 text.split_regex(pattern)            Split text by regex pattern
-text.split_re(pattern)               Deprecated alias for split_regex
 text.split(separator)                Split string into array by delimiter (builtin)
 text.starting_with(prefix [,nth])    Return substring from prefix to end (nth: 1=first, -1=last)
 text.strip([chars])                  Remove whitespace or specified characters
@@ -103,7 +100,7 @@ text.to_lower()                      Convert to lowercase (builtin)
 text.to_upper()                      Convert to uppercase (builtin; also available as upper())
 text.lower()                         Convert to lowercase (alias for to_lower(); for Python users)
 text.upper()                         Convert to uppercase (alias for to_upper(); for Python users)
-text.trim()                          Remove whitespace from start and end (builtin)
+text.trim()                          Remove whitespace in place; returns () (builtin; use strip() for a value)
 text.unescape_html()                 Unescape HTML entities to text
 text.unescape_json()                 Unescape JSON escape sequences
 
@@ -172,7 +169,7 @@ to_datetime(text [,fmt [,tz]])       Convert string into DateTimeWrapper with op
                                      (for a *different* string field, or to state format/timezone;
                                      the auto-detected timestamp is already in meta.parsed_ts)
 to_duration("1h30m")                 Convert duration string into DurationWrapper
-duration_from_<unit>(n)              Create duration from seconds/minutes/hours/days/ms/ns
+duration_from_seconds(n)             Create duration; also _minutes, _hours, _days, _milliseconds, _nanoseconds
 humanize_duration(ms)                Convert milliseconds to human-readable format (e.g., "1h 30m")
 dt.to_iso()                          Convert datetime to ISO 8601 string
 dt.format("format_string")           Format datetime using custom format string (see --help-time)

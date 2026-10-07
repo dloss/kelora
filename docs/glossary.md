@@ -1,226 +1,72 @@
 # Glossary
 
-Quick reference for Kelora terminology. Terms are organized alphabetically with cross-references to detailed documentation.
+**Alias** — a named set of options stored in a config file and used with
+`-a NAME`. [Configuration](guide/config.md)
 
----
+**Auto-detection** — choosing the input format by sampling the input; the
+default when no `-f` is given. [Get Logs into Shape](guide/parse.md#1-let-auto-detection-do-it)
 
-## A
+**Cascade** — a list of formats tried in order on each line (`-f json,line`);
+each event records the winner in `_format`. [Get Logs into Shape](guide/parse.md#3-mixed-files-try-several-parsers-per-line)
 
-### Auto-detection
-The ability to automatically identify input format by examining file content rather than filename. Activated with `-f auto`. See [Format Reference](reference/formats.md).
+**Context lines** — events shown before and after each match (`-A`, `-B`,
+`-C`). [Filter](guide/filter.md#context-around-matches)
 
----
+**Core fields** — timestamp, level, and message; `-c` shows only these.
 
-## B
+**Drain** — the algorithm behind `--drain`, which groups messages into
+templates. [Summarize](guide/summarize.md#message-templates)
 
-### Batch
-A group of log lines processed together in parallel mode. Default batch size is 1000 lines. See `--batch-size` in [CLI Reference](reference/cli-reference.md).
+**Event** — one log record after parsing: a map of fields. Usually one line;
+with multiline grouping, several. In scripts it is `e`.
 
-### Brief Mode
-Display mode that shows only field values without field names. Activated with `-b`. See [Basics Tutorial](tutorials/basics.md#brief-mode-b-values-only).
+**Field** — a named value in an event, such as `level` or `status`. Values can
+be strings, numbers, booleans, maps, or arrays.
 
----
+**Level** — an event's severity (`ERROR`, `WARN`, …), read from a field such as
+`level` or `severity`. Filtered with `-l` and `-L`.
 
-## C
+**Metrics** — values collected by `track_*()` functions and by `--freq`,
+`--describe`, `--card`; printed with `-m`, readable as `metrics` in `--end`.
+[Summarize](guide/summarize.md)
 
-### Cascade Mode
-Input-format mode that tries a list of parsers in order per line, tagging each event with the winning parser in `_format`. Activated by passing a comma-separated list to `-f` (e.g. `-f json,line`). Targets mixed-format streams. See [Cascade Mode](reference/formats.md#cascade-mode).
+**Multiline** — joining several physical lines into one event before parsing
+(`-M`). [Multiline reference](reference/multiline.md)
 
-### Context Lines
-Log lines shown before and/or after a matching event to provide surrounding context. Configured with `-A` (after), `-B` (before), or `-C` (both). Similar to grep's context flags. See [Processing Architecture](concepts/pipeline-model.md#context-lines).
+**Parallel mode** — processing batches of events on all CPU cores
+(`--parallel`). [Big Files, Many Files](guide/files.md#make-it-faster)
 
-### Core Fields
-The essential fields displayed with `-c`: timestamp, level, and message. See [Basics Tutorial](tutorials/basics.md#core-fields-c-essentials-only).
+**`meta`** — information about the current event that isn't one of its fields:
+`meta.line`, `meta.line_num`, `meta.filename`, `meta.parsed_ts`.
+[Script variables](reference/script-variables.md)
 
----
+**Resilient mode** — the default: lines that fail to parse and scripts that
+fail on an event are reported and skipped, and the run continues.
+[How It Works](how-it-works.md#when-something-goes-wrong)
 
-## E
+**Rhai** — the scripting language used in `--filter`, `--exec`, and the other
+script options. [Transform with Scripts](guide/scripting.md)
 
-### Event
-A structured data object (map/dictionary) representing a single log entry after parsing. Each event contains fields that can be accessed in Rhai scripts via the `e` variable. Example: after parsing `{"level": "ERROR", "message": "timeout"}`, you can access `e.level` and `e.message`.
+**Span** — a group of consecutive events: a time window, N events, a run of the
+same field value, or a burst between pauses. [Group into Spans](guide/spans.md)
 
-**Key points:**
+**Stage** — one `--filter`, `--exec`, `-l`, `-L`, or `--assert` step. Stages
+run in command-line order. [How It Works](how-it-works.md#processing-order)
 
-- Created by parsing raw log lines
-- Accessible via `e` in filters and transforms
-- Fields accessed with dot notation: `e.field_name`
-- Nested fields: `e.user.name`
+**State** — the `state` map, which keeps values from one event to the next.
+[Cross-Event Logic](guide/state.md)
 
-See [Events and Fields](concepts/events-and-fields.md).
+**Stats** — the processing summary printed by `-s`: counts, errors, time span,
+fields seen.
 
-### Event Boundary
-The point where one log entry ends and another begins. Important for multiline logs where stack traces or wrapped messages span multiple lines. See [Multiline Strategies](concepts/multiline-strategies.md).
+**Strict mode** — `--strict`: the first parse or script error stops the run
+with exit code 1.
 
-### Exec Stage
-A transformation stage where Rhai scripts modify events. Specified with `--exec` or `-e`. Scripts can add, modify, or remove fields. Example: `-e 'e.duration_s = e.duration_ms / 1000'`. See [Scripting Stages](concepts/scripting-stages.md).
+**Template** — a message pattern with its variable parts replaced by
+placeholders, as found by `--drain`: `Connection timeout after <duration>`.
 
----
+**Time range** — the period selected with `--since` and `--until`, applied
+before any other filter. [Work with Time](guide/time.md#filter-by-time)
 
-## F
-
-### Field
-A key-value pair within an event. Fields can contain strings, numbers, booleans, nulls, nested objects, or arrays. Access fields using `e.field_name` in scripts.
-
-**Examples:**
-
-- `e.timestamp` - String field
-- `e.status` - Number field
-- `e.user.id` - Nested field
-- `e.tags` - Array field
-
-See [Events and Fields](concepts/events-and-fields.md).
-
-### Filter Stage
-A stage that keeps or skips events based on a boolean expression. Specified with `--filter`. Events where the expression evaluates to `true` are kept; `false` means skip. Example: `--filter 'e.status >= 500'`. See [Scripting Stages](concepts/scripting-stages.md).
-
-### Format
-The structure and syntax of input log data. Common formats: JSON, logfmt, syslog, CSV, Apache/Nginx combined format. Specified with `-f` or `--input-format`. See [Format Reference](reference/formats.md).
-
----
-
-## H
-
-### HyperLogLog
-A probabilistic data structure for estimating the cardinality (unique count) of a set using constant memory. Used by `track_cardinality()` to estimate unique values across billions of events with ~1% error using only ~12KB of memory. Use when `track_unique()` would consume too much memory for high-cardinality data. See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md#probabilistic-cardinality-with-hyperloglog).
-
----
-
-## L
-
-### Level
-The severity or importance of a log event. Common levels: DEBUG, INFO, WARN, ERROR, CRITICAL. Can be filtered with `-l` (include) or `-L` (exclude). Case-insensitive. See [Basics Tutorial](tutorials/basics.md#level-filtering).
-
-### Line-Level Processing
-Operations performed on raw string lines before parsing into events. Includes line filtering (`--ignore-lines`, `--keep-lines`), line skipping (`--skip-lines`), and multiline aggregation. See [Processing Architecture](concepts/pipeline-model.md#layer-2-line-level-processing).
-
----
-
-## M
-
-### Metadata
-Contextual information about log processing available in the `meta` variable. Includes:
-
-- `meta.filename` - Current input file
-- `meta.line_num` - Line number in file
-- `meta.parsed_ts` - Parsed UTC timestamp before scripts (or empty when missing)
-- `meta.span_id` - Current span identifier (if using spans)
-
-See [Script Variables](reference/script-variables.md).
-
-### Metrics
-User-defined counters and aggregations tracked with `track_*()` functions. Displayed with `--metrics` or saved with `--metrics-file`. Includes counts, sums, unique values, and buckets. See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md).
-
-### Multiline
-A strategy for combining multiple consecutive raw lines into a single event before parsing. Used for logs with stack traces, wrapped messages, or multi-line JSON. Specified with `-M`. See [Multiline Strategies](concepts/multiline-strategies.md).
-
-**Common strategies:**
-
-- `timestamp` - Lines starting with timestamps begin new events
-- `indent` - Indented lines continue previous event
-- `regex` - Custom patterns define boundaries
-- `all` - Entire input as one event
-
----
-
-## P
-
-### Parallel Mode
-Processing mode where log lines are batched and processed concurrently across multiple CPU cores. Activated with `--parallel`. Trades some features (spans, cross-event context) for higher throughput. See [Processing Architecture](concepts/pipeline-model.md#parallel-processing-model).
-
-### Parser
-The component that converts raw text into structured events. Each format has its own parser: JSON parser, logfmt parser, syslog parser, etc. See [Format Reference](reference/formats.md).
-
-### Pipeline
-The sequence of stages through which events flow: Input → Parse → Filter/Transform → Output. User-controlled stages (filter, exec, levels) run in CLI order. See [Processing Architecture](concepts/pipeline-model.md).
-
----
-
-## R
-
-### Resilient Mode
-Default error handling mode where recovered filter and exec script failures are logged but don't stop processing or fail the process. Parse errors, file I/O failures, and assertion failures still fail the run. Opposite of strict mode. See [Error Handling](concepts/error-handling.md).
-
-### Rhai
-The embedded scripting language used for filters and transforms. Rust-based with JavaScript-like syntax. Provides 150+ built-in functions for log analysis. See [Introduction to Rhai Tutorial](tutorials/intro-to-rhai.md) and [Rhai Cheatsheet](reference/rhai-cheatsheet.md).
-
----
-
-## S
-
-### Span
-A group of consecutive events treated as a unit for aggregation. Spans close after N events (count-based) or after a time window (time-based). Configured with `--span` and `--span-close`. See [Span Aggregation Tutorial](tutorials/span-aggregation.md).
-
-**Examples:**
-
-- `--span 100` - Spans of 100 events each
-- `--span 5m` - 5-minute time windows
-- `--span 1h` - 1-hour time windows
-
-### Stage
-A single processing step in the pipeline. User-controlled stages include:
-
-- `--filter` - Boolean filter
-- `--exec` / `-e` - Transform script
-- `--levels` / `-l` - Include log levels
-- `--exclude-levels` / `-L` - Exclude log levels
-
-Stages run in the order specified on the command line. See [Scripting Stages](concepts/scripting-stages.md).
-
-### State
-A mutable global map for tracking complex stateful information across events. Accessible via the `state` variable. Only available in sequential mode (not with `--parallel`).
-
-Common uses: deduplication, session reconstruction, state machines, cross-event correlation. For simple counting, use `track_*()` functions instead.
-
-See [Script Variables](reference/script-variables.md#state) and `examples/state_examples.rhai`.
-
-### Statistics
-Auto-collected processing metrics displayed with `--stats`. Includes events parsed, filtered, output; discovered levels and field names (both input and output when they differ); errors; time span. Different from user-defined metrics. See [Processing Architecture](concepts/pipeline-model.md#internal-statistics-stats).
-
-### Streaming
-Processing mode where events are read, processed, and output one at a time without buffering the entire file in memory. Default mode (sequential). Enables real-time analysis of live logs. See [Performance Model](concepts/performance-model.md).
-
-### Strict Mode
-Error handling mode where any parsing or script error immediately aborts processing with exit code 1. Activated with `--strict`. Opposite of resilient mode. See [Error Handling](concepts/error-handling.md).
-
----
-
-## T
-
-### Timestamp
-A field containing the date and time when a log event occurred. Kelora auto-detects common field names: `timestamp`, `ts`, `time`, `@timestamp`. Used for time-based filtering with `--since` and `--until`. See [Working with Time Tutorial](tutorials/working-with-time.md).
-
-### Tracking
-The process of accumulating metrics across events using `track_*()` functions:
-
-- `track_freq(name, value)` - Frequency table: count occurrences per value (incl. histogram buckets)
-- `track_inc(name)` - Increment a running counter by 1
-- `track_sum(name, value)` - Sum values (`track_sum(name, 1)` is also a plain counter)
-- `track_avg(name, value)` - Average values
-- `track_percentiles(name, value, [percentiles])` - Streaming percentiles (P50/P95/P99)
-- `track_min/max(name, value)` - Track extremes
-- `track_unique(name, value)` - Collect unique values (exact, stores all)
-- `track_cardinality(name, value)` - Estimate unique count (HyperLogLog, ~1% error, ~12KB)
-- `track_top/bottom(name, item, [n])` and `track_top_by/bottom_by(name, item, score, [n])` - Top/bottom N items
-
-See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md).
-
-### Transform
-A modification applied to an event, typically in an `--exec` stage. Can add new fields, modify existing fields, or remove fields. Example: `--exec 'e.status_class = e.status / 100'`.
-
----
-
-## W
-
-### Window
-A sliding window of recent events accessible in scripts via the `window` array. Configured with `--window N` to keep the last N events in memory. Useful for contextual analysis. Example: `--window 10 --exec 'e.recent_errors = window.filter(|x| x.level == "ERROR").len()'`. See [Advanced Scripting Tutorial](tutorials/advanced-scripting.md).
-
----
-
-## See Also
-
-- [Basics Tutorial](tutorials/basics.md) - Learn fundamental concepts through examples
-- [Events and Fields](concepts/events-and-fields.md) - Deep dive on event structure
-- [Processing Architecture](concepts/pipeline-model.md) - Understanding the pipeline
-- [Scripting Stages](concepts/scripting-stages.md) - Filter and transform details
-- [Function Reference](reference/functions.md) - All 150+ built-in functions
-- [CLI Reference](reference/cli-reference.md) - Complete command-line reference
+**Window** — with `--window N`, the current event and the N before it,
+available to scripts as `window`. [Cross-Event Logic](guide/state.md#-window-look-at-previous-events)

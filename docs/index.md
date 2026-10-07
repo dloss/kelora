@@ -1,16 +1,16 @@
 # Kelora
 
-**One command for messy logs.** Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, plain text, and your own custom formats — with embedded [Rhai](https://rhai.rs) scripting when simple filters aren't enough.
+**One command for messy logs.** Parse, filter, transform, and summarize logs in
+JSON, logfmt, syslog, CSV, Apache/Nginx, Kubernetes, plain text, and your own
+formats — with an embedded scripting language for everything the options don't
+cover.
 
-Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
-
-See **[What's New in 2.0](whats-new-2.0.md)** for the highlights and a migration guide.
-
-[Install Kelora](installation.md){ .md-button }
+[Install Kelora](installation.md){ .md-button } [Explore a log file](guide/explore.md){ .md-button }
 
 ## A quick tour
 
-**You don't even know what's in the file yet. Start there** — no flags, no regex. Kelora decompresses the gzip, recognizes the Apache combined format, and profiles every field with real sample values:
+**Find out what's in a file.** Kelora decompresses it, recognizes the format,
+and profiles every field:
 
 === "Command/Output"
 
@@ -18,7 +18,8 @@ See **[What's New in 2.0](whats-new-2.0.md)** for the highlights and a migration
     kelora examples/web_access_large.log.gz --discover
     ```
 
-**Mixed formats in one file are the normal case, not the exception.** Give Kelora a cascade of parsers (`-f json,line`) and it tries each one per line, tagging every event with the winner in `_format` — so you keep the structured lines, drop the noise, and emit clean CSV in a single pass:
+**Handle mixed formats.** A cascade tries parsers in order on each line, so
+JSON and plain text can share a file. Keep the JSON, drop the noise, write CSV:
 
 === "Command/Output"
 
@@ -27,13 +28,14 @@ See **[What's New in 2.0](whats-new-2.0.md)** for the highlights and a migration
       --filter 'e._format == "json"' -k timestamp,level,msg -F csv
     ```
 
-=== "Input Data"
+=== "Input"
 
     ```bash exec="on" result="ansi"
     cat examples/mixed_format.log
     ```
 
-**And when those logs are a wall of near-duplicate errors that differ only by hostname, UUID, or timestamp, cut straight to what's actually breaking.** Point `--drain` at a field (`-k msg`, the syslog message here) and it groups near-identical lines by inferring where the values varied — `<fqdn>`, `<uuid>`, `<path>`, `<duration>` — so 742 noisy lines collapse into the handful of patterns causing the noise:
+**See what's actually breaking.** `--drain` groups messages that differ only
+in hostnames, IDs, or durations — here, 742 lines become four patterns:
 
 === "Command/Output"
 
@@ -41,133 +43,53 @@ See **[What's New in 2.0](whats-new-2.0.md)** for the highlights and a migration
     kelora examples/syslog_errors.log --drain -k msg
     ```
 
-=== "Input (8 of 742 lines)"
+=== "Input (first 6 of 742 lines)"
 
     ```bash exec="on" result="ansi"
-    head -8 examples/syslog_errors.log
+    head -6 examples/syslog_errors.log
     ```
 
-## When Kelora helps
+Hack the Clown's [5-minute video](https://www.youtube.com/watch?v=IwkicmS3RYo)
+shows more.
 
-Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
+## When to reach for it
 
-- **Chained pipelines collapse into one command.** `grep | awk | jq | script.py` becomes `kelora`, with state preserved across the pipeline instead of lost between pipes.
-- **Messy formats parse cleanly.** Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.
-- **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
-- **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
+Kelora is the middle ground between "grep is enough" and "I need a log
+platform" — the tool for the throwaway Python script you'd otherwise write.
 
-Kelora trades raw [speed](concepts/performance-comparisons.md) for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora [plays well](how-to/integrate-external-tools.md) with `ripgrep`, `jq`, `qsv`, and other Unix tools.
+- **One command instead of a pipe chain.** `grep | awk | jq | script.py`
+  becomes one pass, with state kept across events.
+- **Messy input is normal.** Mixed formats, `key=value` pairs inside messages,
+  JSON inside text, stack traces across lines.
+- **Simple things stay simple.** `-l error`, `--since 1h`, `--freq status` need
+  no scripting. When logic gets stateful — sessions, request/response pairs,
+  error rates per window — there's a real language.
+- **Plays well with others.** Pipe `rg` in front, `jq`, DuckDB, or a
+  spreadsheet behind.
 
-## More examples
+## What it does
 
-### Filter & Convert (The Basics)
-*Scenario: Filter a Logfmt file for slow requests and output clean JSON.*
+| | |
+|---|---|
+| [Get logs into shape](guide/parse.md) | 20+ formats, auto-detection, cascades, columns, regex, multiline events |
+| [Filter](guide/filter.md) | raw lines, file sections, time ranges, levels, expressions, context lines |
+| [Transform](guide/scripting.md) | computed fields, extraction from text, fan-out of arrays, masking and pseudonyms |
+| [Summarize](guide/summarize.md) | counts, percentiles, top-N, distinct values, message templates, before/after diffs |
+| [Group into spans](guide/spans.md) | per-minute rollups, batches, sessions |
+| [Cross-event logic](guide/state.md) | deduplication, pairing requests with responses, gap detection |
+| [Big files](guide/files.md) | gzip/zstd, many files, merging by time, parallel processing |
 
-=== "Command/Output"
+The [Cookbook](cookbook.md) has ready-made commands for common questions.
 
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/traffic_logfmt.log \
-      --filter 'e.status >= 500 || e.latency_ms > 1000' \
-      -F json
-    ```
+## About
 
-=== "Input Data"
+Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE).
+It runs locally: no networking, no telemetry, enforced by a CI check.
 
-    ```bash exec="on" result="ansi"
-    cat examples/traffic_logfmt.log
-    ```
-
-### Modify & Anonymize (Scripting)
-*Scenario: Mask user emails for privacy and convert milliseconds to seconds before printing.*
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/audit.jsonl \
-      --exec 'e.email = "***"; e.duration_sec = e.ms / 1000.0;' \
-      --keys timestamp,user_id,email,duration_sec
-    ```
-
-=== "Input Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/audit.jsonl
-    ```
-
-### Stateful Analysis (Streaming Stats)
-*Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute a full distribution summary (avg, min/max, p50/p95/p99) per endpoint in one pass, no external aggregator.*
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/api_latency_incident.jsonl --metrics \
-      --exec 'track_stats("latency_" + e.endpoint.after("/", -1), e.response_time_ms)'
-    ```
-
-=== "Input Data"
-
-    ```bash exec="on" result="ansi"
-    head -3 examples/api_latency_incident.jsonl
-    ```
-
-Look at `latency_posts`: the average (~147ms) looks healthy, but p99 is ~880ms — a 6× tail the average hides entirely. `track_stats` maintains streaming state across events (averages and counts directly, percentiles via t-digest), so this scales to files of any size without holding everything in memory. `--exec` runs per event; `--metrics` prints just the tracked metrics at the end (it implies `--quiet`, so individual events are suppressed).
-
----
-
-## Advanced Features
-
-Beyond basic filtering and conversion, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:
-
-- **[Extract JSON from text](how-to/power-user-techniques.md#extract-json-from-unstructured-text)** - Pull structured data from unstructured lines
-  `e.data = e.line.extract_json()`
-
-- **[Deep flattening](how-to/power-user-techniques.md#deep-structure-flattening)** - Fan out nested arrays to flat records
-  `emit_each(e.get_path("data.orders", []))`
-
-- **[Pattern normalization](how-to/power-user-techniques.md#pattern-normalization)** - Group errors by replacing IPs, UUIDs, emails with placeholders
-  `e.error_pattern = e.message.normalized()`
-
-- **[Deterministic sampling](how-to/power-user-techniques.md#deterministic-sampling-with-bucket)** - Consistent sampling across log rotations
-  `--filter 'e.request_id.bucket() % 10 == 0'`
-
-- **[JWT parsing](how-to/power-user-techniques.md#jwt-parsing-without-verification)** - Extract claims (or flag expired tokens) without verification
-  `e.token.parse_jwt().expires_at < now()`
-
-- **[Cryptographic pseudonymization](how-to/power-user-techniques.md#multiple-hash-algorithms)** - Privacy-preserving anonymization with HMAC
-  `e.anon_user = pseudonym(e.email, "users")`
-
-See **[Power-User Techniques](how-to/power-user-techniques.md)** for real-world examples.
-
----
-
-## Get Started
-
-**[→ Installation](installation.md)** - macOS, Linux, Windows, and Cargo
-
-**[→ Quickstart (5 minutes)](quickstart.md)** - Run your first commands
-
-**[→ Tutorial: Basics (30 minutes)](tutorials/basics.md)** - Learn input formats, filtering, and output
-
-**[→ How-To Guides](how-to/index.md)** - Solve specific problems (including [debugging](how-to/debug-issues.md))
-
-Need to reconstruct one timeline from several already-ordered log shards? See
-[Merge Sorted Files by Timestamp](how-to/merge-timestamp-sorted-files.md).
-
-For deeper understanding, see [Concepts](concepts/index.md). For complete reference, see [Glossary](glossary.md), [Functions](reference/functions.md), [Formats](reference/formats.md), and [CLI options](reference/cli-reference.md).
-
-Upgrading from 1.x? See [What's New in 2.0](whats-new-2.0.md) for the highlights and a migration guide.
-
-!!! tip "On-call?"
-    Jump to **[Incident Response Playbooks](how-to/incident-response-playbooks.md)** for copy-paste commands covering latency spikes, error surges, auth failures, and more.
-
----
-
-## License
-
-Kelora is open source software licensed under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE).
-
-## Development Approach
-
-Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check.
-
-This is a single-developer spare-time project, and support is best-effort. Review the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before using it on sensitive data in production.
+Kelora is an experiment in agentic AI development: AI agents write all
+implementation and tests, and I steer requirements rather than writing or
+reviewing code. Validation relies on an extensive automated test suite plus
+`cargo audit` and `cargo deny`. It is a single-developer spare-time project
+with best-effort support; review the
+[security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before
+using it on sensitive data.

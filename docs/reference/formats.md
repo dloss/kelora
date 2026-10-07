@@ -1,744 +1,348 @@
 # Format Reference
 
-Quick reference for all formats supported by Kelora.
+Input format: `-f, --input-format <format>`. Output format: `-F, --output-format <format>`. `kelora --help-formats` prints a condensed version of this page.
 
 ## Input Formats
 
-Specify input format with `-f, --input-format <format>`.
+| Format | Input | Fields |
+|--------|-------|--------|
+| `auto` | Default. Detects one format (see [Auto-Detection](#auto-detection)) | depends |
+| `json` / `-j` | JSON Lines, one object per line | all keys, types kept |
+| `line` | Plain text | `line` |
+| `raw` | Plain text | `raw` |
+| `logfmt` | `key=value` pairs | all keys |
+| `csv`, `tsv`, `csvnh`, `tsvnh` | Delimited, with or without header row | header names or `c1`, `c2`, … |
+| `syslog` | RFC 5424 and RFC 3164 | `pri`, `facility`, `severity`, `level`, `ts`, `host`, `prog`, `pid`, `msg`, … |
+| `combined` | Apache/Nginx access logs | `ip`, `ts`, `method`, `path`, `status`, … |
+| `cef` | ArcSight Common Event Format | header fields + extensions |
+| `cri` | Kubernetes CRI/containerd container logs | `ts`, `stream`, `tag`, `msg` |
+| `glog`, `log4j`, `postgres`, … | [Built-in application-log formats](#built-in-application-log-formats) | `ts`, `level`, `msg` + extras |
+| `cols:<spec>` | Whitespace- or separator-delimited columns | named in the spec |
+| `regex:<pattern>` | Anything a regex with named groups can match | named groups |
+| `auto-per-file` | Detects separately for each file | depends |
+| `<fmt1>,<fmt2>,…` | [Cascade](#cascade-mode): first parser that succeeds wins, per line | + `_format` |
 
-### Overview
-
-| Format | Description |
-|--------|----------|
-| `auto` | Auto-detect (default): first non-empty line on stdin, sampled file head on files |
-| `json` | Application logs, structured data (shorthand: `-j`) |
-| `line` | Unstructured logs, plain text (trailing newline/CR trimmed) |
-| `raw` | Plain text preserved verbatim (no trimming of newline/CR or other artifacts) |
-| `logfmt` | Heroku-style logs, simple structured logs |
-| `csv` / `tsv` | Spreadsheet data, exports |
-| `syslog` | System logs, network devices |
-| `combined` | Apache/Nginx web server access logs |
-| `cef` | ArcSight Common Event Format, SIEM data |
-| `cri` | Kubernetes CRI/containerd container logs (`kubectl logs --timestamps`, `/var/log/pods/*`) |
-| `<name>` | Built-in application-log formats (`glog`, `log4j`, …) — see `--help-formats` |
-| `cols:<spec>` | Custom column-based logs |
-| `regex:<pattern>` | Custom regex parsing with named groups and type annotations |
-| `<fmt1>,<fmt2>[,…]` | Cascade mode — try parsers in order, first success wins (e.g. `json,line`) |
+A line that a parser rejects is a parse error: it is counted, reported on stderr and skipped. `--strict` aborts on it instead.
 
 ### JSON Format
 
-**Syntax:** `-f json` or `-j`
+One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error.
 
-**Description:** JSON Lines format (one object per line). Nested structures preserved.
+For pretty-printed objects that span several lines, join them first: `-j -M 'regex:match=^\{'` (each object starts with `{` in column 1), or `-j -M all` for a single document. See [multiline.md](multiline.md).
 
-**Input Example:**
-```json
-{"timestamp": "2024-01-15T10:30:00Z", "level": "ERROR", "service": "api", "message": "Connection failed"}
-```
+### Line and Raw Formats
 
-**Output Fields:** All JSON fields become event fields with original names and types.
+| Format | Field | Blank lines | Trimming |
+|--------|-------|-------------|----------|
+| `line` | `line` | kept, as `line=""` | trailing `\n`/`\r` removed |
+| `raw` | `raw` | skipped | none by the parser |
 
-**Notes:**
-
-- Use `-M json` for multi-line JSON objects
-- Preserves field types (strings, numbers, booleans, null)
-- Supports nested objects and arrays
-
-### Line Format
-
-**Syntax:** `-f line`
-
-**Description:** Plain text, one line per event.
-
-**Output Fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `line` | String | Complete line content |
-
-**Notes:**
-
-- Auto-detect falls back to line when it can't identify a structured format
-- Empty lines are skipped
-- Useful for unstructured logs or custom parsing with `--exec`
-
-### Raw Format
-
-**Syntax:** `-f raw`
-
-**Description:** Plain text, one event per line, preserved verbatim. Unlike
-`line`, the trailing newline/CR is **not** trimmed and backslashes and other
-artifacts are kept exactly as read.
-
-**Output Fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `raw` | String | Line content, byte-for-byte as read |
-
-**Notes:**
-
-- Choose `raw` over `line` when trailing whitespace or escape characters are
-  significant (e.g. round-tripping data without normalization)
-- Like `line`, it matches every line, so in a cascade it must come last
+Leading and trailing spaces, tabs and backslashes are kept by both. `line` is the `auto` fallback when nothing else matches. Both accept every line, so in a cascade they must come last.
 
 ### Logfmt Format
 
-**Syntax:** `-f logfmt`
-
-**Description:** Heroku-style key-value pairs.
-
-**Input Example:**
 ```
-timestamp=2024-01-15T10:30:00Z level=ERROR service=api message="Connection failed"
+timestamp=2024-01-15T10:30:00Z level=ERROR status=500 message="Connection failed"
 ```
 
-**Output Fields:** All key-value pairs become top-level fields.
-
-**Notes:**
-
-- Supports quoted values: `key="value with spaces"`
-- Keys must be alphanumeric (with underscores/hyphens)
+- Every pair becomes a top-level field. Keys may contain any non-space characters except `=` (`a.b-c`, `k:x` are fine).
+- Unquoted values are typed: `500` → int, `1.5` and `1e3` → float, `true`/`True` → bool. `007` stays a string.
+- Quoted values may contain spaces and `\"`. `key=` gives an empty string.
+- A bare word without `=` is a parse error.
 
 ### CSV / TSV Formats
 
-**Syntax:**
+| Format | Delimiter | Header |
+|--------|-----------|--------|
+| `csv` | `,` | first row |
+| `tsv` | tab | first row |
+| `csvnh` | `,` | none; fields `c1`, `c2`, … |
+| `tsvnh` | tab | none; fields `c1`, `c2`, … |
 
-- `-f csv` - Comma-separated with header
-- `-f tsv` - Tab-separated with header
-- `-f csvnh` - CSV without header
-- `-f tsvnh` - TSV without header
+Values are strings unless you annotate them (see [Type Annotations](#type-annotations)):
 
-**Output Fields:**
-
-- **With header:** Field names from header row
-- **Without header:** `c1`, `c2`, `c3`, etc.
-
-**Type Annotations:**
-
-Specify field types for automatic conversion:
 ```bash
 kelora -f 'csv status:int bytes:int response_time:float' access.csv
 ```
 
-Supported types: `int`, `float`, `bool`
-
-**Notes:**
-
-- Quoted fields supported: `"value, with, commas"`
-- Escaped quotes: `"value with ""quotes"""`
-- Embedded newlines inside quoted fields (RFC 4180) are supported: a record that
-  spans several physical lines, e.g. `"a","line1<newline>line2"`, is reassembled
-  into a single event before parsing. This works in both sequential and
-  `-P`/`--parallel` mode — the parallel batcher keeps whole records within a batch
-  so the record can be stitched back together. A quote that is opened but never
-  closed before end of input is genuinely malformed and reported as an
-  `Unterminated quoted field` parse error in either mode.
-- Ragged rows are preserved, not dropped: columns beyond the header (or beyond
-  the first row in header-less mode) are kept under positional names (`c5`,
-  `c6`, ... counted from 1), and rows with fewer columns leave the trailing
-  fields absent. Both cases are counted and reported as a hint on stderr.
-- `--strict` rejects ragged rows as parse errors instead.
+- RFC 4180 quoting: `"a, b"`, `"say ""hi"""`, and quoted fields containing newlines (also under `-P`). An unclosed quote at end of input is an `Unterminated quoted field` error.
+- Ragged rows are kept. Columns beyond the header (or beyond the first row with `csvnh`/`tsvnh`) get positional names (`c4`, `c5`, … counted from 1). Short rows leave the missing fields absent. A hint reports both counts. `--strict` makes a ragged row a fatal error.
 
 ### Syslog Format
 
-**Syntax:** `-f syslog`
-
-**Description:** RFC5424 and RFC3164 syslog messages. Auto-detects format.
-
-**Input Examples:**
-
-RFC5424:
 ```
 <165>1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
-```
-
-RFC3164:
-```
 <34>Jan 15 10:30:00 myhost myapp[1234]: Connection failed
 ```
 
-**Output Fields:**
+| Field | Type | RFC 5424 | RFC 3164 | Description |
+|-------|------|----------|----------|-------------|
+| `pri` | int | ✓ | if `<N>` present | priority = facility × 8 + severity |
+| `facility` | int | ✓ | if `<N>` present | |
+| `severity` | int | ✓ | if `<N>` present | 0–7 |
+| `level` | string | ✓ | if `<N>` present | `EMERG` `ALERT` `CRIT` `ERROR` `WARN` `NOTICE` `INFO` `DEBUG` (severity 0–7) |
+| `ts` | string | ✓ | ✓ | timestamp as written |
+| `host` | string | ✓ | ✓ | |
+| `prog` | string | ✓ | ✓ | |
+| `pid` | int | ✓ | if `[pid]` present | RFC 5424: string if not numeric |
+| `msgid` | string | ✓ | – | |
+| `version` | int | ✓ | – | |
+| `msg` | string | ✓ | ✓ | |
 
-| Field | Type | RFC5424 | RFC3164 | Description |
-|-------|------|---------|---------|-------------|
-| `pri` | Integer | ✓ | ✓* | Priority value (facility * 8 + severity) |
-| `facility` | Integer | ✓ | ✓* | Syslog facility code |
-| `severity` | Integer | ✓ | ✓* | Severity level (0-7) |
-| `level` | String | ✓ | ✓* | Log level (EMERG, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG) |
-| `ts` | String | ✓ | ✓ | Parsed timestamp |
-| `host` | String | ✓ | ✓ | Source hostname |
-| `prog` | String | ✓ | ✓ | Application/program name |
-| `pid` | Integer/String | ✓ | ✓ | Process ID (parsed as integer if numeric) |
-| `msgid` | String | ✓ | - | Message ID |
-| `version` | Integer | ✓ | - | Syslog protocol version |
-| `msg` | String | ✓ | ✓ | Log message |
-
-*RFC3164: Only present if priority prefix `<NNN>` is included
-
-**Notes:**
-
-- Severity levels: 0=emerg, 1=alert, 2=crit, 3=err, 4=warn, 5=notice, 6=info, 7=debug
+RFC 5424 fields whose value is `-` are omitted. Structured data is not extracted. RFC 3164 timestamps have no year; see [time-reference.md](time-reference.md#year-and-timezone).
 
 ### Combined Log Format
 
-**Syntax:** `-f combined`
+Handles Common Log Format, Combined, and Nginx Combined with a trailing request time, detected per line:
 
-**Description:** Apache/Nginx web server logs. Auto-handles three variants:
-
-- Apache Common Log Format (CLF)
-- Apache Combined Log Format
-- Nginx Combined with request_time
-
-**Input Examples:**
-
-Common:
 ```
 192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
+192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
+192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
 ```
-
-Combined:
-```
-192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /api/data HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
-```
-
-Nginx with request_time:
-```
-192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api/data HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
-```
-
-**Output Fields:**
 
 | Field | Type | Common | Combined | Nginx | Description |
 |-------|------|--------|----------|-------|-------------|
-| `ip` | String | ✓ | ✓ | ✓ | Client IP address |
-| `identity` | String | ✓ | ✓ | ✓ | RFC 1413 identity (omit if `-`) |
-| `user` | String | ✓ | ✓ | ✓ | HTTP auth username (omit if `-`) |
-| `ts` | String | ✓ | ✓ | ✓ | Request timestamp |
-| `request` | String | ✓ | ✓ | ✓ | Full HTTP request line |
-| `method` | String | ✓ | ✓ | ✓ | HTTP method (auto-extracted) |
-| `path` | String | ✓ | ✓ | ✓ | Request path (auto-extracted) |
-| `protocol` | String | ✓ | ✓ | ✓ | HTTP protocol (auto-extracted) |
-| `status` | Integer | ✓ | ✓ | ✓ | HTTP status code |
-| `bytes` | Integer | ✓ | ✓ | ✓ | Response size (omit if `-`, keep if `0`) |
-| `referer` | String | - | ✓ | ✓ | HTTP referer (omit if `-`) |
-| `user_agent` | String | - | ✓ | ✓ | HTTP user agent (omit if `-`) |
-| `request_time` | Float | - | - | ✓ | Request time in seconds (omit if `-`) |
+| `ip` | string | ✓ | ✓ | ✓ | client address |
+| `identity` | string | ✓ | ✓ | ✓ | RFC 1413 identity |
+| `user` | string | ✓ | ✓ | ✓ | auth user |
+| `ts` | string | ✓ | ✓ | ✓ | `15/Jan/2024:10:30:00 +0000` |
+| `request` | string | ✓ | ✓ | ✓ | full request line |
+| `method` | string | ✓ | ✓ | ✓ | from `request` |
+| `path` | string | ✓ | ✓ | ✓ | from `request` |
+| `protocol` | string | ✓ | ✓ | ✓ | from `request` |
+| `status` | int | ✓ | ✓ | ✓ | |
+| `bytes` | int | ✓ | ✓ | ✓ | `0` is kept |
+| `referer` | string | – | ✓ | ✓ | |
+| `user_agent` | string | – | ✓ | ✓ | |
+| `request_time` | float | – | – | ✓ | seconds |
 
-**Notes:**
-
-- Parser auto-detects variant per line
-- Fields with `-` values omitted (except `bytes` includes `0`)
+Any field whose value is `-` is omitted.
 
 ### CEF Format
 
-**Syntax:** `-f cef`
-
-**Description:** ArcSight Common Event Format for security logs.
-
-**Input Example:**
 ```
 CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
 ```
 
-**Output Fields:**
-
-**Syslog prefix (optional):**
-
 | Field | Type | Description |
 |-------|------|-------------|
-| `ts` | String | Timestamp from syslog prefix |
-| `host` | String | Hostname from syslog prefix |
+| `ts` | string | from an optional syslog prefix (`Jan 15 10:30:00 host CEF:…`) |
+| `host` | string | from the optional syslog prefix |
+| `cefver` | string | CEF version |
+| `vendor` | string | device vendor |
+| `product` | string | device product |
+| `version` | string | device version |
+| `eventid` | string | signature ID |
+| `event` | string | event name |
+| `severity` | string | `0`–`10` |
 
-**CEF header:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `cefver` | String | CEF format version |
-| `vendor` | String | Device vendor name |
-| `product` | String | Device product name |
-| `version` | String | Device version |
-| `eventid` | String | Event signature ID |
-| `event` | String | Event name/classification |
-| `severity` | String | Event severity (0-10) |
-
-**Extensions:** All extension key=value pairs become top-level fields with automatic type conversion (integers, floats, booleans)
+Each extension pair becomes a top-level field. Extension values are typed: `1232` → int, `1.5` → float, `true` → bool. Everything else, including IP addresses, stays a string.
 
 ### CRI Format
 
-**Syntax:** `-f cri`
+The Kubernetes CRI/containerd log layout `<RFC3339Nano> <stream> <tag> <message>`: files under `/var/log/pods/`, and `kubectl logs --timestamps` output.
 
-**Description:** The Kubernetes CRI/containerd on-disk container-log layout —
-`<RFC3339Nano> <stream> <tag> <message>`. This is the raw shape of
-`/var/log/pods/*/*.log`, of `kubectl logs --timestamps`, and of what node-level
-log shippers (Fluent Bit, Vector, promtail) read before forwarding. The message
-is often itself JSON or logfmt; it is kept verbatim in `msg` for an optional
-second-stage parse.
-
-**Input Example:**
 ```
 2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}
 2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer
 ```
 
-**Output Fields:**
-
 | Field | Type | Description |
 |-------|------|-------------|
-| `ts` | String | RFC3339Nano timestamp written by the runtime |
-| `stream` | String | `stdout` or `stderr` |
-| `tag` | String | `F` (full line) or `P` (partial — the runtime split a line longer than ~16 KiB; consumers rejoin consecutive `P` lines up to the next `F`) |
-| `msg` | String | The container's log line, kept verbatim |
+| `ts` | string | runtime timestamp |
+| `stream` | string | `stdout` or `stderr` |
+| `tag` | string | `F` full line, `P` partial (the runtime split a long line; the following lines up to the next `F` continue it) |
+| `msg` | string | the container's line, verbatim |
 
-**Example Usage:**
 ```bash
-# Show only stderr lines from a pod log file
 kelora pod.log -f cri --filter 'e.stream == "stderr"' -k ts,msg
-
-# Fan a structured JSON payload back into top-level fields, then filter on it
 kelora pod.log -f cri --exec 'e.absorb_json("msg")' --filter 'e.level == "error"'
 ```
 
-**Notes:**
-
-- Unlike the other built-in application-log formats (see below), `cri` is part of
-  auto-detection's early path — it is tried **before** the logfmt and CSV steps,
-  because a CRI message is frequently itself JSON or logfmt (whose commas/pairs
-  would otherwise be misdetected as CSV/logfmt). Auto-detection therefore
-  recognises CRI logs regardless of the message payload.
-- The Docker `json-file` log driver writes a *different* shape (one JSON object
-  per line with `log`/`stream`/`time` keys) — use `-f json` for those.
+Auto-detection tries `cri` before logfmt and CSV, so a JSON or logfmt payload does not hide it. Docker's `json-file` driver writes one JSON object per line (`log`, `stream`, `time`); use `-f json` for that.
 
 ### Built-in Application-Log Formats
 
-Beyond the wire/access formats above, Kelora ships a curated set of built-in
-application-log layouts — `glog` (Go/Kubernetes klog), `nginx-error`,
-`apache-error`, `log4j`/Java, `python-logging`, `postgres` (PostgreSQL server
-log), `redis`, `s3`, `haproxy`, and `iso8601-level`
-— that parse into `ts`, `level`, `msg`, and format-specific extras. Select them
-with `-f <name>` (e.g. `-f log4j`) or inside a cascade (`-f log4j,line`). With
-the exception of `cri` (above), they are tried only as the last step before the
-`line` fallback, so they never override a format detected earlier. Run `kelora
---help-formats` for the full catalogue, sample lines, and per-format notes.
-(These definitions are adapted from [lnav](https://lnav.org), BSD-3-Clause;
-`cri` is Kelora-original.)
+Fixed layouts parsed with built-in regexes. Select with `-f <name>` or in a comma cascade (`-f log4j,line`). Except for `cri` (above), auto-detection tries them only after every other format and just before the `line` fallback. Most definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause).
 
-The access-log formats (`s3`, `haproxy`) keep only a curated set of useful
-fields and may drop a long, version-dependent tail. Nothing is lost: the full
-raw line is always available to a script as `line` / `meta.line`, so a dropped
-column can be recovered with a second-stage parse, e.g. extracting a trailing
-quoted column off the raw line:
+| Format | Example line | Fields besides `ts`, `level`, `msg` |
+|--------|--------------|-------------------------------------|
+| `apache-error` | `[Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client 10.0.0.1] File does not exist` | `module`, `pid`, `tid`, `client` (each optional) |
+| `glog` | `I0102 15:04:05.123456 1 main.go:42] started` | `pid`, `source`; `level` is `I`/`W`/`E`/`F` |
+| `haproxy` | `Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"` | see below |
+| `iso8601-level` | `2024-01-02T15:04:05Z INFO started` (space instead of `T`, `[…]` brackets, and `,` fractions also match) | – |
+| `log4j` | `2024-01-02 15:04:05,123 INFO [main] com.example.App - started` | `thread`, `logger` |
+| `nginx-error` | `2024/01/02 15:04:05 [error] 29#29: open() failed` | `pid`, `tid` |
+| `postgres` | `2024-01-02 15:04:05.123 UTC [1234] LOG:  ready` | `pid`, `log_tz` |
+| `python-logging` | `2024-01-02 15:04:05,123 - myapp.db - INFO - connected` | `logger` |
+| `redis` | `12345:M 06 Feb 2024 12:00:00.123 * Ready` | `pid`, `role`; `level` is the marker `.` `-` `*` `#` |
+| `s3` | AWS S3 server access log | `owner`, `bucket`, `client`, `requester`, `req_id`, `op`, `key`, `method`, `uri`, `query`, `httpver`, `status`, `error_code`, `bytes_sent`, `obj_size`, `total_time`, `turnaround_time`, `referer`, `user_agent`, then (newer logs) `version_id`, `host_id`, `sig_version`, `cipher_suite`, `auth_type`, `host_header`, `tls_version`; no `level`/`msg` |
+
+`haproxy` fields: `host`, `proc`, `pid`, `client_ip`, `client_port`, `accept_date`, `frontend`, `backend`, `server`, timers `tq`/`tw`/`tc`/`tr`/`tt` (HTTP) or `tw`/`tc`/`tt` (TCP), `status` (HTTP), `bytes_read`, `termination_state`, `actconn`, `feconn`, `beconn`, `srv_conn`, `retries`, `srv_queue`, `backend_queue`, `req_headers`/`resp_headers` (when captured), and the request line in `msg` (HTTP). It has no `level`. HAProxy lines are syslog lines, so `-f auto` detects them as `syslog`: pass `-f haproxy`.
+
+Types: fields named `pid`, `tid`, `client_port`, `bytes_read` and the haproxy connection counters are ints. Everything else is a string, including the `s3` and `haproxy` `status`, sizes and timers. Convert in a script if you need numbers: `--exec 'e.status = to_int(e.status)'`.
+
+`s3` and `haproxy` keep a curated set of columns. The unparsed line is still available as `meta.line`, so a missing column can be extracted in a script:
 
 ```bash
-kelora -f s3 access.log \
-  --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
+kelora -f s3 access.log --exec 'e.last_col = meta.line.extract_regex("(\\S+)$", 1)'
 ```
 
-`postgres` matches the default `log_line_prefix = '%m [%p] '`
-(`2024-01-02 15:04:05.123 UTC [1234] LOG:  …`); a customized prefix (adding
-`user@db`, an application name, etc.) won't auto-detect — reach those with
-`-f regex:`.
+Format notes:
 
-A PostgreSQL error often spans several physical lines — an `ERROR:`/`STATEMENT:`
-record followed by tab-indented query-continuation lines that carry no prefix.
-Parse those with `-M indent`, which folds the indented lines into the preceding
-record before parsing; without it they are reported as parse errors and dropped.
-(`-f postgres,line` is the alternative: it keeps each unmatched continuation
-line as a raw `line` event instead of folding it.)
-
-Its `ts` is **naive**: like the other timestamp-only formats, it is resolved
-through `--input-tz` (default `UTC`), **not** the zone abbreviation logged on the
-line. The abbreviation is preserved in the `log_tz` field for inspection but not
-applied to the timestamp, because zone abbreviations are ambiguous (`CST`,
-`BST`, `IST` each map to several zones) and an abbreviation alone cannot encode
-DST — so it cannot be reliably converted to an offset. (The field is named
-`log_tz`, not `tz`, to signal that it is the abbreviation the server logged, not
-the zone applied to the timestamp.) A Postgres server logging in UTC (the
-common, recommended configuration) is therefore correct by default; for a server
-logging in a non-UTC zone, pass `--input-tz <IANA>` matching its `log_timezone`,
-e.g. `--input-tz Europe/Berlin`.
+- `glog` timestamps have no year; see [Year and timezone](time-reference.md#year-and-timezone).
+- `postgres` matches only the default `log_line_prefix = '%m [%p] '`. For a custom prefix use `-f regex:`. Multi-line `STATEMENT`s (tab-indented continuation lines) need `-M indent`; without it the continuation lines are parse errors. `-f postgres,line` keeps them as separate `line` events instead.
+- `postgres` `ts` is naive. The logged zone abbreviation is kept in `log_tz` but not applied, because abbreviations like `CST` or `IST` are ambiguous. The timestamp is read in `--input-tz` (default UTC). For a server whose `log_timezone` is not UTC, pass e.g. `--input-tz Europe/Berlin`.
 
 ### Column Format
 
-**Syntax:** `-f 'cols:<spec>'`
+`-f 'cols:<spec>'` splits on whitespace (runs of spaces count as one separator), or on the string given with `--cols-sep`.
 
-**Description:** Custom column-based parsing with whitespace (or custom separator) splitting.
+| Token | Meaning |
+|-------|---------|
+| `name` | one column |
+| `name(N)` | N columns joined with a space |
+| `-` / `-(N)` | skip one / N columns |
+| `*name` | rest of the line; must be last |
+| `name:type` | apply a type: `int`, `float`, `bool`, `string` |
 
-**Separator:** Use `--cols-sep <separator>` for custom separators (default: whitespace)
-
-**Specification Syntax:**
-
-- `field` - Consume one column
-- `field(N)` - Consume N columns and join
-- `-` or `-(N)` - Skip one or N columns
-- `*field` - Capture remaining columns (must be last)
-- `field:type` - Apply type annotation (`int`, `float`, `bool`, `string`)
-
-**Examples:**
-
-Simple fields:
 ```bash
-# Input: ERROR api "Connection failed"
+# ERROR api "Connection failed"     → level, service, msg='"Connection failed"' (quotes kept)
 kelora -f 'cols:level service *msg' app.log
-```
 
-Multi-token timestamp:
-```bash
-# Input: 2024-01-15 10:30:00 INFO Connection failed
-kelora -f 'cols:ts(2) level *msg' app.log --ts-field ts
-```
+# 2024-01-15 10:30:00 INFO Started  → ts='2024-01-15 10:30:00' (detected as timestamp)
+kelora -f 'cols:ts(2) level *msg' app.log
 
-Custom separator:
-```bash
-# Input: name|age|city
+# bob|42|Berlin
 kelora -f 'cols:name age:int city' --cols-sep '|' data.txt
 ```
 
-**Output Fields:** Field names from specification with applied type conversions.
-
-**Notes:**
-
-- `*field` must be the final token
+A line with too few columns sets the missing fields to `()`. Extra columns are dropped unless the spec ends in `*name`. Neither is an error, even under `--strict`. With `--cols-sep`, empty columns (`a||b`) become empty strings.
 
 ### Regex Format
 
-**Syntax:** `-f 'regex:<pattern>'`
+`-f 'regex:<pattern>'`. The pattern is anchored automatically: the whole line must match. Each named group becomes a field.
 
-**Description:** Parse logs using regular expressions with named capture groups and optional type annotations.
+| Syntax | Result |
+|--------|--------|
+| `(?P<name>…)` or `(?<name>…)` | string field |
+| `(?P<name:int>…)`, `:float`, `:bool` | typed field (lowercase type names only) |
+| `(?:…)` | non-capturing group |
 
-**Pattern Syntax:**
-
-- `(?P<name>pattern)` - Named capture group (field stored as string)
-- `(?P<name:type>pattern)` - Named capture group with type annotation
-
-**Supported Types:** `int`, `float`, `bool` (lowercase only)
-
-**Examples:**
-
-Simple extraction:
 ```bash
-# Input: 404 Not found
+# 404 Not found
 kelora -f 'regex:(?P<code:int>\d+) (?P<msg>.*)' app.log
+
+# 2025-01-15T10:00:00Z [ERROR] Database connection failed
+kelora -f 'regex:(?P<ts>\S+) \[(?P<level>\w+)\] (?P<msg>.+)' app.log
+
+# 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234
+kelora -f 'regex:(?P<ip>\S+) - - \[(?P<ts>[^\]]+)\] "(?P<method>\w+) (?P<path>\S+) HTTP/[\d.]+" (?P<status:int>\d+) (?P<bytes:int>\d+)' access.log
 ```
 
-Structured logs:
-```bash
-# Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed
-kelora -f 'regex:^(?P<ts>\S+) \[(?P<level>\w+)\] (?P<msg>.+)$' app.log
-```
+- A group that captures an empty string is omitted.
+- A line that does not match is a parse error.
+- Nested named groups and the names `original_line`, `parsed_ts` and `fields` are rejected when the pattern is compiled.
+- Single-quote the whole `-f` argument so the shell leaves `\`, `$` and `[` alone.
 
-Apache-style logs with typed fields:
-```bash
-# Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234
-kelora -f 'regex:^(?P<ip>\S+) - - \[(?P<timestamp>[^\]]+)\] "(?P<method>\w+) (?P<path>\S+) HTTP/[\d.]+" (?P<status:int>\d+) (?P<bytes:int>\d+)$' access.log
-```
+### Type Annotations
 
-**Output Fields:** Field names from capture groups with applied type conversions.
-
-**Behavior:**
-
-- **Full-line matching:** Pattern implicitly anchored with `^...$`
-- **Empty captures:** Skipped (not stored as fields)
-- **Non-matching lines:**
-    - Default (lenient): Returns error, line skipped, processing continues
-    - With `--strict`: Returns error, processing halts
-- **Type conversion failures** (e.g., `"abc"` for `:int`):
-    - Default (lenient): Automatically falls back to storing as string
-    - With `--strict`: Returns error, processing halts
-
-**Reserved Field Names:**
-
-The following names cannot be used: `original_line`, `parsed_ts`, `fields`
-
-**Limitations:**
-
-- Nested named capture groups are not supported
-- Type annotations must be lowercase (`:int`, not `:INT`)
-
-**Notes:**
-
-- Use raw strings in shell to avoid escaping issues: `-f 'regex:...'`
-- Combine with `--ts-field` to specify which field contains the timestamp
-- Non-capturing groups `(?:...)` are supported
+Used by `csv`/`tsv`, `cols:` and `regex:`. A value that cannot be converted (`abc` for `:int`) becomes `()`; the rest of the event is kept. With `--strict` the run aborts instead. To choose a fallback yourself, leave out the annotation and convert in a script: `--exec 'e.status = to_int_or(e.status, 0)'`.
 
 ### Auto-Detection
 
-**Syntax:** `-f auto`
+`-f auto` is the default. It picks one format:
 
-**Description:** Automatically detect the input format. Reading from stdin,
-detection uses the first non-empty line (a live pipe never waits for more
-input). Reading from files, detection samples the file head — up to the first
-64 non-empty lines (capped at 256 KiB) — so a stray banner line or a mix of
-formats can't mislead it. Plain (uncompressed) files of 32 KiB or more are
-additionally probed at a few deeper offsets (1/4, 1/2, 3/4, and the tail), so
-a format change partway through the file — concatenated rotations, a service
-that switched formats mid-file — is still caught; gzip/zstd files sample the
-head only, since compressed streams aren't seekable.
+- **stdin:** from the first non-empty line. A live pipe never waits for more input.
+- **Files:** from up to the first 64 non-empty lines (max 256 KiB) of the first file that has content. Uncompressed files of 32 KiB or more are also sampled at 1/4, 1/2, 3/4 and the tail. Gzip/zstd files are sampled from the head only.
 
-**Detection Order:**
+Each line is tested in this order, first match wins:
 
-1. JSON (starts with `{`)
-2. Syslog (starts with `<NNN>` or an RFC3164 date)
-3. CEF (starts with `CEF:`)
-4. Combined (matches Apache/Nginx pattern)
-5. CRI (`<RFC3339Nano> stdout|stderr F|P …`, tried early so a JSON/logfmt message isn't misread as CSV/logfmt)
-6. Logfmt (contains `key=value` pairs)
-7. CSV (contains commas with consistent pattern)
-8. Built-in application-log formats (regex-based: `glog`, `log4j`, …; see `--help-formats`)
-9. Line (fallback)
+1. `json`: the line is a JSON object
+2. `cef`: parses as CEF, with or without a syslog prefix
+3. `syslog`: RFC 5424 or RFC 3164
+4. `combined`
+5. `cri`
+6. `logfmt`
+7. `csv`/`tsv`: at least two commas or tabs. If the first field contains no letters, `csvnh`/`tsvnh`; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit `-f csv` skips this check.
+8. built-in application-log formats
+9. `line`
 
-**Notes:**
+**Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`. A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
 
-- Detects once, applies to all lines
-- With multiple files, detection samples the first file that has content —
-  leading files that are empty or contain only blank lines are skipped, so a
-  freshly rotated (empty) log doesn't force everything to `line`
-- **Mixed-format files (file input only):** when the sampled head shows more
-  than one format, kelora parses with a two-member cascade — the *dominant*
-  structured format plus the `line` catch-all (e.g. `cascade(json,line)`),
-  exactly as if you had passed `-f json,line`. Each event gets an `_format`
-  field naming the format that parsed it; see **cascade mode** below.
-  Auto-detection never builds anything wider: per-line detection has good
-  recall but imperfect precision, so a format needs at least two sampled
-  lines to anchor a cascade (in samples of four lines or more), and any
-  *further* structured formats in the sample parse as whole `line` events —
-  with a hint naming the explicit cascade (`-f json,syslog,line`) that would
-  parse them. CSV/TSV can't participate: a file whose first line reads as
-  CSV is parsed entirely as CSV, and a CSV-looking line later in a non-CSV
-  file is treated as `line`
-- On stdin, mixed input still pins to the first line's format — pass an
-  explicit cascade (`-f json,line`) for mixed streams
+`-v` prints the decision, e.g. `Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)`.
 
 ### Auto-Detection Per File
 
-**Syntax:** `-f auto-per-file`
+`-f auto-per-file` runs the file detection above separately for each file, so JSON and logfmt files can be read in one run:
 
-**Description:** Automatically detect the format of each input file (sampling
-the file head, like `-f auto` on files), then apply that parser to the rest of
-the file.
-
-**Good fit:** Batch runs where each file is internally consistent, but
-different files use different formats.
-
-**Example Usage:**
 ```bash
-# JSON app logs and logfmt worker logs in one invocation
 kelora -f auto-per-file -J logs/api/*.log logs/workers/*.log
-
-# Aggregate error events across mixed file formats without splitting first
-kelora -f auto-per-file --levels error,warn logs/**/* -J
 ```
 
-**Notes:**
-
-- Detects once per file
-- Uses the same head-sampling semantics as `-f auto` on files, so a file that
-  mixes formats gets a per-file cascade
-- Not supported with `--parallel` or `--merge-sorted`
+On stdin it behaves like `auto`. It cannot be combined with `--parallel` or `--merge-sorted`.
 
 ### Cascade Mode
 
-**Syntax:** `-f <fmt1>,<fmt2>[,…]` (comma-separated list of simple formats)
+Every line is tried against each format in order. The first that parses it wins, and the event gets a `_format` field naming that format. Typical use: structured logs with interleaved plain text (panics, banners, stack traces), or files that interleave several services.
 
-**Description:** Try each parser in order on every line; the first one that
-succeeds handles the event. Designed for the common "noisy JSON" case —
-structured logs with plain-text noise (stack traces, panics, startup banners)
-interspersed — without requiring users to split the stream with `grep` first.
-
-**Multi-service files:** an explicit cascade is the intended tool for logs
-that genuinely interleave several structured formats — aggregated container
-output, fluentbit file sinks, concatenated logs from different services (the
-files you might otherwise open in lnav). Auto-detection gets you started:
-run `kelora file.log` once and it parses the dominant format, prints the
-exact `-f json,syslog,line` that would parse the rest, and you paste it.
-Piped input (`kubectl logs … | kelora`) always wants the explicit list, since
-stdin detection never samples beyond the first line.
-
-**Input Example:**
-```
-{"level":"info","msg":"hello"}
-Server starting on port 8080
-{"level":"error","msg":"connection refused"}
-java.lang.NullPointerException
-```
-
-**Example Usage:**
 ```bash
-# Noisy JSON with plain-text fallback
-kelora -f json,line app.log
-
-# Three-way cascade
-kelora -f json,logfmt,line mixed.log
-
-# Segment downstream by how each event was parsed
+kelora -f json,line app.log                              # noisy JSON
+kelora -f json,syslog,line mixed.log
 kelora -f json,line app.log --filter 'e._format == "line"'
-
-# See per-format breakdown
-kelora -f json,line app.log --stats
+kelora -f json,line app.log -s                           # adds "Cascade formats: json=9812, line=23"
 ```
 
-**The `_format` field:** Every event emitted in cascade mode gets a
-`_format` field naming the winning parser (e.g. `"json"`, `"line"`). This
-field is **only** added in cascade mode — single-format runs are unchanged.
-Filter or group by it in Rhai, or inspect it in the output to debug
-classification.
-
-If a record already carries a field of its own named `_format`, that value is
-kept and the tag is **not** added to it — your data is never overwritten. A
-warning reports how many events this affected, and the format name is still
-available from `--stats` and the `-v` detection notice.
-
-**Diagnostic counts:** With `--stats`, cascade mode adds a per-format
-breakdown so silent misclassification surfaces immediately:
-
-```
-Cascade formats: json=9812, line=23
-```
-
-**Allowed in a comma list:** `json`, `line`, `raw`, `logfmt`, `syslog`,
-`cef`, `combined`.
-
-**Not allowed in a comma list** (rejected at CLI parse time):
-
-- `auto` — meaningless inside a cascade list; list the formats explicitly
-- `csv`, `tsv`, `csvnh`, `tsvnh` — schema-based; headers/types can't safely
-  change mid-stream
-- `cols:<spec>`, `regex:<pattern>` — a regex pattern may itself contain
-  commas, so commas can't safely delimit them. Use **repeated `-f`** instead.
-
-**Cascades with `cols:`/`regex:` — use repeated `-f`.** Pass one `-f` per
-format and they are tried in order, exactly like a comma list, but each spec
-is taken whole so `cols:`/`regex:` work as members:
+| Members | How to list them |
+|---------|------------------|
+| `json`, `line`, `raw`, `logfmt`, `syslog`, `cef`, `combined`, built-in application-log formats (incl. `cri`) | comma list or repeated `-f` |
+| `cols:<spec>`, `regex:<pattern>` | repeated `-f` only (a pattern may contain commas) |
+| `auto`, `auto-per-file`, `csv`, `tsv`, `csvnh`, `tsvnh` | not allowed |
 
 ```bash
-# JSON lines plus a 'timestamp LEVEL message' app log in one file
 kelora -f json -f 'cols:ts(2) level *msg' app.log
-
-# Selective regex first, raw line as the catch-all for anything else
 kelora -f json -f 'regex:(?P<ts>\S+ \S+) (?P<level>\w+) (?P<msg>.*)' -f line app.log
 ```
 
-A comma list and repeated `-f` can be combined; comma-list members are
-flattened into the cascade in order.
+Repeated `-f` and comma lists can be mixed; members are tried in the order given.
 
-**Catch-alls go last.** `line`, `raw`, and `cols:` match essentially every
-line (in resilient mode `cols:` fills missing fields with `()` rather than
-failing), so anything listed after them would never run — Kelora rejects that
-ordering. `regex:` is selective: it declines non-matching lines, so it may sit
-earlier in the cascade and fall through to a later catch-all (as in the
-example above, where stack-trace lines that don't match the regex are kept by
-`line`).
-
-**Ordering matters.** The first parser that returns `Ok` wins, so list
-high-confidence formats first and use `line` as the terminal fallback.
-Liberal grammars (like `logfmt`, which accepts any `key=value` substring)
-should come *after* stricter ones to avoid swallowing events that a later
-parser would handle correctly.
-
-**Multiline:** Multiline chunking is format-aware and runs *before* parsing,
-so it follows the first listed format's strategy. Per-chunk
-reclassification is intentionally not supported.
-
-**Notes:**
-
-- Adds ~5–10% overhead per line vs. a single parser (one extra parse
-  attempt on fall-through)
-- Safe to combine with `--filter`, `--select`, `--stats`, `--metrics`, and
-  Rhai scripting
-- Works in both sequential and parallel modes
+- **Order:** `line`, `raw` and `cols:` accept every line, so they must be last; kelora rejects anything after them. `regex:` rejects non-matching lines, so it can appear earlier. Put liberal grammars such as `logfmt` after stricter ones.
+- **`_format` collisions:** if a record already has its own `_format` field, it is kept and not tagged; a warning reports how many events this affected.
+- **Multiline:** `-M` grouping runs before parsing and follows the first format's strategy.
+- Works with `-P/--parallel`.
 
 ## Output Formats
 
-Specify output format with `-F, --output-format <format>`.
+| Format | Output | Requirements |
+|--------|--------|--------------|
+| `default` | colored `key='value'` pairs | |
+| `json` / `-J` | JSON Lines | |
+| `logfmt` | `key=value` pairs | |
+| `inspect` | one field per line with its type | |
+| `levelmap` | timeline of one glyph per event (first letter of the level) | no `-P` |
+| `keymap` | timeline of the first character of one field; `.` when missing or empty | `-k` with exactly one field; no `-P` |
+| `tailmap` | timeline of one numeric field by percentile: `_` below p90, `1` p90–p95, `2` p95–p99, `3` above p99, `.` missing | `-k` with exactly one numeric field; no `-P` |
+| `csv`, `tsv` | delimited, header row | `-k` (sets the columns) |
+| `csvnh`, `tsvnh` | delimited, no header | `-k` |
 
-| Format | Description |
-|--------|-------------|
-| `default` | Key-value format with colors |
-| `json` | JSON lines (one object per line) |
-| `logfmt` | Key-value pairs (logfmt format) |
-| `inspect` | Debug format with type information |
-| `levelmap` | Events grouped by log level |
-| `keymap` | Shows first character of specified field (requires `--keys` with exactly one field) |
-| `tailmap` | Visualizes numeric field distributions with percentile thresholds (requires `--keys` with exactly one numeric field) |
-| `csv` | CSV with header row |
-| `tsv` | Tab-separated values with header row |
-| `csvnh` | CSV without header |
-| `tsvnh` | TSV without header |
-
-Use `-q/--quiet` to suppress output (implied by `--stats` and `--metrics`).
-
-**Levelmap Visual Example:**
-
-![Levelmap output format showing compact log visualization](../screenshots/levelmap.gif)
-
-The `levelmap` format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.
-
-**Map legends:**
-
-All three map formats (`levelmap`, `keymap`, `tailmap`) append a one-line legend
-that decodes their glyphs. The legend is **data-driven**: it lists only the
-glyphs that actually appeared, mapped back to the source values that produced
-them. For example a `keymap` over HTTP status codes might end with
-`2 = 200,204 | 4 = 404 | 5 = 500,503`, and a `levelmap` with
-`E = ERROR | I = INFO | W = WARN`.
-
-By default the legend is shown only when output goes to an interactive terminal,
-so piped or redirected output stays clean. Override with:
-
-- `--legend` — always append the legend (even when piped)
-- `--no-legend` — never append the legend
-
-**Map timestamps:**
-
-All three map formats prefix each line with the timestamp of the event that
-opened it. The timestamp is kept even when `--keys` selects a different field —
-`keymap` and `tailmap` require `--keys`, so otherwise they could never show one.
-Two cases fall back to `line N` instead:
-
-- the input has no detectable timestamp at all
-- `--exclude-keys` explicitly removes the timestamp field
-
-**Keymap Format:**
-
-The `keymap` format works similarly to `levelmap` but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.
-
-- Requires `--keys` (or `-k`) with exactly one field name
-- Shows the first character of the field value (converted to string for non-string fields)
-- Displays `.` for empty or missing field values
-- Groups events by timestamp like `levelmap`
-- Legend groups full values under each glyph (e.g. `2 = 200,204`)
-- Not compatible with `--parallel` mode
-
-**Tailmap Format:**
-
-The `tailmap` format visualizes numeric field distributions over time using tail-focused percentile thresholds (p90, p95, p99). This is ideal for performance monitoring, latency analysis, and identifying outliers.
-
-- Requires `--keys` (or `-k`) with exactly one numeric field name
-- Uses symbols: `_` (below p90), `1` (p90-p95), `2` (p95-p99), `3` (above p99), `.` (missing)
-- Shows a summary with field statistics and percentile thresholds
-- Groups events by timestamp for timeline visualization
-- Not compatible with `--parallel` mode
-
-**Use cases:**
-- API response time analysis
-- Database query performance monitoring
-- Request latency tracking
-- Any time-series numeric data where tail latencies matter
-
-**Examples:**
 ```bash
-kelora -j app.log -F json                      # Output as JSON
-kelora -j app.log -F csv --keys ts,level,msg   # Output as CSV
-kelora -F keymap -k method access.log          # Show HTTP method patterns
-kelora -F keymap --keys status api.log         # Show status field patterns
-kelora -F tailmap -k response_time api.log     # Visualize response time distribution
-kelora -F tailmap --keys query_time_ms db.log  # Show database query performance
-kelora -j app.log --stats                      # Only stats
+kelora -j app.log -F csv -k ts,level,msg
+kelora access.log -F keymap -k status
+kelora api.log -F tailmap -k response_time
 ```
 
-## See Also
+**CSV/TSV:** columns appear in `-k` order; a field missing from an event is an empty cell. Nested maps and arrays are flattened into a single cell, e.g. `{"x":[1,2],"y":"q"}` becomes `x_0:1,x_1:2,y:q`. Values with quotes or delimiters are quoted CSV-style (also in TSV).
 
-- [CLI Reference](cli-reference.md) - Complete flag documentation including timestamp parsing, multiline strategies, and prefix extraction
-- [Quickstart](../quickstart.md) - Format examples with annotated output
-- [Parsing Custom Formats Tutorial](../tutorials/parsing-custom-formats.md) - Step-by-step guide
-- [Prepare CSV Exports for Analytics](../how-to/process-csv-data.md) - CSV-specific tips
+**Nested values in other formats:** `default` prints them as JSON, `logfmt` flattens them like CSV into one quoted value, `json` and `inspect` keep the structure.
+
+**Maps** (`levelmap`, `keymap`, `tailmap`):
+
+![Levelmap output](../screenshots/levelmap.gif)
+
+- Each row starts with the timestamp of its first event, even if `-k` does not select the timestamp field. Without a timestamp (none detected, or removed with `--exclude-keys`) the row starts with `line N`.
+- A one-line legend lists only the glyphs that appeared and the values behind them, e.g. `2 = 200,204 | 4 = 404 | 5 = 500,503`. `tailmap` adds a line with count, range and the p90/p95/p99 thresholds. The legend is shown only when stdout is a terminal; `--legend` forces it, `--no-legend` hides it.
+
+`-q/--quiet` suppresses events; `-s/--stats` and `-m/--metrics` imply it.
+
+See also: [guide/parse.md](../guide/parse.md), [guide/output.md](../guide/output.md), [multiline.md](multiline.md), [time-reference.md](time-reference.md).

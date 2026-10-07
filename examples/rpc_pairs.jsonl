@@ -1,0 +1,7 @@
+{"ts":"2024-08-12T09:00:00.120Z","kind":"request","req":"r-101","method":"GET","path":"/cart"}
+{"ts":"2024-08-12T09:00:00.180Z","kind":"request","req":"r-102","method":"POST","path":"/checkout"}
+{"ts":"2024-08-12T09:00:00.245Z","kind":"response","req":"r-101","status":200}
+{"ts":"2024-08-12T09:00:00.400Z","kind":"request","req":"r-103","method":"GET","path":"/cart"}
+{"ts":"2024-08-12T09:00:00.470Z","kind":"response","req":"r-103","status":200}
+{"ts":"2024-08-12T09:00:02.990Z","kind":"response","req":"r-102","status":504}
+{"ts":"2024-08-12T09:00:03.100Z","kind":"request","req":"r-104","method":"GET","path":"/health"}

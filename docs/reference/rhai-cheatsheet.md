@@ -1,491 +1,209 @@
 # Rhai Cheatsheet
 
-Quick reference for Rhai scripting in Kelora. For detailed tutorials, see [Advanced Scripting](../tutorials/advanced-scripting.md). For practical examples: `kelora --help-examples`. For function reference: `kelora --help-functions`.
+Rhai syntax and idioms for Kelora scripts. Which variables (`e`, `meta`, `conf`, `state`, `window`, `metrics`, `span`) exist in which stage: [Script Variables](script-variables.md). All functions: [Functions](functions.md) or `kelora --help-functions [KEYWORD]`.
 
-## Variables & Types
+## Values
 
 ```rhai
-let x = 42;                          // Integer (i64)
-let price = 19.99;                   // Float (f64)
-let name = "alice";                  // String (double quotes only!)
-let re = #"\d+"#;                    // Raw string, no escape processing (best for regexes)
-let active = true;                   // Boolean (true/false)
-let tags = [1, "two", 3.0];          // Array (mixed types ok)
-let user = #{name: "bob", age: 30};  // Map/object literal
-let empty = ();                      // Unit type (Rhai's "nothing")
+let n = 42;                          // i64
+let f = 19.99;                       // f64
+let s = "alice";                     // string: double quotes ('a' is a single char)
+let re = #"\d+\.\d+"#;               // raw string: no escapes, use for regexes
+let q = ##"has "quotes""##;          // more # to allow " inside
+let msg = `user ${s} has ${n + 1}`;  // interpolation: backticks only, \${ for a literal ${
+let ok = true;
+let tags = [1, "two", 3.0];          // array, mixed types ok
+let user = #{name: "bob", age: 30};  // map
+let none = ();                       // unit: Rhai's "nothing" (no null/undefined)
 
-type_of(x)                           // Returns: "i64", "string", "array", "map", "()"
-x = "hello";                         // Dynamic typing: can change type
+type_of(n)                           // "i64", "f64", "string", "bool", "array", "map", "()"
 ```
 
-**Key Points:**
-
-- `let` required for new variables (no implicit declaration)
-- Double quotes only for strings (`"text"` not `'text'`)
-- Raw strings are `#"…"#`, not `r"…"` — inside them backslashes need no doubling, which is what makes them worth using for regexes
-- Unit type `()` represents "nothing" (not null/undefined)
-- Arrays and maps are reference types (modifying copies affects original)
+- `let` is required to create a variable; plain `x = 1` fails with `Variable not found`.
+- Variables are dynamically typed: `let x = 1; x = "s";` is fine.
+- Arrays and maps are copied on assignment: `let b = a; b.push(2);` leaves `a` unchanged.
+- Comments: `// line`, `/* block */`.
 
 ## Operators
 
-```rhai
-// Arithmetic
-a + b    a - b    a * b    a / b    a % b    a ** b  // power: 2**3 == 8
-
-// Comparison
-a == b   a != b   a < b    a > b    a <= b   a >= b
-
-// Logical
-a && b   a || b   !a
-
-// Bitwise
-a & b    a | b    a ^ b    a << b   a >> b
-
-// Assignment
-a = b    a += b   a -= b   a *= b   a /= b   a %= b
-a &= b   a |= b   a ^= b   a <<= b  a >>= b
-
-// Ranges (for loops only)
-1..5     // Exclusive: 1, 2, 3, 4
-1..=5    // Inclusive: 1, 2, 3, 4, 5
-
-// Membership
-"key" in map                         // Check if key exists
+```text
+Arithmetic   + - * / %   ** (power)
+Comparison   == != < > <= >=
+Logical      && || !
+Bitwise      & | ^ << >>
+Assignment   = += -= *= /= %= &= |= ^= <<= >>=
+Default      a ?? b       a unless it is (); b is evaluated only if needed
+Membership   "key" in map, x in array
+Ranges       1..5 (1–4), 1..=5 (1–5), in for loops and switch arms
 ```
 
-## String Interpolation
+`+` with a string on either side concatenates: `"5" + 3` is `"53"`, `"n=" + ()` is `"n="`. To add numbers, convert first: `"5".to_int() + 3`.
 
-Rhai supports string interpolation using `${...}` syntax within backtick strings:
+Assignment is a statement, not an expression: `let n = (x = 1);` does not compile.
 
-```rhai
-let name = "Alice";
-let age = 30;
-let message = `Hello, ${name}! You are ${age} years old.`;
-// Result: "Hello, Alice! You are 30 years old."
-
-// Complex expressions in interpolation
-let x = 10;
-let y = 20;
-let result = `Sum: ${x + y}, Product: ${x * y}`;
-// Result: "Sum: 30, Product: 200"
-
-// Nested interpolations
-let status = "active";
-let msg = `User ${name} is ${`currently ${status}`}`;
-// Result: "User Alice is currently active"
-
-// Multi-line interpolated strings
-let report = `
-  User: ${e.user.name}
-  Status: ${e.status}
-  Count: ${e.items.len()}
-`;
-```
-
-**Key Points:**
-
-- Interpolation only works with backtick strings (`` `text` ``), not double-quote strings (`"text"`)
-- Use `${expression}` to embed any Rhai expression
-- The expression can be a variable, function call, or complex statement block
-- Cannot escape `${` in interpolated strings; build such strings in pieces instead
-
-## Raw Strings
-
-Disable escape sequences with `#"..."#` (ideal for regexes and file paths):
+## Control flow
 
 ```rhai
-let regex = #"\d{3}-\d{2}-\d{4}"#;        // vs "\\d{3}-\\d{2}-\\d{4}"
-let path = #"C:\Users\data"#;             // Windows paths
-let s = ##"Has "quotes" inside"##;        // Multiple # to include "
-```
+if x > 10 { "big" } else if x > 5 { "medium" } else { "small" }   // braces required
+let size = if x > 10 { "big" } else { "small" };                  // if is an expression
 
-## Control Flow
-
-### If-Else
-
-```rhai
-if x > 10 {
-    print("big");
-} else if x > 5 {
-    print("medium");
-} else {
-    print("small");
-}
-
-// Ternary-style (if is an expression)
-let category = if x > 10 { "big" } else { "small" };
-```
-
-### Switch
-
-```rhai
-let category = switch x {
-    1 => "one",
-    2 | 3 => "two or three",          // Multiple cases
-    4..=6 => "four to six",            // Range matching
-    _ => "other"                       // Default (underscore)
+let kind = switch e.status {
+    200 | 204 => "ok",
+    400..=499 => "client error",
+    _ => "other"
 };
+
+for i in 0..10 { ... }
+for item in e.items { ... }
+for key in e.keys() { print(`${key}=${e[key]}`); }   // maps aren't iterable: use keys()/values()
+while cond { if done { break; } if skip { continue; } }
+loop { if stop { break; } }
 ```
 
-### Loops
+Semicolons separate statements; they are optional only after a block `}` and after the last statement.
+
+## Functions, closures, method calls
 
 ```rhai
-// Range loops
-for i in 0..10 { print(i); }          // 0 to 9
-for i in 0..=10 { print(i); }         // 0 to 10
+fn add(a, b) { a + b }               // last expression is the return value
+fn greet(name) { return "hi " + name; }
 
-// Array iteration
-for item in array { print(item); }
-
-// Map iteration (maps aren't directly iterable; iterate keys, then index)
-for key in map.keys() {
-    print(`${key} = ${map[key]}`);
-}
-
-// While loop
-while condition {
-    if done { break; }
-    if skip { continue; }
-}
-
-// Infinite loop
-loop {
-    if should_stop { break; }
-}
-```
-
-## Functions & Closures
-
-```rhai
-// Function definition
-fn add(a, b) {
-    a + b                             // Last expr is return value
-}
-
-fn greet(name) {
-    return "Hello, " + name;          // Explicit return
-}
-
-// Closures
 let double = |x| x * 2;
-let add = |a, b| a + b;
-
-// Closures in array methods
-[1, 2, 3].map(|x| x * 2)              // [2, 4, 6]
-[1, 2, 3].filter(|x| x > 1)           // [2, 3]
+[1, 2, 3].map(|x| x * 2)             // [2, 4, 6]
+[1, 2, 3].filter(|x| x > 1)          // [2, 3]
+[1, 2, 3].reduce(|acc, x| acc + x, 0)
 ```
 
-## Rhai Special Feature: Function-as-Method
-
-Rhai allows calling any function as a method on its first argument:
+Any built-in can be called as a method on its first argument, which allows chaining:
 
 ```rhai
-// These are equivalent:
-extract_regex(e.line, #"\d+"#)          // Function call style
-e.line.extract_regex(#"\d+"#)           // Method call style
-
-// Use method style for chaining:
-e.domain = e.url
-    .extract_domain()
-    .to_lower()
-    .strip();
-
-// Both styles work for all functions:
-to_int(e.port)                        // Function style
-e.port.to_int()                       // Method style (more readable)
+to_int(e.port)  ==  e.port.to_int()
+e.domain = e.url.extract_domain().to_lower().strip();
 ```
 
-## Kelora Event Access
+Your own functions (inline `fn` or `--include`) must be called function-style: `is_problem(e)`, not `e.is_problem()` (`Function not found`). A `fn` defined in one `--exec` is not visible in the next; use `--include` to share it.
 
-The global variable `e` represents the current event in `--filter` and `--exec` stages:
+## Strings
 
 ```rhai
-// Direct field access
-e.level                               // Top-level field
-e.user.name                           // Nested field (maps)
-e.scores[1]                           // Array indexing (0-based)
-e.scores[-1]                          // Negative indexing (last element)
-e.headers["user-agent"]               // Bracket notation for special chars
-
-// Field existence checking
-"field" in e                          // Check top-level field exists
-e.has("field")                        // True only if value not ()
-e.has_path("user.role")               // Check nested path exists
-
-// Safe field access with defaults
-e.get_path("user.role", "guest")      // Get nested with fallback
-e.get_path("scores[0]", 0)            // Works with array paths
-
-// Field removal
-e.password = ()                       // Remove field (unit assignment)
-e.ssn = ()                            // Remove another field
-e = ()                                // Remove entire event (filtered out)
+e.msg.to_lower()  e.msg.to_upper()   // new string
+e.msg.strip()                        // new string, whitespace trimmed
+e.msg.contains("timeout")
+e.msg.starts_with("GET")  e.msg.ends_with(".json")
+e.msg.split(" ")                     // array
+e.msg.replace_regex(#"\d+"#, "N")    // new string
+e.msg.extract_regex(#"user=(\w+)"#, 1)   // "" if no match
+e.msg.extract_regex(#"user=(\w+)"#, 1).or_empty()   // () if no match, so the field is not set
 ```
 
-## Array & Map Operations
+!!! warning "`trim()`, `replace()`, `sort()`, `reverse()` modify in place and return `()`"
+    These Rhai built-ins change the variable they are called on and return nothing.
+    `e.y = e.msg.trim()` leaves `y` unset, and `e.msg.trim().to_upper()` fails.
+    Use the value-returning versions: `strip()`, `replace_regex()`, `sorted()`, `reversed()`.
 
-JSON arrays become native Rhai arrays with full functionality:
+## Event fields
 
 ```rhai
-// Array transformations
-sorted(e.scores)                      // Sort numerically/lexicographically
-reversed(e.items)                     // Reverse order
-unique(e.tags)                        // Remove duplicates
-dedup(e.values)                       // Remove consecutive duplicates
-sorted_by(e.users, "age")             // Sort objects by field
+e.level                              // top-level field
+e.user.name                          // nested map
+e.scores[0]   e.scores[-1]           // array index, negative counts from the end
+e["user-agent"]   e[name]            // non-identifier or dynamic key (e.user-agent is subtraction)
 
-// Array methods
-e.tags.len()                          // Length
-e.tags.is_empty()                     // Check if empty
-e.tags.join(", ")                     // Join to string
-e.scores.sum()                        // Sum numbers
-e.scores.min()                        // Minimum value
-e.scores.max()                        // Maximum value
-
-// Array access patterns
-if e.items.len() > 0 {
-    e.first = e.items[0];
-    e.last = e.items[-1];
-}
-
-// Fan-out: convert array elements to separate events
-emit_each(e.items)                    // Each element becomes an event
-emit_each(e.items, #{ctx: "value"})   // Add base fields to each
-
-// Map operations (maps aren't directly iterable; iterate keys, then index)
-for key in e.keys() {
-    print(`${key} = ${e[key]}`);
-}
+e.status = 500;                      // set
+e.password = ();                     // remove field
+e = ();                              // drop the event
 ```
 
-## Type Conversions
+`m.key` and `m["key"]` are the same for identifier keys. On a map, bare `e.len` reads a field called `len`; use `e.len()` or `len(e)` for the field count.
+
+### Missing fields
+
+A missing field reads as `()`. What happens next depends on the operation:
+
+| Expression | Result |
+|---|---|
+| `e.missing == "x"`, `e.missing > 5` | `false` |
+| `"took " + e.missing` | `"took "` |
+| `e.missing + 1` | error |
+| `e.missing.to_upper()` | error |
+| `e.user.role` with `user` absent | error |
+
+Safe forms:
 
 ```rhai
-// Strict conversions (return () on error)
-to_int(e.port)                        // String → integer
-to_float(e.price)                     // String → float
-to_bool(e.active)                     // String → boolean
+e.dur ?? 0                           // default for a top-level field
+e.get("dur", 0)                      // same, method style
+e.get_path("user.role", "guest")     // dotted path, also "items[0].id"
+e.has("dur")                         // true if present and not ()
+"dur" in e                           // true if present
+e.has_path("user.role")
+```
 
-// Safe conversions with defaults
-e.port.to_int_or(8080)                // Use default if conversion fails
+## Arrays and maps
+
+```rhai
+e.tags.len()   e.tags.is_empty()   e.tags.contains("x")
+e.tags.join(", ")
+sorted(e.scores)                     // new array, numeric or lexicographic
+reversed(e.items)
+unique(e.tags)                       // keeps first occurrence
+sorted_by(e.users, "age")            // array of maps, by field
+e.users.pluck("name")                // field from each map, skips missing
+e.scores.slice("-3:")                // Python-style slice spec
+e.scores.sum()   e.scores.min()   e.scores.max()   e.scores.mean()
+
+// highest scorer first, names only
+e.ranking = sorted_by(e.users, "score").reversed().pluck("name");
+
+emit_each(e.items)                   // one event per element; the original is dropped
+emit_each(e.items, #{batch: e.id})   // add fields to each
+
+e.keys()   e.values()   e.contains("k")
+```
+
+Nested fan-out takes one `--exec` per level:
+
+```bash
+kelora -j batches.json \
+  -e 'emit_each(e.batches)' \
+  -e 'emit_each(e.items, #{batch_id: e.id})' \
+  --filter 'e.status == "active"'
+```
+
+## Conversions
+
+```rhai
+to_int("42")   to_float("1.5")   to_bool("true")   // () if conversion fails
+e.port.to_int_or(8080)                            // default instead of ()
 e.price.to_float_or(0.0)
 e.active.to_bool_or(false)
-
-// String conversions
-to_string(42)                         // Any → string
-e.value.to_int()                      // Method style
-
-// Type checking
-type_of(e.field)                      // Get type as string
-type_of(e.field) != "()"              // Check if field has value
+to_string(42)   42.to_string()
 ```
 
-## Common Patterns
-
-### Safe Nested Access
+## Errors
 
 ```rhai
-// With default fallback
-let role = e.get_path("user.role", "guest");
-let port = e.port.to_int_or(8080);
-
-// With existence check
-if e.has_path("user.profile.avatar") {
-    e.avatar = e.user.profile.avatar;
-}
-
-// Safe array access
-if e.items.len() > 0 {
-    e.first_item = e.items[0];
+try {
+    e.n = e.raw.to_int() + 1;
+} catch (err) {
+    eprint(err);                     // err is a map with message, line, position
 }
 ```
 
-### Conditional Field Removal
+Guards (`??`, `to_int_or`, `has`) are cheaper than `try`. Without `--strict`, a failing `--filter` counts as false and a failing `--exec` is rolled back (the event continues unchanged from before that stage); both are reported as warnings and the exit code stays 0. With `--strict` the first error aborts with exit code 1. Details: [When something goes wrong](../how-it-works.md#when-something-goes-wrong).
 
-```rhai
-// Remove debug fields in production
-if e.level != "DEBUG" {
-    e.stack_trace = ();
-    e.debug_info = ();
-}
+## Coming from other languages
 
-// Remove entire event conditionally
-if e.status < 400 { e = (); }         // Only keep errors
-```
+| Habit | In Rhai |
+|---|---|
+| `null`, `None`, `undefined` | `()` |
+| `'text'` | `"text"` (`'t'` is a single character) |
+| `r"\d+"` | `#"\d+"#` |
+| `if x > 5:` | `if x > 5 { ... }` |
+| `x = 1` to declare | `let x = 1;` |
+| `"5" + 3 == 8` | `"53"`; convert with `to_int()` |
+| `arr[-3:]` | `arr.slice("-3:")` |
+| `for k in dict` | `for k in map.keys()` |
+| `s.trim()` returns a string | `s.strip()` |
 
-### Method Chaining
-
-```rhai
-// Extract and normalize domain
-e.domain = e.url
-    .extract_domain()
-    .to_lower()
-    .strip();
-
-// Parse and extract from structured text
-e.error_line = e.stack_trace
-    .extract_regex(#"line (\d+)"#, 1)
-    .to_int_or(0);
-```
-
-### Array Processing
-
-```rhai
-// Get top N scores
-e.top_3 = sorted(e.scores)[-3:];
-
-// Extract names from sorted users
-e.winners = sorted_by(e.users, "score")
-    .reverse()
-    .map(|u| u.name);
-
-// Filter and count
-e.active_items = e.items.filter(|i| i.status == "active");
-e.active_count = e.active_items.len();
-```
-
-### Multi-Level Fan-Out
-
-```rhai
-# First exec: batches → separate events
---exec 'emit_each(e.batches)'
-
-# Second exec: items → separate events with context
---exec 'let ctx = #{batch_id: e.id}; emit_each(e.items, ctx)'
-
-# Filter the final events
---filter 'e.status == "active"'
-```
-
-## Global Context
-
-```rhai
-conf                                  // Global config map (read-only after --begin)
-metrics                               // Global metrics map (from track_* calls)
-meta                                  // Event metadata (filename, line numbers, raw line)
-get_env("VAR", "default")             // Environment variable access
-
-// meta attributes:
-meta.line                             // Original raw line (always available)
-meta.line_num                         // Line number, 1-based (available with files)
-meta.filename                         // Source filename (multi-file processing)
-meta.parsed_ts                        // Parsed UTC timestamp before scripts (or () if missing)
-
-// Example usage:
---begin 'conf.env = get_env("ENVIRONMENT", "dev")'
---filter 'conf.env == "prod" || e.level == "ERROR"'
-
-// Multi-file tracking
---exec 'if e.level == "ERROR" { track_freq("file", meta.filename) }'
-
-// Debugging with line numbers
---exec 'eprint("Error at " + meta.filename + ":" + meta.line_num)'
-```
-
-## Error Handling Modes
-
-**Default (resilient):**
-
-- Parse errors → skip line, continue
-- Filter errors → treat as false, drop event
-- Exec errors → rollback, keep original event
-- Recovered filter/exec errors are warnings and exit 0
-
-**Strict mode (`--strict`):**
-
-- Any error → abort immediately with exit code 1
-
-## Rhai Quirks & Gotchas
-
-| Coming from | Watch out for |
-|------------|---------------|
-| **JavaScript** | No `null`/`undefined` (use `()`), no single quotes, `let` required |
-| **Python** | Braces required, no `:` after if/for, `!=` not `<>`, double quotes only |
-| **Rust** | More permissive syntax, semicolons mostly optional, dynamic typing |
-
-**Common mistakes:**
-
-```rhai
-// ❌ Wrong
-x = 1                                 // Error: x not declared
-let name = 'alice';                   // Error: single quotes not allowed
-if x > 5: print("big")                // Error: colon not allowed, braces required
-"5" + 3                               // Error: no implicit conversion
-let n = state["x"] = 1;               // Error: assignment is not an expression
-
-// ✅ Correct
-let x = 1;                            // Declare with let
-let name = "alice";                   // Double quotes
-if x > 5 { print("big"); }            // Braces required
-"5".to_int() + 3                      // Explicit conversion
-state["x"] = 1; let n = state["x"];   // Assign, then read on separate statements
-```
-
-**Special behaviors:**
-
-- Last expression in block is return value (no `return` needed)
-- Semicolons recommended but often optional
-- No implicit type conversion (use `to_int()`, `to_float()`, etc.)
-- Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are required for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
-
-### Calling style (in practice)
-
-- Built-in functions: either style — chain with method style. `e.msg.to_upper().trim()` or `to_upper(e.msg)`.
-- Your own helpers (`--include` or inline `fn f(x)`): function-style only — `is_problem(e)`, not `e.is_problem()` (that fails with `Function not found`).
-- Fields & state keys: `e.field` / `state.key` for plain names; brackets for dynamic or non-identifier keys — `e[var]`, `e["user-agent"]`, `state[e.user]`.
-- Length/keys of a map: use `len(e)` / `keys(e)` (or `e.len()`); bare `e.len` reads a field named `len`, not the count.
-
-## Quick Reference
-
-```rhai
-// Event manipulation
-e.field = value                       // Set field
-e.field = ()                          // Remove field
-e = ()                                // Remove event
-
-// Type checking
-type_of(e.field)                      // Get type
-"field" in e                          // Field exists
-
-// Safe access
-e.get_path("a.b.c", default)          // Nested with fallback
-e.has_path("a.b.c")                   // Check nested exists
-
-// Conversions
-val.to_int_or(0)                      // Safe int conversion
-val.to_float_or(0.0)                  // Safe float conversion
-val.to_bool_or(false)                 // Safe bool conversion
-try { risky_call(); } catch (err) {   // Catch runtime errors (type mismatch, missing fields); slower than guards
-  eprint(err);                        // Prefer to_int_or/has_path for common cases
-}
-
-// Arrays
-e.items.len()                         // Length
-e.items.is_empty()                    // Check empty
-sorted(e.items)                       // Sort
-unique(e.items)                       // Deduplicate
-emit_each(e.items)                    // Fan out to events
-
-// Strings
-e.text.to_lower()                     // Lowercase
-e.text.to_upper()                     // Uppercase
-e.text.strip()                        // Trim whitespace
-e.text.contains("word")               // Substring check
-e.text.extract_regex(#"(\d+)"#, 1)    // Regex extraction
-
-// Environment & Context
-get_env("VAR", "default")             // Get env var
-conf.key                              // Read config (from --begin)
-metrics.key                           // Read metrics (in --end)
-meta.filename                         // Current source filename
-meta.line_num                         // Current line number (1-based)
-meta.line                             // Original raw line
-```
-
-## See Also
-
-- [Advanced Scripting Tutorial](../tutorials/advanced-scripting.md) - Detailed walkthrough with examples
-- `kelora --help-functions` - Complete function catalogue (add a KEYWORD to search, e.g. `kelora --help-functions ip`)
-- `kelora --help-examples` - Practical log analysis patterns
-- `kelora --help-rhai` - Language guide (this cheatsheet's source)
-- [Rhai Documentation](https://rhai.rs) - Full Rhai language reference
+More: [Scripting guide](../guide/scripting.md), `kelora --help-rhai`, [rhai.rs](https://rhai.rs/book/).

@@ -251,7 +251,7 @@ kelora app.log --assert '…'          # fail on explicit data-quality rules
 **Action:** if a script relied on a nonzero exit for a broken `--exec`, add
 `--strict` (exec is now best-effort). If a pipeline relied on exit `1` for *any*
 parse error, add `--strict`. The full model — with a scenario table — is in
-[Error Handling](concepts/error-handling.md#exit-codes-the-model).
+[Exit Codes](reference/exit-codes.md).
 
 ### Breaking: config files are validated strictly
 
@@ -408,6 +408,6 @@ input and supports only gzip/zstd.
 ## See also
 
 - [Full changelog](https://github.com/dloss/kelora/blob/main/CHANGELOG.md) — the complete, change-by-change record.
-- [Metrics and Tracking tutorial](tutorials/metrics-and-tracking.md) — the redesigned tracking functions in depth.
+- [Summarize](guide/summarize.md) — the redesigned tracking functions in practice.
 - [Format Reference](reference/formats.md) — the built-in application-log formats and cascades.
-- [Error Handling](concepts/error-handling.md) — resilient vs. `--strict` vs. `--assert`.
+- [How It Works](how-it-works.md#when-something-goes-wrong) — resilient vs. `--strict` vs. `--assert`.

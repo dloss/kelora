@@ -50,6 +50,48 @@ jobs:
       - name: Run tests
         run: cargo test --all-features
 
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.86.0
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-docs-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-target-docs-
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Build Kelora (for executable examples)
+        run: cargo build
+
+      - name: "Build docs (strict: broken links or failing examples fail the job)"
+        run: |
+          PATH="${GITHUB_WORKSPACE}/target/debug:${PATH}" \
+          KELORA_IGNORE_CONFIG=1 \
+          DISABLE_MKDOCS_2_WARNING=true \
+          FORCE_COLOR=1 \
+          COLUMNS=80 \
+          uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects mkdocs build --strict
+
   release-helper-tools:
     runs-on: ubuntu-latest
 
