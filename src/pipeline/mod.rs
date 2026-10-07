@@ -353,6 +353,14 @@ pub trait Chunker: Send {
     fn collapsed_without_boundary(&self) -> bool {
         false
     }
+    /// At end of input: `Some` when the strategy evidently joined unrelated
+    /// lines — many lines per event on average, most of them joined at column 0
+    /// rather than indented like stack-trace continuations (#361). Terminal,
+    /// like `collapsed_without_boundary` (which takes precedence: it answers
+    /// `None` whenever that one is true).
+    fn excessive_joining(&self) -> Option<multiline::JoinStats> {
+        None
+    }
     /// True when every fed line is exactly one record (no buffering ever).
     /// Lets the pipeline skip the chunk-buffer machinery on the hot path.
     fn is_passthrough(&self) -> bool {
@@ -1105,5 +1113,11 @@ impl Pipeline {
     /// the final flush; see [`Chunker::collapsed_without_boundary`].
     pub fn multiline_collapsed_without_boundary(&self) -> bool {
         self.chunker.collapsed_without_boundary()
+    }
+
+    /// Line/event counts when multiline joining looks wrong. Ask after the
+    /// final flush; see [`Chunker::excessive_joining`].
+    pub fn multiline_excessive_joining(&self) -> Option<multiline::JoinStats> {
+        self.chunker.excessive_joining()
     }
 }

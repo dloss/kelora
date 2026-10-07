@@ -19,7 +19,7 @@ use super::batching::{
 use super::sink::pipeline_result_sink_thread;
 use super::tracker::GlobalTracker;
 use super::types::{BatcherThreadConfig, ParallelConfig, WorkMessage};
-use super::worker::{chunker_thread, worker_thread, ChunkerRuntime};
+use super::worker::{chunker_thread, worker_thread, ChunkerRuntime, ExcessiveJoinWarning};
 
 /// Assemble the chunker thread's runtime knobs from config: the idle-flush
 /// timeout plus preformatted once-per-run advisories (None when the relevant
@@ -59,12 +59,25 @@ fn build_chunker_runtime(
     } else {
         None
     };
+    // Its counts are known only at end of input, so carry the strategy and the
+    // already-resolved warning prefix rather than a finished string.
+    let excessive_join_warning: Option<ExcessiveJoinWarning> = if config.warnings_allowed() {
+        let strategy = multiline_config.strategy.clone();
+        let prefix = config.format_warning_message("");
+        Some(Box::new(move |stats| {
+            crate::config::excessive_join_warning_text(&strategy, stats)
+                .map(|text| format!("{prefix}{text}"))
+        }))
+    } else {
+        None
+    };
     ChunkerRuntime {
         idle_timeout: multiline_config.idle_timeout,
         idle_hint,
         cap_warning,
         preset_ts_hint,
         no_boundary_hint,
+        excessive_join_warning,
     }
 }
 

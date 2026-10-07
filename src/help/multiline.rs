@@ -88,6 +88,10 @@ TROUBLESHOOTING:
   single line (a typo'd regex:match=, or `timestamp` on lines whose timestamp
   is not at column 0), the whole input becomes one event and kelora hints
   once. `all` and the language presets are exempt.
+- Too much joined: when `timestamp` or `regex` recognizes only some record
+  starts, the rest are glued onto them. At end of run kelora warns when
+  events average 3+ lines over 50+ lines and most joined lines start at
+  column 0 (stack-trace continuations are indented, so traces stay quiet).
 - Events merging that should split: with `timestamp`, the lock-in may have
   latched onto the wrong format if the file's first line is not a real
   header — pin it with timestamp:format=... or use timestamp:loose.

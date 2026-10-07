@@ -790,7 +790,14 @@ pub(crate) struct ChunkerRuntime {
     pub cap_warning: Option<String>,
     pub preset_ts_hint: Option<String>,
     pub no_boundary_hint: Option<String>,
+    /// Builds the end-of-run excessive-joining warning from the chunker's
+    /// counts (#361); None when warnings are suppressed.
+    pub excessive_join_warning: Option<ExcessiveJoinWarning>,
 }
+
+/// Formats the excessive-joining warning once its counts are known.
+pub(crate) type ExcessiveJoinWarning =
+    Box<dyn Fn(crate::pipeline::JoinStats) -> Option<String> + Send>;
 
 /// Chunker thread: converts line batches to event batches for multiline
 /// processing. Chunks carry their own provenance, so no filename/line-number
@@ -965,6 +972,14 @@ pub(crate) fn chunker_thread(
     if chunker.collapsed_without_boundary() {
         if let Some(hint) = &runtime.no_boundary_hint {
             let _ = crate::platform::SafeStderr::new().writeln(hint);
+        }
+    }
+    if let (Some(stats), Some(build)) = (
+        chunker.excessive_joining(),
+        runtime.excessive_join_warning.as_ref(),
+    ) {
+        if let Some(warning) = build(stats) {
+            let _ = crate::platform::SafeStderr::new().writeln(&warning);
         }
     }
 

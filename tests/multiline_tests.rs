@@ -1189,6 +1189,70 @@ fn test_multiline_max_lines_cap_splits_and_warns() {
     );
 }
 
+/// #361: a strategy that recognizes only some record starts glues the rest on,
+/// collapsing the event count with no other symptom. Warn at end of run, in
+/// both drivers, honoring --no-warnings; stay quiet on stack-trace fixtures.
+#[test]
+fn test_multiline_excessive_joining_warns() {
+    let mut input = String::new();
+    for i in 0..10 {
+        input.push_str(&format!("2024-07-14 19:52:1{i} host app[1]: hello\n"));
+        for _ in 0..7 {
+            input.push_str("{\"ts\":\"2024-07-14T14:00:01Z\",\"msg\":\"ok\"}\n");
+        }
+    }
+    let expected = "multiline 'timestamp' joined 80 lines into 10 events (8.0 lines/event)";
+
+    for extra in [&[][..], &["--parallel"][..]] {
+        let mut args = vec!["-f", "line", "-M", "timestamp"];
+        args.extend_from_slice(extra);
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(&args, &input);
+        assert_eq!(exit_code, 0);
+        assert_eq!(
+            stderr.matches(expected).count(),
+            1,
+            "warning once ({extra:?}): {stderr}"
+        );
+        assert!(stderr.contains("--help-multiline"), "{stderr}");
+    }
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "line", "-M", "timestamp", "--no-warnings"], &input);
+    assert!(!stderr.contains("lines/event"), "{stderr}");
+}
+
+#[test]
+fn test_multiline_stack_trace_fixtures_do_not_warn_about_joining() {
+    for (file, strategy) in [
+        ("examples/stacktrace_java.log", "timestamp"),
+        ("examples/stacktrace_java.log", "java"),
+        ("examples/stacktrace_python.log", "timestamp"),
+        ("examples/stacktrace_python.log", "python"),
+        ("examples/stacktrace_go.log", "go"),
+        ("examples/multiline_stacktrace.log", "timestamp"),
+        ("examples/syslog_multiline.log", "timestamp"),
+    ] {
+        let (_stdout, stderr, _) = run_kelora(&["-f", "line", "-M", strategy, file]);
+        assert!(
+            !stderr.contains("lines/event"),
+            "{file} with -M {strategy} must not warn: {stderr}"
+        );
+    }
+
+    // A trace-heavy log: every event carries a long, indented Java trace.
+    let mut input = String::new();
+    for i in 0..20 {
+        input.push_str(&format!("2024-07-14 10:00:{i:02} ERROR Request failed\n"));
+        input.push_str("java.lang.IllegalStateException: boom\n");
+        for j in 0..13 {
+            input.push_str(&format!("\tat com.example.Foo.bar{j}(Foo.java:{j})\n"));
+        }
+        input.push_str("Caused by: java.io.IOException: nope\n\t... 13 more\n");
+    }
+    let (_stdout, stderr, _) = run_kelora_with_input(&["-f", "line", "-M", "timestamp"], &input);
+    assert!(!stderr.contains("lines/event"), "{stderr}");
+}
+
 #[test]
 fn test_multiline_flag_validation() {
     // The auxiliary flags require --multiline.

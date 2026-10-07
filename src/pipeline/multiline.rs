@@ -14,6 +14,23 @@ const PRESET_TS_HINT_HEADERS: u32 = 3;
 /// mentioning: a one-record input or a two-line smoke test legitimately has
 /// nothing to split, and nagging there would be noise rather than a footgun.
 const MIN_LINES_FOR_NO_BOUNDARY_HINT: u64 = 10;
+/// Excessive-joining warning (#361): below this many lines in assembled
+/// events, the ratio says too little to warn about.
+const MIN_LINES_FOR_COLLAPSE_WARNING: u64 = 50;
+/// ...and at or above this mean lines-per-event the joining is suspicious.
+/// Ordinary stack-trace logs sit well below it across a whole file, since most
+/// of their events are single lines.
+const COLLAPSE_MEAN_LINES_PER_EVENT: f64 = 3.0;
+
+/// Line/event counts behind the excessive-joining warning; see
+/// [`Chunker::excessive_joining`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct JoinStats {
+    /// Non-blank physical lines that went into emitted events.
+    pub lines: u64,
+    /// Events emitted.
+    pub events: u64,
+}
 
 /// Multi-line chunker that implements the reduced set of strategies for
 /// detecting event boundaries.
@@ -44,6 +61,12 @@ pub struct MultilineChunker {
     /// firings" is what `collapsed_without_boundary` reports.
     lines_fed: u64,
     boundaries: u64,
+    /// Emitted events, the non-blank lines in them, and how many of their
+    /// non-blank continuation lines (not an event's first line) start at
+    /// column 0. Feeds `excessive_joining`.
+    events_emitted: u64,
+    event_lines: u64,
+    unindented_continuations: u64,
 }
 
 /// Runtime state for a language preset strategy: the trace rule machine plus
@@ -112,6 +135,9 @@ impl MultilineChunker {
             cap_hit: false,
             lines_fed: 0,
             boundaries: 0,
+            events_emitted: 0,
+            event_lines: 0,
+            unindented_continuations: 0,
         })
     }
 
@@ -192,7 +218,14 @@ impl MultilineChunker {
                 joined.push_str(joiner);
             }
             joined.push_str(line.trim_end_matches(['\n', '\r']));
+            if !is_line_blank(line) {
+                self.event_lines += 1;
+                if idx > 0 && !is_line_indented(line) {
+                    self.unindented_continuations += 1;
+                }
+            }
         }
+        self.events_emitted += 1;
 
         self.buffer.clear();
         out.push(Chunk {
@@ -490,6 +523,32 @@ impl Chunker for MultilineChunker {
         }
         self.boundaries == 0 && self.lines_fed >= MIN_LINES_FOR_NO_BOUNDARY_HINT
     }
+
+    fn excessive_joining(&self) -> Option<JoinStats> {
+        // Only the header-detecting strategies can misfire this way. `all`,
+        // `blank` (paragraphs) and the presets (whole traces) are asked to build
+        // long events; `indent` never joins an unindented line. A run that found
+        // no boundary at all already gets the more specific no-boundary hint.
+        if !matches!(
+            self.config.strategy,
+            MultilineStrategy::Timestamp { .. } | MultilineStrategy::Regex { .. }
+        ) || self.collapsed_without_boundary()
+            || self.events_emitted == 0
+            || self.event_lines < MIN_LINES_FOR_COLLAPSE_WARNING
+        {
+            return None;
+        }
+        let mean = self.event_lines as f64 / self.events_emitted as f64;
+        let continuations = self.event_lines - self.events_emitted.min(self.event_lines);
+        // Stack-trace continuations are mostly indented (`\tat ...`, `  File ...`);
+        // joined lines that mostly start at column 0 look like records in their
+        // own right that the start rule failed to recognize. Require two thirds.
+        let unindented_dominate = self.unindented_continuations * 3 >= continuations * 2;
+        (mean >= COLLAPSE_MEAN_LINES_PER_EVENT && unindented_dominate).then_some(JoinStats {
+            lines: self.event_lines,
+            events: self.events_emitted,
+        })
+    }
 }
 
 /// Create a chunker based on multiline configuration
@@ -784,6 +843,77 @@ mod tests {
         let chunks = chunk_all(&mut chunker, &input);
         assert_eq!(chunks.len(), 1, "everything collapsed into one event");
         assert!(chunker.collapsed_without_boundary());
+    }
+
+    /// #361: headers on only some records — every 8th line — glue the
+    /// unrecognized records (unindented) onto them. Reported with the counts.
+    #[test]
+    fn excessive_joining_is_reported_for_unindented_continuations() {
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+        let mut input = String::new();
+        for i in 0..10 {
+            input.push_str(&format!("2024-07-14 19:52:1{} host app: hello\n", i));
+            for _ in 0..7 {
+                input.push_str("{\"ts\":\"2024-07-14T14:00:01Z\",\"msg\":\"ok\"}\n");
+            }
+        }
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 10);
+        assert_eq!(
+            chunker.excessive_joining(),
+            Some(JoinStats {
+                lines: 80,
+                events: 10
+            })
+        );
+    }
+
+    /// Long but indented continuations are stack traces doing their job: quiet,
+    /// even when every event carries one.
+    #[test]
+    fn stack_trace_joining_is_not_excessive() {
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+        let mut input = String::new();
+        for i in 0..20 {
+            input.push_str(&format!("2024-07-14 10:00:{:02} ERROR failed\n", i));
+            input.push_str("java.lang.IllegalStateException: boom\n");
+            for j in 0..12 {
+                input.push_str(&format!("\tat com.example.Foo.bar{j}(Foo.java:{j})\n"));
+            }
+            input.push_str("Caused by: java.io.IOException: nope\n");
+        }
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 20);
+        assert_eq!(chunker.excessive_joining(), None);
+    }
+
+    /// Below the minimum line count the ratio is not worth a warning, and a
+    /// run that found no boundary at all gets the no-boundary hint instead.
+    #[test]
+    fn excessive_joining_needs_enough_lines_and_a_boundary() {
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+        let mut input = String::from("2024-07-14 19:52:10 host app: hello\n");
+        for _ in 0..20 {
+            input.push_str("{\"msg\":\"ok\"}\n");
+        }
+        chunk_all(&mut chunker, &input);
+        assert_eq!(chunker.excessive_joining(), None, "21 lines is too few");
+
+        let mut chunker = MultilineChunker::new(config(
+            MultilineStrategy::Regex {
+                start: "^NEVER".to_string(),
+                end: None,
+            },
+            MultilineJoin::Newline,
+        ))
+        .unwrap();
+        let input = (0..100).map(|i| format!("line {i}\n")).collect::<String>();
+        chunk_all(&mut chunker, &input);
+        assert!(chunker.collapsed_without_boundary());
+        assert_eq!(chunker.excessive_joining(), None);
     }
 
     #[test]

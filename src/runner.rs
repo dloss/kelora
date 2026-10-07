@@ -1334,6 +1334,7 @@ fn run_pipeline_sequential_internal<W: Write>(
     }
 
     multiline_state.note_no_boundary(&pipeline, config);
+    multiline_state.note_excessive_joining(&pipeline, config);
 
     // Release trailing context lines (-A/-C) still parked in a script stage.
     // Runs after the chunker flush so the last input line has become an event,
@@ -1489,6 +1490,28 @@ impl MultilineSeqState {
             return;
         };
         let _ = SafeStderr::new().writeln(&config.format_hint_message(&text));
+    }
+
+    /// Called once after the final flush. Warns when the strategy joined many
+    /// lines per event, mostly unindented ones — a start rule that matches only
+    /// some of the real records, which collapses the event count with no other
+    /// symptom (#361).
+    fn note_excessive_joining(&mut self, pipeline: &pipeline::Pipeline, config: &KeloraConfig) {
+        if !config.warnings_allowed() {
+            return;
+        }
+        let Some(stats) = pipeline.multiline_excessive_joining() else {
+            return;
+        };
+        let Some(text) = config
+            .input
+            .multiline
+            .as_ref()
+            .and_then(|m| crate::config::excessive_join_warning_text(&m.strategy, stats))
+        else {
+            return;
+        };
+        let _ = SafeStderr::new().writeln(&config.format_warning_message(&text));
     }
 }
 

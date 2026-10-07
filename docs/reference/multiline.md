@@ -112,6 +112,7 @@ Other rules:
 | every line is still its own event | the start rule never matched — Kelora hints once; check the regex, or use `timestamp` only if timestamps sit at the start of the line |
 | everything is one event | same cause with an end-less rule; the line cap splits after 10 000 lines with a warning |
 | events merge that should split | `timestamp` locked onto the wrong format: use `timestamp:format=…` |
+| warning `joined N lines into M events` | the start rule recognizes only some records (lines that don't *begin* with a timestamp, a too-narrow `regex:match=`), so the rest are glued on. Fires at 3+ lines per event over 50+ lines when most joined lines start at column 0; indented stack traces don't trigger it |
 | events split on a live stream | a pause longer than the timeout: raise `--multiline-timeout` |
 | fewer events with `-M` than without | joined blocks no longer parse: use a free-text format (see above) |
 | a preset splits a trace | unusual trace shape: check with `-f raw -F json -n 5`; fall back to `regex:` |

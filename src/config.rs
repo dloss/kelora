@@ -844,6 +844,35 @@ pub fn no_boundary_hint_text(strategy: &MultilineStrategy) -> Option<String> {
     })
 }
 
+/// Warning text for a multiline strategy that joined many lines per event,
+/// mostly unindented ones (#361). `None` for strategies that never report it
+/// (see `Chunker::excessive_joining`).
+pub fn excessive_join_warning_text(
+    strategy: &MultilineStrategy,
+    stats: crate::pipeline::JoinStats,
+) -> Option<String> {
+    let (name, check) = match strategy {
+        MultilineStrategy::Timestamp { .. } => (
+            "timestamp".to_string(),
+            "only a line that begins with a timestamp starts an event; check that every record \
+             does, or use a regex start pattern"
+                .to_string(),
+        ),
+        MultilineStrategy::Regex { start, .. } => (
+            "regex".to_string(),
+            format!("only a line matching '{start}' starts an event; check the start pattern"),
+        ),
+        _ => return None,
+    };
+    let mean = stats.lines as f64 / stats.events.max(1) as f64;
+    Some(format!(
+        "multiline '{name}' joined {} lines into {} events ({mean:.1} lines/event), mostly \
+         lines that start at column 0 rather than indented continuations — {check} \
+         (see --help-multiline)",
+        stats.lines, stats.events
+    ))
+}
+
 fn unknown_option_error(strategy: &str, segment: &str) -> String {
     let supported = match strategy {
         "timestamp" => "format=..., loose",
