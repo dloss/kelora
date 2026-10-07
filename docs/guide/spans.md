@@ -97,8 +97,11 @@ In `--exec`, each event knows its span through `meta.span_id`,
 `meta.span_start`, and `meta.span_end`. With time spans, an event whose
 timestamp falls in a span that already closed is **late**
 (`meta.span_status == "late"`); it is passed through, but not counted in the
-closed span. Out-of-order input — merged files, parallel shippers — produces
-late events; sort it first if every event must count.
+closed span; Kelora warns with the number of events `--span-summary` and
+`--span-close` missed this way. Out-of-order input — merged files, parallel shippers —
+produces late events; sort it first if every event must count. `meta.span_id`
+itself is assigned per event, so tagging events and grouping them later stays
+correct on unsorted input.
 
 Spans need sequential processing; with `--parallel`, Kelora warns and ignores
 it ([details](files.md#what-parallel-cant-do)).

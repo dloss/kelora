@@ -443,6 +443,45 @@ fn span_summary_warns_that_late_events_are_in_no_row() {
 }
 
 #[test]
+fn span_close_warns_that_late_events_reached_no_span() {
+    // #417: the hook loses late events exactly like the summary does.
+    let input = r#"{"ts":"2024-01-15T10:00:00Z","n":1}
+{"ts":"2024-01-15T10:02:00Z","n":2}
+{"ts":"2024-01-15T10:00:30Z","n":3}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--span",
+            "1m",
+            "--span-close",
+            "print(span.size)",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(
+        stdout.trim_end().lines().collect::<Vec<_>>(),
+        vec!["1", "1"]
+    );
+    assert!(
+        stderr.contains("1 event(s) arrived after their window had closed and reached no span"),
+        "{stderr}"
+    );
+
+    // Tagging alone assigns each event its own window, so nothing is lost.
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--span", "1m", "--exec", "e.w = meta.span_id"],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(!stderr.contains("arrived after"), "{stderr}");
+}
+
+#[test]
 fn span_summary_warns_when_no_event_can_be_placed_in_a_window() {
     let (stdout, stderr, exit_code) = run_kelora_with_input(
         &["-f", "json", "--span", "1m", "--span-summary=text"],

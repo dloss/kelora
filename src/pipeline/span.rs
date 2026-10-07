@@ -270,8 +270,9 @@ pub struct SpanProcessor {
     /// of one line per omitted key.
     warned_non_additive_collapsed: bool,
     /// Events whose window had already closed (`SpanStatus::Late`). They belong
-    /// to no span, so every summary row under-counts by this much; a nonzero
-    /// tally is reported once at the end of the run.
+    /// to no span, so per-window values (summary rows and hook values alike)
+    /// under-count by this much; a nonzero tally is reported once at the end of
+    /// the run.
     late_events: usize,
     /// Span labels already emitted, used only to detect the interleaved-field
     /// case where one field value yields many spans. Populated for field spans
@@ -468,7 +469,7 @@ impl SpanProcessor {
                 self.pending = Some(PendingEvent::new(assignment));
                 stats::stats_add_late_event();
                 // Counted locally as well: stats_add_late_event is inert unless
-                // --stats is collecting, but a summary row's under-count needs
+                // --stats is collecting, but a per-window under-count needs
                 // reporting on every run.
                 self.late_events += 1;
                 return Ok(());
@@ -839,20 +840,23 @@ impl SpanProcessor {
 
     /// Report events that arrived after their window had already closed.
     ///
-    /// A late event belongs to no span, so it is counted in no row: the totals a
-    /// reader sums from the rollup are short by exactly this many. Emitted once
-    /// at the end of the run, when the tally is final.
+    /// A late event belongs to no span, so it reaches neither a `--span-summary`
+    /// row nor a `--span-close` hook's `span.size`/`span.events`/`span.metrics`:
+    /// per-window values are short by exactly this many. Emitted once at the end
+    /// of the run, when the tally is final, whenever any span consumer ran. Plain
+    /// event tagging (`meta.span_id`) is per-event and unaffected, so it stays
+    /// quiet there.
     fn warn_late_events(&self, ctx: &PipelineContext) {
-        if self.summary.is_none() || self.late_events == 0 {
+        if !self.detail.active() || self.late_events == 0 {
             return;
         }
         if ctx.config.suppress_warnings || ctx.config.silent {
             return;
         }
         let message = crate::config::format_warning_message_auto(&format!(
-            "{} event(s) arrived after their window had closed and are counted in no \
-             --span-summary row, so the rows under-count by that much. Sort the input by \
-             timestamp to place every event in its own window.",
+            "{} event(s) arrived after their window had closed and reached no span, so \
+             per-window values under-count by that much. Sort the input by timestamp to place \
+             every event in its own window.",
             self.late_events
         ));
         let _ = SafeStderr::new().writeln(&message);
