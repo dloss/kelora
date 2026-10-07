@@ -341,7 +341,8 @@ kelora api.log -F tailmap -k response_time
 
 ![Levelmap output](../screenshots/levelmap.gif)
 
-- Each row starts with the timestamp of its first event, even if `-k` does not select the timestamp field. Without a timestamp (none detected, or removed with `--exclude-keys`) the row starts with `line N`.
+- Each row starts with the timestamp of its first event, even if `-k` does not select the timestamp field. Without a timestamp (none detected, or removed with `--exclude-keys`) the row starts with `line N`, the number padded to a fixed width so the glyph columns stay aligned.
+- A row holds a fixed number of events, not a fixed span of time: it can cover seconds or hours depending on event density. Compare row labels to see how much time a row covers.
 - A one-line legend lists only the glyphs that appeared and the values behind them, e.g. `2 = 200,204 | 4 = 404 | 5 = 500,503`. `tailmap` adds a line with count, range and the p90/p95/p99 thresholds. The legend is shown only when stdout is a terminal; `--legend` forces it, `--no-legend` hides it.
 
 `-q/--quiet` suppresses events; `-s/--stats` and `-m/--metrics` imply it.

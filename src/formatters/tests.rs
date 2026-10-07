@@ -729,6 +729,23 @@ fn test_keymap_formatter_empty_field() {
 }
 
 #[test]
+fn test_keymap_formatter_pads_line_number_fallback() {
+    // Without a timestamp the row label is `line N`; the number is padded so
+    // every row starts in the same column regardless of its digit count.
+    let formatter = KeymapFormatter::with_width(1, Some("status".to_string()));
+
+    let mut first = Event::default();
+    first.set_metadata(2, None);
+    first.set_field("status".to_string(), Dynamic::from("ok"));
+    let mut later = Event::default();
+    later.set_metadata(1078, None);
+    later.set_field("status".to_string(), Dynamic::from("error"));
+
+    assert_eq!(formatter.format(&first), "line       2 o");
+    assert_eq!(formatter.format(&later), "line    1078 e");
+}
+
+#[test]
 fn test_keymap_formatter_custom_field() {
     let formatter = KeymapFormatter::with_width(4, Some("method".to_string()));
     let ts = Utc.timestamp_millis_opt(0).unwrap();

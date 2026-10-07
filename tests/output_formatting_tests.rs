@@ -762,7 +762,7 @@ fn test_tailmap_shows_timestamp_not_line_number() {
         stdout
     );
     assert!(
-        !stdout.contains("line 1"),
+        !stdout.contains("line "),
         "tailmap should not fall back to the line number when a timestamp exists: {}",
         stdout
     );
@@ -782,10 +782,59 @@ fn test_keymap_shows_timestamp_not_line_number() {
         stdout
     );
     assert!(
-        !stdout.contains("line 1"),
+        !stdout.contains("line "),
         "keymap should not fall back to the line number when a timestamp exists: {}",
         stdout
     );
+}
+
+// Without timestamps the map formats fall back to `line N`. The number is
+// padded to a fixed width so rows with 1- and 4-digit line numbers start their
+// glyphs in the same column (and, on a terminal, hold the same number of glyphs).
+#[test]
+fn test_map_line_number_fallback_is_aligned() {
+    let input: String = (1..=1200)
+        .map(|i| format!("{{\"rt\": {i}, \"svc\": \"api\"}}\n"))
+        .collect();
+
+    for format in ["keymap", "tailmap"] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(
+            &[
+                "-f",
+                "json",
+                "-F",
+                format,
+                "-k",
+                "rt",
+                "--filter",
+                "e.rt % 10 == 2",
+                "--no-legend",
+            ],
+            &input,
+        );
+        assert_eq!(exit_code, 0, "{format} run should succeed: {stdout}");
+
+        let lines: Vec<&str> = stdout.lines().filter(|l| !l.is_empty()).collect();
+        assert!(
+            lines.len() > 1,
+            "{format} should emit several rows: {stdout}"
+        );
+        assert!(
+            lines[0].starts_with("line       2 "),
+            "{format} first row should carry a padded line label: {stdout}"
+        );
+        // Glyphs never contain spaces, so the last space ends the label.
+        let glyph_start = |line: &str| line.rfind(' ').unwrap();
+        let first = glyph_start(lines[0]);
+        for line in &lines {
+            assert!(line.starts_with("line "), "{format} row label: {line}");
+            assert_eq!(
+                glyph_start(line),
+                first,
+                "{format} rows should start glyphs in the same column: {stdout}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -838,7 +887,7 @@ fn test_map_timestamp_falls_back_to_line_number_without_timestamp() {
 
     assert_eq!(exit_code, 0, "tailmap run should succeed: {}", stdout);
     assert!(
-        stdout.contains("line 1"),
+        stdout.contains("line       1 "),
         "input without any timestamp should still fall back to the line number: {}",
         stdout
     );
@@ -864,7 +913,7 @@ fn test_map_timestamp_respects_explicit_exclude_keys() {
 
     assert_eq!(exit_code, 0, "tailmap run should succeed: {}", stdout);
     assert!(
-        stdout.contains("line 1"),
+        stdout.contains("line       1 "),
         "--exclude-keys ts should still suppress the timestamp prefix: {}",
         stdout
     );

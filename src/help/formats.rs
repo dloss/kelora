@@ -208,6 +208,9 @@ Map legends (levelmap/keymap/tailmap)
   Map formats append a one-line, data-driven legend decoding their glyphs
   (e.g. 'E = ERROR | I = INFO' or '2 = 200,204 | 4 = 404'). Shown only on a
   terminal by default; use --legend to force it when piping, --no-legend to hide.
+  Each row is labeled with its first event's timestamp ('line N' when the event
+  has none). Rows hold a fixed number of events, not a fixed span of time: a
+  row can cover seconds or hours depending on event density.
 csv       - Comma-separated with header row
 tsv       - Tab-separated with header row
 csvnh     - CSV without header

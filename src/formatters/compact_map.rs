@@ -205,12 +205,23 @@ pub(super) mod compact_map_utils {
             }
         }
 
-        if let Some(line_num) = event.line_num {
-            format!("line {}", line_num)
-        } else {
-            "unknown".to_string()
+        fallback_label(event.line_num)
+    }
+
+    /// Row label for an event without a timestamp: `line N`, with the number
+    /// right-aligned to a fixed width. The label width is subtracted from the
+    /// terminal width, so a ragged `line 2` / `line 1078` column would shift
+    /// where each row starts *and* change how many glyphs fit on it.
+    pub(super) fn fallback_label(line_num: Option<usize>) -> String {
+        match line_num {
+            Some(n) => format!("line {:>width$}", n, width = LINE_LABEL_DIGITS),
+            None => format!("{:<width$}", "unknown", width = LINE_LABEL_DIGITS + 5),
         }
     }
+
+    /// Digits reserved for the line number in fallback labels (up to 9,999,999
+    /// lines stay aligned; larger numbers widen the label rather than truncate).
+    const LINE_LABEL_DIGITS: usize = 7;
 
     pub(super) fn format_timestamp(ts: DateTime<Utc>) -> String {
         ts.to_rfc3339_opts(SecondsFormat::Millis, true)
