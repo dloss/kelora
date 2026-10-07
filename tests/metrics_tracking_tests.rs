@@ -2048,6 +2048,27 @@ fn sugar_describe_emits_stats_keys() {
 }
 
 #[test]
+fn sugar_flags_accept_comma_lists_like_repetition() {
+    // #366: `--card a,n` used to be one literal field named "a,n".
+    for flag in ["--card", "--freq", "--describe"] {
+        let (list_out, list_err, c1) =
+            run_kelora_with_input(&["-f", "json", flag, "service,ms"], SUGAR_INPUT);
+        let (rep_out, _e2, c2) =
+            run_kelora_with_input(&["-f", "json", flag, "service", flag, "ms"], SUGAR_INPUT);
+        assert_eq!(c1, 0, "{flag}: {list_err}");
+        assert_eq!(c2, 0);
+        assert_eq!(
+            list_out, rep_out,
+            "{flag} a,b should equal {flag} a {flag} b"
+        );
+        assert!(
+            !list_err.contains("service,ms"),
+            "{flag}: comma list must not be one field: {list_err}"
+        );
+    }
+}
+
+#[test]
 fn sugar_card_matches_explicit_track_cardinality() {
     let (sugar_out, _e1, c1) =
         run_kelora_with_input(&["-f", "json", "--card", "service"], SUGAR_INPUT);

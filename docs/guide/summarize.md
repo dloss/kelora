@@ -23,7 +23,8 @@ kelora examples/api_latency_incident.jsonl --filter 'e.endpoint == "/api/posts"'
 | `--card FIELD` | an estimate of the number of distinct values (about 1 % error, constant memory) |
 
 They count only events that pass your filters, accept dotted paths for nested
-fields (`--freq user.id`), and can be repeated. Look at the average and p99
+fields (`--freq user.id`), and take several fields, repeated or as a comma list
+(`--card user_id,trace_id`). Look at the average and p99
 above: the average looks fine, the tail does not.
 
 ## Output: table, TSV, JSON
