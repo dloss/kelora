@@ -224,6 +224,14 @@ fn main() -> Result<()> {
         stderr.writeln(&warning).unwrap_or(());
     }
 
+    if warnings_allowed {
+        if let Some(message) = crate::config::span_calendar_unit_warning(&config) {
+            stderr
+                .writeln(&config.format_warning_message(&message))
+                .unwrap_or(());
+        }
+    }
+
     // Context is computed against the leading run of match filters (see
     // install_context_group). A filter cut off from that run by an --exec or
     // --assert still judges matches, but its rejections can leave context lines

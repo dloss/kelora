@@ -1088,24 +1088,26 @@ fn no_timestamp_warning_mentions_a_field_the_duration_shadows() {
 }
 
 #[test]
-fn calendar_span_units_are_rejected_with_a_fixed_length_suggestion() {
-    // #415: epoch-modulo alignment starts weeks on Thursday and lets months and
-    // years drift, so these units are refused rather than silently misaligned.
-    for spec in ["1w", "2weeks", "1M", "1month", "1y", "1year"] {
+fn month_and_year_span_units_run_with_a_warning() {
+    // #415: humantime months and years are fixed lengths, so epoch-aligned
+    // windows drift off the calendar. They still run, but say so.
+    for spec in ["1M", "1month", "1y", "2years"] {
         let (_stdout, stderr, exit_code) = run_kelora_with_input(
             &["-f", "json", "--span", spec, "--span-summary=text"],
             SUMMARY_INPUT,
         );
-        assert_eq!(exit_code, 2, "{spec}: {stderr}");
-        assert!(stderr.contains("epoch-aligned in UTC"), "{spec}: {stderr}");
-        assert!(stderr.contains("--span 7d"), "{spec}: {stderr}");
+        assert_eq!(exit_code, 0, "{spec}: {stderr}");
+        assert!(stderr.contains("calendar boundaries"), "{spec}: {stderr}");
     }
 
-    let (_stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--span", "1d", "--span-summary=text"],
-        SUMMARY_INPUT,
-    );
-    assert_eq!(exit_code, 0, "{stderr}");
+    for spec in ["1w", "2weeks", "1d", "5m"] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(
+            &["-f", "json", "--span", spec, "--span-summary=text"],
+            SUMMARY_INPUT,
+        );
+        assert_eq!(exit_code, 0, "{spec}: {stderr}");
+        assert!(!stderr.contains("calendar boundaries"), "{spec}: {stderr}");
+    }
 }
 
 #[test]
@@ -1119,6 +1121,6 @@ fn a_digit_led_span_spec_that_is_no_duration_names_the_units() {
         stderr.contains("Unrecognised --span duration '1mo'"),
         "{stderr}"
     );
-    assert!(stderr.contains("ms, s, m, h, d"), "{stderr}");
+    assert!(stderr.contains("ms, s, m, h, d, w"), "{stderr}");
     assert!(!stderr.contains("field name"), "{stderr}");
 }

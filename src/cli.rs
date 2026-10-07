@@ -447,7 +447,7 @@ pub struct Cli {
         long = "span",
         value_name = "N|DURATION|FIELD",
         help_heading = "Processing Options",
-        help = "Aggregate events into consecutive spans.\n  --span <N>         Close after every N events that pass filters.\n  --span <DURATION>  Close on aligned time windows (e.g. 30s, 5m, 1h, 1d).\n                     Units: ms, s, m, h, d. Windows are fixed-length and\n                     aligned to the Unix epoch in UTC; calendar units\n                     (w, M, y) are rejected.\n  --span <FIELD>     Close when the specified field value changes.\nUse with --span-close to run a Rhai snippet when each span finishes."
+        help = "Aggregate events into consecutive spans.\n  --span <N>         Close after every N events that pass filters.\n  --span <DURATION>  Close on aligned time windows (e.g. 30s, 5m, 1h, 1d).\n                     Units: ms, s, m, h, d, w. Windows are fixed-length\n                     and aligned to the Unix epoch in UTC, so weeks run\n                     Thursday to Wednesday.\n  --span <FIELD>     Close when the specified field value changes.\nUse with --span-close to run a Rhai snippet when each span finishes."
     )]
     pub span: Option<String>,
 

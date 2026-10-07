@@ -2229,17 +2229,6 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
     // A spec that starts with a digit can never be a field name, so it is a
     // duration or a mistake — report it as a duration either way (#415).
     let looks_like_duration = span_spec.starts_with(|c: char| c.is_ascii_digit());
-    if looks_like_duration {
-        if let Some(unit) = calendar_span_unit(span_spec) {
-            return Err(anyhow::anyhow!(
-                "--span does not accept the calendar unit '{}' (in '{}'): windows are fixed-length \
-                 and epoch-aligned in UTC, so calendar weeks, months and years are not supported. \
-                 Use a fixed length instead, e.g. --span 7d for a 7-day window.",
-                unit,
-                span_spec
-            ));
-        }
-    }
 
     let parsed_duration = humantime::parse_duration(span_spec);
     if looks_like_duration && parsed_duration.is_err() {
@@ -2298,21 +2287,35 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
 }
 
 /// Duration units `--span` accepts, for error messages.
-const SPAN_DURATION_UNITS: &str = "ms, s, m, h, d";
+const SPAN_DURATION_UNITS: &str = "ms, s, m, h, d, w";
 
-/// The first calendar unit (week/month/year, in any humantime spelling) in a
-/// `--span` duration, if there is one.
+/// The first month or year unit (in any humantime spelling) in a `--span`
+/// duration, if there is one.
 ///
-/// humantime accepts these as fixed lengths (a 365.25-day year, a 30.44-day
-/// month), and epoch-modulo alignment then starts weeks on Thursday and lets
-/// months and years drift off the calendar. Rejecting them is more honest than
-/// answering a different question than the one asked.
+/// humantime reads these as fixed lengths (a 30.44-day month, a 365.25-day
+/// year), so epoch-aligned windows drift off the calendar. They still run, as
+/// they always have, but get a warning (#415).
 fn calendar_span_unit(spec: &str) -> Option<&str> {
-    const CALENDAR_UNITS: &[&str] = &[
-        "w", "week", "weeks", "M", "month", "months", "y", "year", "years",
-    ];
+    const CALENDAR_UNITS: &[&str] = &["M", "month", "months", "y", "year", "years"];
     spec.split(|c: char| !c.is_ascii_alphabetic())
         .find(|unit| CALENDAR_UNITS.contains(unit))
+}
+
+/// Warning text for a `--span` duration that uses a month or year unit.
+pub fn span_calendar_unit_warning(config: &KeloraConfig) -> Option<String> {
+    let SpanMode::Time { spec, .. } = &config.processing.span.as_ref()?.mode else {
+        return None;
+    };
+    let unit = calendar_span_unit(spec)?;
+    let length = if matches!(unit, "M" | "month" | "months") {
+        "a month is 30.44 days"
+    } else {
+        "a year is 365.25 days"
+    };
+    Some(format!(
+        "--span {spec} uses fixed-length windows aligned to the Unix epoch in UTC ({length}), \
+         so rows won't line up with calendar boundaries."
+    ))
 }
 
 /// Point out the three ways a span mode ends up producing nothing useful.

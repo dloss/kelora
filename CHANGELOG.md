@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Breaking
 
-- **`--span` rejects calendar units** - `1w`, `1M` and `1y` were silently aligned to the Unix epoch: weeks ran Thursday to Wednesday, and months and years drifted off the calendar. They are now a usage error (exit 2) that suggests a fixed length such as `--span 7d`. A spec that starts with a digit but isn't a duration (`1mo`) now lists the accepted units (ms, s, m, h, d) instead of giving a field-name error. (#415)
 - **`span.metric()` returns `()` for metrics with no per-window value** - It returned `0` for omitted non-additive metrics such as percentiles, so `p95=0` read as data. Additive metrics with no delta still return `0`. (#419)
 - **Idle span ids use `Z`** - `--span-idle` ids wrote UTC as `+00:00` while time span ids used `Z`. Both now use `Z`. (#421)
 
@@ -22,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **`--span` warns about month and year units** - `1M` and `1y` are fixed lengths (30.44 and 365.25 days) aligned to the Unix epoch, so the rows drifted off calendar boundaries without any notice. They still run, now with a warning. A spec that starts with a digit but isn't a duration (`1mo`) now lists the accepted units instead of giving a field-name error. The docs now state that windows are epoch-aligned in UTC, so `--span 1w` runs Thursday to Wednesday. (#415)
 - **Sub-millisecond `--span` no longer aborts** - `--span 500us` divided by zero and crashed. It is now a usage error. (#414)
 - **Hint for a `--span` field no event has** - A misspelled `--span FIELD` silently put every event into one `(unset)` span. A hint now names the field and suggests the nearest real one. (#416)
 - **Late-event warning covers `--span-close`** - Out-of-order events were reported as missing only for `--span-summary`. The warning now fires for any span consumer. (#417)
