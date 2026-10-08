@@ -46,8 +46,56 @@ templates (2 items):
    2: stock lookup for sku <num> failed: <num> Service Unavailable
 ```
 
-The [documentation](https://kelora.dev) continues this example: which component
-fails, when it started, and how to handle formats Kelora doesn't know.
+**When did it start?** One character per event, one row per stretch of time
+([more](https://kelora.dev/latest/guide/summarize/#see-it-over-time)):
+
+```bash
+kelora examples/shop.log -F levelmap
+```
+
+```
+2026-10-06T14:00:23.860Z IIIIIIIIIIIIIIIIIIIIIIIIIIIIIEIIIIIIIIIIIIIIIWIIIIIIIII
+2026-10-06T14:13:26.503Z IIIIIIWIIIIIIIIIIIIIIIIIWIIEEEEIIEEIIIEEEEEEIEIWEIIIIIE
+2026-10-06T14:26:39.972Z EWIIEIIIIEIIIIIIWIIIIIIIIWIIIIIIIIIIIIIWIIIIIIIIIIIIIII
+2026-10-06T14:39:42.915Z II
+
+🔹 E = ERROR | I = INFO | W = WARN
+```
+
+**What's new since then?** Message patterns before and after 14:15, compared
+([more](https://kelora.dev/latest/guide/summarize/#what-changed-between-two-logs)):
+
+```bash
+kelora examples/shop.log --drain-diff --cut-at '2026-10-06 14:15' -k msg
+```
+
+```
+--- examples/shop.log before 2026-10-06T14:15:00Z  61 events  2026-10-06T14:00:23Z .. 2026-10-06T14:14:40Z
++++ examples/shop.log from 2026-10-06T14:15:00Z  106 events  2026-10-06T14:15:03Z .. 2026-10-06T14:40:03Z
+
++        17  payment for order <num> failed: timeout after <duration> (provider…
++         3  retrying payment for order <num> (attempt <num>)
+* 2.1× less  order <num> placed in <duration>
+
+3 templates unchanged in frequency | field: msg
+3 of them changed a little, but 61 and 106 events are too few to tell that from random variation
+```
+
+After 14:15, payments time out and fewer orders go through.
+
+More things one option does:
+
+- `kelora file.log.gz -d` — every field, its type and sample values, in a file
+  you've never seen ([explore](https://kelora.dev/latest/guide/explore/))
+- `--span 10m --freq level --span-summary` — one row of counts per 10 minutes
+  ([spans](https://kelora.dev/latest/guide/spans/))
+- `-f json,line` — JSON and plain text mixed in one file, each line parsed as
+  what it is ([parse](https://kelora.dev/latest/guide/parse/#3-mixed-files-try-several-parsers-per-line))
+- `--merge-sorted a.jsonl b.jsonl` — one timeline from several services' logs
+  ([big files](https://kelora.dev/latest/guide/files/))
+
+The [documentation](https://kelora.dev) continues from here: the guide, a
+cookbook of ready-made commands, and how to handle formats Kelora doesn't know.
 
 ## Installation
 

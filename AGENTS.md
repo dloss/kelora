@@ -101,6 +101,20 @@ Rules:
 - **Plain, dense prose.** No marketing words ("powerful", "seamless", "comprehensive"), no filler. Admins skim: put the answer first.
 - Run `just docs-check` before committing doc changes.
 
+**Front pages — settled; don't redesign them without a reason from real readers:**
+
+- `docs/index.md` *explains* (for someone who already came to kelora.dev):
+  lede, the `shop.log` investigation, "In short", topic table. No showpiece,
+  "Advanced features", or highlight sections — tried twice (Nov 2025, Jun 2026)
+  and removed after first-impression tests with fresh readers. A change to its
+  structure needs a new first-impression test.
+- `README.md` *sells* (for someone browsing GitHub or crates.io): same lede;
+  the `shop.log` story continued by at most two showcase outputs (levelmap,
+  `--drain-diff`); a short one-line list of further options; install; doc
+  links; agent skill; how it's built; license. Absolute URLs only (crates.io).
+  Sample output is checked by `dev/readme_check.py` (part of `just docs-check`
+  and CI); after an output change, run `just readme-update` and review the diff.
+
 ## Project Structure
 
 ```

@@ -38,9 +38,16 @@ kelora examples/api_latency_incident.jsonl -l error --span 5m --span-summary
 
 ## What changed after the deploy?
 
-`kelora --drain-diff before.log after.log -k msg` lists message templates that
-appeared, disappeared, or changed rate. With one file, split it at the deploy:
-`--cut-before 'e.msg.contains("deploy")'` or `--cut-at 2025-01-20T14:00Z`.
+Split the log at a time and compare its message patterns before and after:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/shop.log --drain-diff --cut-at '2026-10-06 14:15' -k msg
+```
+
+`+` marks a pattern that appeared, `-` one that disappeared, `*` one whose rate
+changed. To split at the deploy message instead, use
+`--cut-before 'e.msg.contains("deploy")'`; for two files,
+`kelora --drain-diff before.log after.log -k msg`.
 [Summarize](../guide/summarize.md#what-changed-between-two-logs)
 
 ## Which exceptions do the stack traces contain?

@@ -92,6 +92,9 @@ jobs:
           COLUMNS=80 \
           uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects mkdocs build --strict
 
+      - name: Check README sample output
+        run: PATH="${GITHUB_WORKSPACE}/target/debug:${PATH}" python3 dev/readme_check.py
+
   release-helper-tools:
     runs-on: ubuntu-latest
 

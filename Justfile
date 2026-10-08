@@ -141,8 +141,8 @@ docs-build:
     UV_TOOL_DIR={{justfile_directory()}}/.uv/tools \
     {{DOCS_UVX}} mkdocs build --strict
 
-# Check the docs quickly with a debug build: fails on broken links and on any
-# example command that exits unexpectedly
+# Check the docs quickly with a debug build: fails on broken links, on any
+# example command that exits unexpectedly, and on stale README output
 docs-check:
     cargo build
     mkdir -p {{justfile_directory()}}/.uv/cache {{justfile_directory()}}/.uv/data {{justfile_directory()}}/.uv/tools
@@ -155,6 +155,12 @@ docs-check:
     UV_DATA_DIR={{justfile_directory()}}/.uv/data \
     UV_TOOL_DIR={{justfile_directory()}}/.uv/tools \
     {{DOCS_UVX}} mkdocs build --strict --site-dir {{justfile_directory()}}/target/docs-site
+    PATH="{{justfile_directory()}}/target/debug:${PATH}" python3 dev/readme_check.py
+
+# Rewrite the sample output in README.md from the current debug build
+readme-update:
+    cargo build
+    PATH="{{justfile_directory()}}/target/debug:${PATH}" python3 dev/readme_check.py --update
 
 # List published documentation versions (from gh-pages via mike)
 docs-list-versions:
