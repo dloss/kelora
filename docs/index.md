@@ -50,23 +50,23 @@ The payment provider has been timing out since about 14:20. The
 
 ## Logs in your own format
 
-Most shops have a log format no tool knows. Kelora keeps such lines whole and
-says so; describe the layout once — here with named regex groups — and you get
-fields like any other:
+When Kelora doesn't know a format, describe it right on the command line — with
+column names, a regex with named groups, or a script. This example names the
+columns and uses a short script to clean up one field:
 
 ```bash exec="on" result="ansi"
 head -2 examples/jobs.log
 ```
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/jobs.log -n 2 \
-  -f 'regex:\[(?P<ts>[^\]]+)\] \((?P<worker>[^)]+)\) (?P<level>\w+) :: (?P<msg>.*)'
+kelora examples/jobs.log -n 2 -f 'cols:ts(2) worker level - *msg' \
+  -e 'e.worker = e.worker.clip()'
 ```
 
+`ts(2)` takes two words, `-` skips the `::`, and `*msg` takes the rest;
+`clip()` trims the parentheses (the timestamp parses with its brackets on).
 Everything above — `-l`, `--freq worker`, `--drain` — then works the same.
-Whitespace-separated columns are even simpler (`-f 'cols:ts(2) level *msg'`),
-and fields buried in free text, such as `key=value` pairs, can be pulled out
-with a script. [Get Logs into Shape](guide/parse.md) covers all of it.
+[Get Logs into Shape](guide/parse.md) covers all three approaches.
 
 ## In short
 
