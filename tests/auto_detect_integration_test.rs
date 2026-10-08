@@ -1117,3 +1117,45 @@ fn test_auto_cascade_hints_about_format_field() {
         run_kelora_with_files(&["--hints", "--exclude-keys", "_format"], &[&mixed]);
     assert!(!stderr.contains("_format"), "already excluded: {}", stderr);
 }
+
+/// A file holding one JSON array is neither JSON lines nor an app log: the
+/// fallback hint names the array recipe instead of `cols:` or `-f json,line`.
+#[test]
+fn test_auto_detect_json_array_file_hints_recipe() {
+    let dir = TempDir::new().expect("tempdir");
+    let pretty = write_input(
+        &dir,
+        "pretty.json",
+        "[\n  {\n    \"a\": 1\n  },\n  {\n    \"a\": 2\n  }\n]\n",
+    );
+    let compact = write_input(&dir, "compact.json", "[\n{\"a\": 1},\n{\"a\": 2}\n]\n");
+
+    for file in [&pretty, &compact] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_files(&["--hints"], &[file]);
+        assert_eq!(exit_code, 0, "{stderr}");
+        assert!(
+            stderr.contains("Input looks like one JSON array")
+                && stderr.contains("emit_each(e.line.parse_json())"),
+            "{file}: {stderr}"
+        );
+        assert!(!stderr.contains("cols:ts"), "{file}: {stderr}");
+        assert!(!stderr.contains("-f json,line"), "{file}: {stderr}");
+    }
+
+    // The suggested command reads the file.
+    let (stdout, stderr, exit_code) = run_kelora_with_files(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "all",
+            "-e",
+            "emit_each(e.line.parse_json())",
+            "-F",
+            "json",
+        ],
+        &[&pretty],
+    );
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert_eq!(stdout.lines().count(), 2, "{stdout}");
+}

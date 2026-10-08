@@ -99,6 +99,9 @@ pub struct DetectedFormat {
     /// syslog-style `Jan 15 10:00:00 INFO …`), when the sample agrees on one
     /// count. Feeds the `cols:ts(N)` suggestion in the fallback hint only.
     pub leading_ts_tokens: Option<usize>,
+    /// The sample looks like one JSON array (`[` then `{`, or `[{…`) rather
+    /// than JSON lines. Feeds the fallback hint only.
+    pub json_array: bool,
 }
 
 /// A multiline (stack-trace) shape that detection can spot in its sample and
@@ -200,6 +203,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -210,6 +214,8 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             } else {
                 None
             };
+            let json_array = matches!(detected, config::InputFormat::Line)
+                && looks_like_json_array(std::iter::once(trimmed_line));
             Ok(DetectedFormat {
                 format: detected,
                 had_input: true,
@@ -220,6 +226,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 unparsed_formats: Vec::new(),
                 cascade_suggestion: None,
                 leading_ts_tokens,
+                json_array,
             })
         }
     }
@@ -256,6 +263,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
@@ -274,6 +282,8 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
     } else {
         None
     };
+    let json_array = matches!(detected.format, config::InputFormat::Line)
+        && looks_like_json_array(trimmed.iter().copied());
     Ok(DetectedFormat {
         format: detected.format,
         had_input: true,
@@ -284,6 +294,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
         unparsed_formats: detected.unparsed_formats,
         cascade_suggestion: detected.suggested_cascade,
         leading_ts_tokens,
+        json_array,
     })
 }
 
@@ -502,6 +513,7 @@ pub fn detect_format_for_parallel_mode(
                 unparsed_formats: Vec::new(),
                 cascade_suggestion: None,
                 leading_ts_tokens: None,
+                json_array: false,
             },
             None,
         ));
@@ -576,6 +588,11 @@ pub fn format_detected_format_notice(
         // enough of any one format to anchor a cascade — say so specifically
         // instead of the generic fallback advice: the suggestion names the
         // exact -f value that would parse them.
+        // A JSON array file is neither JSON lines nor an app log: point at the
+        // recipe that reads it, not at `cols:` or `-f json`.
+        if detected.json_array {
+            return Some(config.format_hint_message(JSON_ARRAY_HINT));
+        }
         if let Some(message) = unparsed_formats_hint_text(detected) {
             return Some(config.format_hint_message(&message));
         }
@@ -596,6 +613,23 @@ fn fallback_hint_text(leading_ts_tokens: Option<usize>) -> String {
             "No input format detected; keeping whole lines as 'line'. The sampled lines look like 'timestamp LEVEL message' with a {n}-token timestamp; extract fields with -f 'cols:ts({n}) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts({n}) level *msg'. See --help-formats."
         ),
         None => "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(N) level *msg' (or a regex:), where N is how many whitespace-separated tokens the timestamp spans: ts(1) for 2024-01-15T10:00:00Z, ts(3) for syslog-style 'Jan 15 10:00:00'. Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(N) level *msg'. See --help-formats.".to_string(),
+    }
+}
+
+const JSON_ARRAY_HINT: &str = "Input looks like one JSON array; -f json reads one object per line. For one event per element: -f line -M all -e 'emit_each(e.line.parse_json())'. See --help-formats.";
+
+/// Whether the sample starts like a JSON array of objects: a first line that
+/// is `[` alone followed by a line starting with `{`, or a first line starting
+/// with `[{` (spaces allowed). Bracketed log prefixes such as `[2024-01-15 …]`
+/// or `[INFO]` never match.
+fn looks_like_json_array<'a>(lines: impl IntoIterator<Item = &'a str>) -> bool {
+    let mut lines = lines.into_iter().map(str::trim).filter(|l| !l.is_empty());
+    let Some(rest) = lines.next().and_then(|first| first.strip_prefix('[')) else {
+        return false;
+    };
+    match rest.trim_start() {
+        "" => lines.next().is_some_and(|next| next.starts_with('{')),
+        rest => rest.starts_with('{'),
     }
 }
 
@@ -1193,6 +1227,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         };
         assert!(detected.multiline_hint.is_some());
 
@@ -1221,6 +1256,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
             ..detected
         };
         assert!(multiline_hint_message(&cfg, &clean).is_none());
@@ -1275,6 +1311,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         };
 
         let mut verbose_cfg = base_config();
@@ -1302,6 +1339,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         };
         let cfg = base_config();
         let message = auto_cascade_hint_message(&cfg, &detected).expect("hint expected");
@@ -1338,6 +1376,7 @@ mod tests {
             unparsed_formats: vec!["logfmt".to_string()],
             cascade_suggestion: Some("json,logfmt,line".to_string()),
             leading_ts_tokens: None,
+            json_array: false,
         };
 
         // Normal run: hint tier, no warning.
@@ -1376,6 +1415,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
             ..detected
         };
         assert!(unparsed_formats_data_mode_warning(&data_mode, &clean).is_none());
@@ -1449,6 +1489,7 @@ mod tests {
             unparsed_formats: Vec::new(),
             cascade_suggestion: None,
             leading_ts_tokens: None,
+            json_array: false,
         };
 
         // A confident auto-detection is silent on a normal run...
@@ -1626,6 +1667,25 @@ mod tests {
             leading_ts_tokens(["Jan 15 10:00:00 INFO a", "x", "y", "z"]),
             None
         );
+    }
+
+    #[test]
+    fn json_array_shapes_are_recognized() {
+        assert!(looks_like_json_array(["[", "  {", "    \"a\": 1"]));
+        assert!(looks_like_json_array(["", "[", "{\"a\": 1},"]));
+        assert!(looks_like_json_array(["[{\"a\":1},{\"a\":2}]"]));
+        assert!(looks_like_json_array(["[ {\"a\": 1}, "]));
+    }
+
+    #[test]
+    fn bracketed_log_lines_are_not_json_arrays() {
+        assert!(!looks_like_json_array(["[2024-01-15 10:00:00] INFO hi"]));
+        assert!(!looks_like_json_array(["[INFO] started"]));
+        assert!(!looks_like_json_array(["[1, 2, 3]"]));
+        // A bare `[` alone (stdin first-line detection) or before text is not enough.
+        assert!(!looks_like_json_array(["["]));
+        assert!(!looks_like_json_array(["[", "not json"]));
+        assert!(!looks_like_json_array([] as [&str; 0]));
     }
 
     #[test]

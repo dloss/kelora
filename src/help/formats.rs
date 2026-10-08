@@ -80,6 +80,7 @@ iso8601-level
 json (-j)
   JSON Lines format, one object per line
   Fields: All JSON keys preserved with types
+  One JSON array instead: -f line -M all -e 'emit_each(e.line.parse_json())'
 
 line
   Plain text, one event per line (trailing newline/CR trimmed)

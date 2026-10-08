@@ -35,7 +35,7 @@ A line that a parser rejects is a parse error: it is counted, reported on stderr
 
 ### JSON Format
 
-One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error.
+One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error; for a file that holds one JSON array, see [A file that is one JSON array](../cookbook/parsing.md#a-file-that-is-one-json-array).
 
 For pretty-printed objects that span several lines, join them first: `-j -M 'regex:match=^\{'` (each object starts with `{` in column 1), or `-j -M all` for a single document. See [multiline.md](multiline.md).
 
@@ -286,6 +286,8 @@ Each line is tested in this order, first match wins:
 9. `line`
 
 **Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`; a hint says so, since the extra field changes the output's shape (`--exclude-keys _format` drops it, an explicit `-f json,line` silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
+
+**JSON arrays:** a sample that starts like a JSON array of objects (`[` on its own line followed by `{`, or `[{`) is read as `line`, and a hint names the command that reads it. On stdin only `[{` on the first line is recognized.
 
 `-v` prints the decision, e.g. `Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)`.
 
