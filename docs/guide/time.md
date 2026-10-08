@@ -13,8 +13,8 @@ common problems is part of parsing:
 [Get the timestamp right](parse.md#get-the-timestamp-right). The details are
 below.
 
-The parsed value is available to scripts as `meta.parsed_ts`. The field itself
-(`e.timestamp`) keeps the original text.
+The parsed value is available to scripts as `meta.parsed_ts`. The timestamp field itself, whatever its name (`e.ts`,
+`e.timestamp`, …), keeps the original text.
 
 ### Formats
 

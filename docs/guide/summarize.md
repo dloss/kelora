@@ -29,7 +29,9 @@ above: the average looks fine, the tail does not.
 
 ## Output: table, TSV, JSON
 
-In a terminal you get the table. Piped or redirected, the same command writes
+The format depends on where the output goes. Shown on screen, you get the
+tables above. Piped into another command (`| head`) or redirected to a file
+(`> counts.tsv`), the same command writes
 one tab-separated row per value — metric name, value, count — sorted by count,
 so `head` gives the top N and `tail` the rarest (statistics like `--describe`
 print as `name_stat`, empty column, value):
