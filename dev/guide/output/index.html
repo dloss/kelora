@@ -1755,10 +1755,10 @@
 
 
 <h1 id="output-and-integration">Output and Integration<a class="headerlink" href="#output-and-integration" title="Permanent link">&para;</a></h1>
-<p>Kelora follows the Unix rule of silence: <strong>the result you asked for goes to
-stdout — events, or the summary when you ask for one with <code>-s</code>, <code>-m</code>,
-<code>--freq</code>, <code>--drain</code> — and everything else (errors, warnings, hints) goes to
-stderr.</strong> A successful run prints nothing but its data, which makes Kelora
+<p>Kelora follows the Unix rule of silence: the result you asked for goes to
+stdout, everything else (errors, warnings, hints) goes to stderr. The result
+is the events, or the summary when you ask for one with <code>-s</code>, <code>-m</code>, <code>--freq</code>
+or <code>--drain</code>. A successful run prints nothing but its data, which makes Kelora
 safe to pipe into other tools and to use in scripts and CI.</p>
 <h2 id="output-formats">Output formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span>-J

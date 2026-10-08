@@ -1852,7 +1852,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"timestamp":"2024-01-15T10:30:00Z","created_at":"2024-01-15T10:31:00Z"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at
 </code></pre></div>
-<p>Parsers that produce a timestamp (syslog, combined, cri, the built-in application-log formats) put it in <code>ts</code>.</p>
+<p>Parsers that produce a timestamp (<code>syslog</code>, <code>combined</code>, <code>cri</code>, <code>log4j</code>, <code>glog</code>, … — see <a href="../formats/#input-formats">Input Formats</a>) put it in <code>ts</code>.</p>
 <p>Without <code>--ts-format</code>, common layouts are recognized automatically: RFC 3339/ISO 8601 (with <code>T</code> or space, any fraction, <code>Z</code> or offset), Apache <code>15/Jan/2024:10:30:00 +0000</code>, syslog <code>Jan 15 10:30:00</code>, Python <code>2024-01-15 10:30:00,123</code>, and Unix epochs as numbers or numeric strings:</p>
 <table>
 <thead>

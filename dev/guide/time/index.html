@@ -1865,8 +1865,8 @@ seconds, milliseconds, or microseconds. Checking the result and fixing the
 common problems is part of parsing:
 <a href="../parse/#get-the-timestamp-right">Get the timestamp right</a>. The details are
 below.</p>
-<p>The parsed value is available to scripts as <code>meta.parsed_ts</code>. The field itself
-(<code>e.timestamp</code>) keeps the original text.</p>
+<p>The parsed value is available to scripts as <code>meta.parsed_ts</code>. The timestamp field itself, whatever its name (<code>e.ts</code>,
+<code>e.timestamp</code>, …), keeps the original text.</p>
 <h3 id="formats">Formats<a class="headerlink" href="#formats" title="Permanent link">&para;</a></h3>
 <p><code>--ts-format</code> uses <a href="../../reference/time-reference/">chrono format codes</a>:
 <code>%Y-%m-%d %H:%M:%S,%3f</code> for Python logging, <code>%d/%b/%Y:%H:%M:%S %z</code> for Apache.

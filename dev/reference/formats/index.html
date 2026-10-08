@@ -1366,10 +1366,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#built-in-application-log-formats" class="md-nav__link">
+  <a href="#server-and-application-logs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Built-in Application-Log Formats
+        Server and Application Logs
       
     </span>
   </a>
@@ -1940,10 +1940,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#built-in-application-log-formats" class="md-nav__link">
+  <a href="#server-and-application-logs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Built-in Application-Log Formats
+        Server and Application Logs
       
     </span>
   </a>
@@ -2115,9 +2115,54 @@
 <td><code>ts</code>, <code>stream</code>, <code>tag</code>, <code>msg</code></td>
 </tr>
 <tr>
-<td><code>glog</code>, <code>log4j</code>, <code>postgres</code>, …</td>
-<td><a href="#built-in-application-log-formats">Built-in application-log formats</a></td>
-<td><code>ts</code>, <code>level</code>, <code>msg</code> + extras</td>
+<td><code>apache-error</code></td>
+<td>Apache httpd error log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>module</code>, <code>pid</code>, <code>tid</code>, <code>client</code></td>
+</tr>
+<tr>
+<td><code>glog</code></td>
+<td>Go glog and Kubernetes klog</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>source</code></td>
+</tr>
+<tr>
+<td><code>haproxy</code></td>
+<td>HAProxy HTTP/TCP traffic log</td>
+<td><code>client_ip</code>, <code>frontend</code>, <code>backend</code>, <code>server</code>, <code>status</code>, timers, …</td>
+</tr>
+<tr>
+<td><code>iso8601-level</code></td>
+<td>ISO 8601 timestamp, level, message</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code></td>
+</tr>
+<tr>
+<td><code>log4j</code></td>
+<td>log4j / Java logging</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>thread</code>, <code>logger</code></td>
+</tr>
+<tr>
+<td><code>nginx-error</code></td>
+<td>nginx error log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>tid</code></td>
+</tr>
+<tr>
+<td><code>postgres</code></td>
+<td>PostgreSQL log, default prefix</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>log_tz</code></td>
+</tr>
+<tr>
+<td><code>python-logging</code></td>
+<td>Python <code>logging</code> (<code>asctime - name - levelname - message</code>)</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>logger</code></td>
+</tr>
+<tr>
+<td><code>redis</code></td>
+<td>Redis server log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>role</code></td>
+</tr>
+<tr>
+<td><code>s3</code></td>
+<td>AWS S3 server access log</td>
+<td><code>bucket</code>, <code>op</code>, <code>key</code>, <code>status</code>, …</td>
 </tr>
 <tr>
 <td><code>cols:&lt;spec&gt;</code></td>
@@ -2541,69 +2586,60 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.absorb_json("msg")'</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "error"'</span>
 </code></pre></div>
 <p>Auto-detection tries <code>cri</code> before logfmt and CSV, so a JSON or logfmt payload does not hide it. Docker's <code>json-file</code> driver writes one JSON object per line (<code>log</code>, <code>stream</code>, <code>time</code>); use <code>-f json</code> for that.</p>
-<h3 id="built-in-application-log-formats">Built-in Application-Log Formats<a class="headerlink" href="#built-in-application-log-formats" title="Permanent link">&para;</a></h3>
-<p>Fixed layouts parsed with built-in regexes. Select with <code>-f &lt;name&gt;</code> or in a comma cascade (<code>-f log4j,line</code>). Except for <code>cri</code> (above), auto-detection tries them only after every other format and just before the <code>line</code> fallback. Most definitions are adapted from <a href="https://lnav.org">lnav</a> (BSD-3-Clause).</p>
+<h3 id="server-and-application-logs">Server and Application Logs<a class="headerlink" href="#server-and-application-logs" title="Permanent link">&para;</a></h3>
+<p>Example lines for the formats from <code>apache-error</code> to <code>s3</code> in the table above. Select one with <code>-f &lt;name&gt;</code> or in a cascade (<code>-f log4j,line</code>). Most definitions are adapted from <a href="https://lnav.org">lnav</a> (BSD-3-Clause).</p>
 <table>
 <thead>
 <tr>
 <th>Format</th>
 <th>Example line</th>
-<th>Fields besides <code>ts</code>, <code>level</code>, <code>msg</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>apache-error</code></td>
 <td><code>[Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client 10.0.0.1] File does not exist</code></td>
-<td><code>module</code>, <code>pid</code>, <code>tid</code>, <code>client</code> (each optional)</td>
 </tr>
 <tr>
 <td><code>glog</code></td>
 <td><code>I0102 15:04:05.123456 1 main.go:42] started</code></td>
-<td><code>pid</code>, <code>source</code>; <code>level</code> is <code>I</code>/<code>W</code>/<code>E</code>/<code>F</code></td>
 </tr>
 <tr>
 <td><code>haproxy</code></td>
 <td><code>Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"</code></td>
-<td>see below</td>
 </tr>
 <tr>
 <td><code>iso8601-level</code></td>
 <td><code>2024-01-02T15:04:05Z INFO started</code> (space instead of <code>T</code>, <code>[…]</code> brackets, and <code>,</code> fractions also match)</td>
-<td>–</td>
 </tr>
 <tr>
 <td><code>log4j</code></td>
 <td><code>2024-01-02 15:04:05,123 INFO [main] com.example.App - started</code></td>
-<td><code>thread</code>, <code>logger</code></td>
 </tr>
 <tr>
 <td><code>nginx-error</code></td>
 <td><code>2024/01/02 15:04:05 [error] 29#29: open() failed</code></td>
-<td><code>pid</code>, <code>tid</code></td>
 </tr>
 <tr>
 <td><code>postgres</code></td>
 <td><code>2024-01-02 15:04:05.123 UTC [1234] LOG:  ready</code></td>
-<td><code>pid</code>, <code>log_tz</code></td>
 </tr>
 <tr>
 <td><code>python-logging</code></td>
 <td><code>2024-01-02 15:04:05,123 - myapp.db - INFO - connected</code></td>
-<td><code>logger</code></td>
 </tr>
 <tr>
 <td><code>redis</code></td>
 <td><code>12345:M 06 Feb 2024 12:00:00.123 * Ready</code></td>
-<td><code>pid</code>, <code>role</code>; <code>level</code> is the marker <code>.</code> <code>-</code> <code>*</code> <code>#</code></td>
 </tr>
 <tr>
 <td><code>s3</code></td>
-<td>AWS S3 server access log</td>
-<td><code>owner</code>, <code>bucket</code>, <code>client</code>, <code>requester</code>, <code>req_id</code>, <code>op</code>, <code>key</code>, <code>method</code>, <code>uri</code>, <code>query</code>, <code>httpver</code>, <code>status</code>, <code>error_code</code>, <code>bytes_sent</code>, <code>obj_size</code>, <code>total_time</code>, <code>turnaround_time</code>, <code>referer</code>, <code>user_agent</code>, then (newer logs) <code>version_id</code>, <code>host_id</code>, <code>sig_version</code>, <code>cipher_suite</code>, <code>auth_type</code>, <code>host_header</code>, <code>tls_version</code>; no <code>level</code>/<code>msg</code></td>
+<td><code>79a59df9… mybucket [06/Feb/2024:00:00:38 +0000] 192.0.2.3 79a59df9… 3E57427F33A59F07 REST.GET.OBJECT photos/cat.jpg "GET /photos/cat.jpg HTTP/1.1" 200 - 2662 2662 14 12 "-" "aws-cli/2.0" -</code></td>
 </tr>
 </tbody>
 </table>
+<p><code>apache-error</code> fields besides <code>ts</code>, <code>level</code>, <code>msg</code> are each optional. <code>glog</code> <code>level</code> is <code>I</code>/<code>W</code>/<code>E</code>/<code>F</code>; <code>redis</code> <code>level</code> is the marker <code>.</code> <code>-</code> <code>*</code> <code>#</code>.</p>
+<p><code>s3</code> fields: <code>owner</code>, <code>bucket</code>, <code>client</code>, <code>requester</code>, <code>req_id</code>, <code>op</code>, <code>key</code>, <code>method</code>, <code>uri</code>, <code>query</code>, <code>httpver</code>, <code>status</code>, <code>error_code</code>, <code>bytes_sent</code>, <code>obj_size</code>, <code>total_time</code>, <code>turnaround_time</code>, <code>referer</code>, <code>user_agent</code>, then (newer logs) <code>version_id</code>, <code>host_id</code>, <code>sig_version</code>, <code>cipher_suite</code>, <code>auth_type</code>, <code>host_header</code>, <code>tls_version</code>. It has no <code>level</code> or <code>msg</code>.</p>
 <p><code>haproxy</code> fields: <code>host</code>, <code>proc</code>, <code>pid</code>, <code>client_ip</code>, <code>client_port</code>, <code>accept_date</code>, <code>frontend</code>, <code>backend</code>, <code>server</code>, timers <code>tq</code>/<code>tw</code>/<code>tc</code>/<code>tr</code>/<code>tt</code> (HTTP) or <code>tw</code>/<code>tc</code>/<code>tt</code> (TCP), <code>status</code> (HTTP), <code>bytes_read</code>, <code>termination_state</code>, <code>actconn</code>, <code>feconn</code>, <code>beconn</code>, <code>srv_conn</code>, <code>retries</code>, <code>srv_queue</code>, <code>backend_queue</code>, <code>req_headers</code>/<code>resp_headers</code> (when captured), and the request line in <code>msg</code> (HTTP). It has no <code>level</code>. HAProxy lines are syslog lines, so <code>-f auto</code> detects them as <code>syslog</code>: pass <code>-f haproxy</code>.</p>
 <p>Types: fields named <code>pid</code>, <code>tid</code>, <code>client_port</code>, <code>bytes_read</code> and the haproxy connection counters are ints. Everything else is a string, including the <code>s3</code> and <code>haproxy</code> <code>status</code>, sizes and timers. Convert in a script if you need numbers: <code>--exec 'e.status = to_int(e.status)'</code>.</p>
 <p><code>s3</code> and <code>haproxy</code> keep a curated set of columns. The unparsed line is still available as <code>meta.line</code>, so a missing column can be extracted in a script:</p>
@@ -2713,7 +2749,7 @@
 <li><code>cri</code></li>
 <li><code>logfmt</code></li>
 <li><code>csv</code>/<code>tsv</code>: at least two commas or tabs. If the first field contains no letters, <code>csvnh</code>/<code>tsvnh</code>; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit <code>-f csv</code> skips this check.</li>
-<li>built-in application-log formats</li>
+<li><code>glog</code>, <code>nginx-error</code>, <code>apache-error</code>, <code>log4j</code>, <code>python-logging</code>, <code>postgres</code>, <code>redis</code>, <code>s3</code>, <code>iso8601-level</code> (<code>haproxy</code> lines are taken by <code>syslog</code> in step 3)</li>
 <li><code>line</code></li>
 </ol>
 <p><strong>Mixed files:</strong> if the file sample contains more than one format, kelora parses with <code>&lt;dominant format&gt;,line</code>, exactly like an explicit <a href="#cascade-mode">cascade</a>, and each event gets <code>_format</code>; a hint says so, since the extra field changes the output's shape (<code>--exclude-keys _format</code> drops it, an explicit <code>-f json,line</code> silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become <code>line</code> events and a hint prints the explicit <code>-f</code> (e.g. <code>-f json,syslog,line</code>) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.</p>
@@ -2739,7 +2775,7 @@
 </thead>
 <tbody>
 <tr>
-<td><code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>, <code>combined</code>, built-in application-log formats (incl. <code>cri</code>)</td>
+<td>every other named format (<code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>, <code>combined</code>, <code>cri</code>, <code>log4j</code>, …)</td>
 <td>comma list or repeated <code>-f</code></td>
 </tr>
 <tr>

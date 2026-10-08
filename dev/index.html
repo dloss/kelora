@@ -1770,12 +1770,12 @@
 
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
-<p>Kelora is a command-line tool for reading log files. It recognizes common
-formats on its own — application logs, syslog, web server logs, JSON, CSV —
-and for any other format you describe the layout in one option. It splits each
-line into named fields and lets you filter, count, and summarize them with
-short options. For logic the options can't express, it has a small scripting
-language.</p>
+<p>Kelora is a command-line tool for reading log files. It recognizes
+<a href="reference/formats/">20+ formats</a> on its own — application logs, syslog, web
+server logs, JSON, CSV — and for any other format you describe the layout on
+the command line. It splits each line into named fields and lets you filter,
+count, and summarize them with short options. For logic the options can't
+express, it has a small scripting language.</p>
 <p><a class="md-button" href="installation/">Install Kelora</a> <a class="md-button" href="guide/explore/">Explore a log file</a></p>
 <h2 id="what-using-it-looks-like">What using it looks like<a class="headerlink" href="#what-using-it-looks-like" title="Permanent link">&para;</a></h2>
 <p>Checkout is failing. This is the shop's application log, plain text (it's in
@@ -1825,24 +1825,24 @@ and numbers:</p>
 <p>The payment provider has been timing out since about 14:20. The
 <a href="guide/explore/">guide</a> starts from here.</p>
 <h2 id="logs-in-your-own-format">Logs in your own format<a class="headerlink" href="#logs-in-your-own-format" title="Permanent link">&para;</a></h2>
-<p>Most shops have a log format no tool knows. Kelora keeps such lines whole and
-says so; describe the layout once — here with named regex groups — and you get
-fields like any other:</p>
+<p>When Kelora doesn't know a format, describe it right on the command line — with
+column names, a regex with named groups, or a script. This example names the
+columns and uses a short script to clean up one field:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[2024-09-05 08:00:06] (worker-4) INFO :: processed batch 750
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>[2024-09-05 08:00:22] (worker-2) ERROR :: lost connection to broker
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/jobs.log<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-f<span class="w"> </span><span class="s1">'regex:\[(?P&lt;ts&gt;[^\]]+)\] \((?P&lt;worker&gt;[^)]+)\) (?P&lt;level&gt;\w+) :: (?P&lt;msg&gt;.*)'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/jobs.log<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) worker level - *msg'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.worker = e.worker.clip()'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ts</span>='2024-09-05 08:00:06' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">msg</span>='processed batch 750'
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ts</span>='[2024-09-05 08:00:06]' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">msg</span>='processed batch 750'
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">worker</span>='worker-4'
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ts</span>='2024-09-05 08:00:22' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">ERROR</span>' <span class=" -Color -Color-Green">msg</span>='lost connection to broker'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ts</span>='[2024-09-05 08:00:22]' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">ERROR</span>' <span class=" -Color -Color-Green">msg</span>='lost connection to broker'
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">worker</span>='worker-2'
 </code></pre></div>
-<p>Everything above — <code>-l</code>, <code>--freq worker</code>, <code>--drain</code> — then works the same.
-Whitespace-separated columns are even simpler (<code>-f 'cols:ts(2) level *msg'</code>),
-and fields buried in free text, such as <code>key=value</code> pairs, can be pulled out
-with a script. <a href="guide/parse/">Get Logs into Shape</a> covers all of it.</p>
+<p><code>ts(2)</code> takes two words, <code>-</code> skips the <code>::</code>, and <code>*msg</code> takes the rest;
+<code>clip()</code> trims the parentheses (the timestamp parses with its brackets on).
+Everything above — <code>-l</code>, <code>--freq worker</code>, <code>--drain</code> — then works the same.
+<a href="guide/parse/">Get Logs into Shape</a> covers all three approaches.</p>
 <h2 id="in-short">In short<a class="headerlink" href="#in-short" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Install:</strong> <code>brew install dloss/kelora/kelora</code>, or one binary for Linux,
@@ -1906,13 +1906,13 @@ with a script. <a href="guide/parse/">Get Logs into Shape</a> covers all of it.<
 <h2 id="about">About<a class="headerlink" href="#about" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>;
 a few included third-party files are under Apache-2.0.
-It runs locally: no networking, no telemetry, enforced by a CI check.</p>
-<p>Kelora is an experiment in agentic AI development: AI agents write all
+It runs locally: no networking, no telemetry, enforced by a CI check. The
+<a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">security policy</a> lists
+this and the other safeguards, and where to send security reports.</p>
+<p>Kelora is built with agentic AI development: AI agents write all
 implementation and tests, and I steer requirements
 (<a href="faq/#was-kelora-built-with-ai">more</a>). It is a single-developer spare-time
-project with best-effort support; review the
-<a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">security policy</a> before
-using it on sensitive data.</p>
+project with best-effort support.</p>
 
 
 

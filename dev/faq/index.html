@@ -1928,12 +1928,11 @@ most log work, so scripts stay short. See
 <p>No. Kelora has no networking code and sends no telemetry; a CI check
 (<code>just check-no-networking</code>) keeps it that way.</p>
 <h2 id="was-kelora-built-with-ai">Was Kelora built with AI?<a class="headerlink" href="#was-kelora-built-with-ai" title="Permanent link">&para;</a></h2>
-<p>Yes. Kelora is an experiment in agentic development: AI agents write the
-implementation and the tests, while the maintainer sets requirements and
-validates behavior. An extensive test suite, <code>cargo audit</code>, and <code>cargo deny</code>
-run on every change. Read the
-<a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">security policy</a>
-before using Kelora on sensitive data.</p>
+<p>Yes. AI agents write the implementation and the tests, while the maintainer
+sets requirements and validates behavior. An extensive test suite,
+<code>cargo audit</code>, and <code>cargo deny</code> run on every change. The
+<a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">security policy</a> lists
+all safeguards and where to send security reports.</p>
 <h2 id="where-do-i-report-bugs-or-ask-questions">Where do I report bugs or ask questions?<a class="headerlink" href="#where-do-i-report-bugs-or-ask-questions" title="Permanent link">&para;</a></h2>
 <p><a href="https://github.com/dloss/kelora/issues">GitHub issues</a>. Include
 <code>kelora --version</code>, the command, and a few sample lines. Kelora is a

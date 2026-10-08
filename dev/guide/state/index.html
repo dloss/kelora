@@ -1892,6 +1892,8 @@ run still exits 0, but your logic never ran (<a href="../files/#what-parallel-ca
 <h2 id="-window-look-at-previous-events"><code>--window</code>: look at previous events<a class="headerlink" href="#-window-look-at-previous-events" title="Permanent link">&para;</a></h2>
 <p><code>--window N</code> makes the current event and the N before it available as
 <code>window</code> (<code>window[0]</code> is the current event, <code>window[1]</code> the previous one).
+Near the start of the input the window is shorter — the first event has no
+<code>window[1]</code> — so check <code>window.len()</code> before indexing.
 Find long pauses between consecutive events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/worker_bursts.jsonl<span class="w"> </span>--window<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'if window.len() &gt; 1 {</span>

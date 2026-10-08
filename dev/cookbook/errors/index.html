@@ -1890,9 +1890,23 @@ exact first and last error, <code>-s</code> prints the output time span.</p>
 </code></pre></div>
 <p><a href="../../guide/spans/">Group into Spans</a></p>
 <h2 id="what-changed-after-the-deploy">What changed after the deploy?<a class="headerlink" href="#what-changed-after-the-deploy" title="Permanent link">&para;</a></h2>
-<p><code>kelora --drain-diff before.log after.log -k msg</code> lists message templates that
-appeared, disappeared, or changed rate. With one file, split it at the deploy:
-<code>--cut-before 'e.msg.contains("deploy")'</code> or <code>--cut-at 2025-01-20T14:00Z</code>.
+<p>Split the log at a time and compare its message patterns before and after:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/shop.log<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-at<span class="w"> </span><span class="s1">'2026-10-06 14:15'</span><span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>--- examples/shop.log before 2026-10-06T14:15:00Z  61 events  2026-10-06T14:00:23Z .. 2026-10-06T14:14:40Z
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>+++ examples/shop.log from 2026-10-06T14:15:00Z  106 events  2026-10-06T14:15:03Z .. 2026-10-06T14:40:03Z
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">+        17  payment for order &lt;num&gt; failed: timeout after &lt;duration&gt; (provider…</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">+         3  retrying payment for order &lt;num&gt; (attempt &lt;num&gt;)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>* 2.1× less  order &lt;num&gt; placed in &lt;duration&gt;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>3 templates unchanged in frequency | field: msg
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>3 of them changed a little, but 61 and 106 events are too few to tell that from random variation
+</code></pre></div>
+<p><code>+</code> marks a pattern that appeared, <code>-</code> one that disappeared, <code>*</code> one whose rate
+changed. To split at the deploy message instead, use
+<code>--cut-before 'e.msg.contains("deploy")'</code>; for two files,
+<code>kelora --drain-diff before.log after.log -k msg</code>.
 <a href="../../guide/summarize/#what-changed-between-two-logs">Summarize</a></p>
 <h2 id="which-exceptions-do-the-stack-traces-contain">Which exceptions do the stack traces contain?<a class="headerlink" href="#which-exceptions-do-the-stack-traces-contain" title="Permanent link">&para;</a></h2>
 <p>Join each trace into one event, then extract the exception class:</p>

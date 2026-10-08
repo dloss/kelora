@@ -628,6 +628,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#split-lines-into-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Split lines into fields
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Split lines into fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#1-let-auto-detection-do-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -637,8 +649,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#2-name-the-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -648,8 +660,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#3-mixed-files-try-several-parsers-per-line" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -659,8 +671,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#4-columns-cols" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -670,8 +682,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#5-patterns-regex" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -681,8 +693,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#6-finish-the-job-in-a-script" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -690,6 +702,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1779,6 +1796,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#split-lines-into-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Split lines into fields
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Split lines into fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#1-let-auto-detection-do-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1788,8 +1817,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#2-name-the-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1799,8 +1828,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#3-mixed-files-try-several-parsers-per-line" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1810,8 +1839,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#4-columns-cols" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1821,8 +1850,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#5-patterns-regex" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1832,8 +1861,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#6-finish-the-job-in-a-script" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1841,6 +1870,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1918,39 +1952,39 @@ works:</p>
 <table>
 <thead>
 <tr>
-<th></th>
-<th>Use when</th>
-<th>Tool</th>
+<th>Step</th>
+<th>Situation</th>
+<th>What to use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
+<td><a href="#1-let-auto-detection-do-it">1</a></td>
 <td>The format is common</td>
 <td>nothing — auto-detection</td>
 </tr>
 <tr>
-<td>2</td>
+<td><a href="#2-name-the-format">2</a></td>
 <td>You know the format, or detection guessed wrong</td>
 <td><code>-f json</code>, <code>-f logfmt</code>, <code>-f syslog</code>, …</td>
 </tr>
 <tr>
-<td>3</td>
+<td><a href="#3-mixed-files-try-several-parsers-per-line">3</a></td>
 <td>One file mixes formats</td>
 <td>cascade: <code>-f json,line</code></td>
 </tr>
 <tr>
-<td>4</td>
+<td><a href="#4-columns-cols">4</a></td>
 <td>Whitespace-separated columns</td>
 <td><code>-f 'cols:ts(2) level *msg'</code></td>
 </tr>
 <tr>
-<td>5</td>
+<td><a href="#5-patterns-regex">5</a></td>
 <td>Anything with a pattern</td>
 <td><code>-f 'regex:(?P&lt;ts&gt;\S+) …'</code></td>
 </tr>
 <tr>
-<td>6</td>
+<td><a href="#6-finish-the-job-in-a-script">6</a></td>
 <td>Fields are buried inside a text field</td>
 <td><code>absorb_kv()</code>, <code>extract_regex()</code>, … in <code>--exec</code></td>
 </tr>
@@ -1970,7 +2004,8 @@ field holding the whole line, and Kelora prints a hint:</p>
 <p>For a field-by-field profile with types and sample values, use <code>--discover</code>
 (<code>-d</code>); its last line also names the timestamp field. Use <code>-v</code> to see which
 format was detected.</p>
-<h2 id="1-let-auto-detection-do-it">1. Let auto-detection do it<a class="headerlink" href="#1-let-auto-detection-do-it" title="Permanent link">&para;</a></h2>
+<h2 id="split-lines-into-fields">Split lines into fields<a class="headerlink" href="#split-lines-into-fields" title="Permanent link">&para;</a></h2>
+<h3 id="1-let-auto-detection-do-it">1. Let auto-detection do it<a class="headerlink" href="#1-let-auto-detection-do-it" title="Permanent link">&para;</a></h3>
 <p>With no <code>-f</code>, Kelora samples the input and picks a parser. It recognizes JSON,
 syslog, CEF, Apache/Nginx access logs, Kubernetes CRI, logfmt, CSV/TSV, and a
 set of application-log layouts (<code>log4j</code>, <code>python-logging</code>, <code>glog</code>,
@@ -1985,7 +2020,7 @@ set of application-log layouts (<code>log4j</code>, <code>python-logging</code>,
 deeper in). If a file mixes a dominant format with stray text lines, it
 switches to a cascade automatically (see 3 below). On stdin, it uses the first
 line only.</p>
-<h2 id="2-name-the-format">2. Name the format<a class="headerlink" href="#2-name-the-format" title="Permanent link">&para;</a></h2>
+<h3 id="2-name-the-format">2. Name the format<a class="headerlink" href="#2-name-the-format" title="Permanent link">&para;</a></h3>
 <p>Pass <code>-f</code> when detection guesses wrong, or in scripts, so a future detection
 change can't surprise you. <code>-j</code> is short for <code>-f json</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/simple_logfmt.log<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
@@ -2005,7 +2040,7 @@ you annotate them:</p>
 </code></pre></div>
 <p><a href="../../reference/formats/">Format reference</a> lists every format and the fields
 it produces; <code>kelora --help-formats</code> prints the same in the terminal.</p>
-<h2 id="3-mixed-files-try-several-parsers-per-line">3. Mixed files: try several parsers per line<a class="headerlink" href="#3-mixed-files-try-several-parsers-per-line" title="Permanent link">&para;</a></h2>
+<h3 id="3-mixed-files-try-several-parsers-per-line">3. Mixed files: try several parsers per line<a class="headerlink" href="#3-mixed-files-try-several-parsers-per-line" title="Permanent link">&para;</a></h3>
 <p>A comma-separated list is a <strong>cascade</strong>: each line goes to the first parser
 that accepts it, and the event records the winner in <code>_format</code>. Typical case:
 JSON logs interrupted by plain-text banners and stack traces.</p>
@@ -2028,7 +2063,7 @@ instead:</p>
 doesn't match and can sit anywhere.</p>
 <p>Different formats in different <em>files</em> (JSON from one service, logfmt from
 another)? Use <code>-f auto-per-file</code> to detect each file separately.</p>
-<h2 id="4-columns-cols">4. Columns: <code>cols:</code><a class="headerlink" href="#4-columns-cols" title="Permanent link">&para;</a></h2>
+<h3 id="4-columns-cols">4. Columns: <code>cols:</code><a class="headerlink" href="#4-columns-cols" title="Permanent link">&para;</a></h3>
 <p>For logs whose fields are separated by whitespace, describe the columns in
 order:</p>
 <div class="highlight"><span class="filename">examples/cols_fixed.log</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-01-15 10:00:00 INFO     server  Application started successfully
@@ -2077,7 +2112,7 @@ order:</p>
 <p>Count the timestamp's whitespace tokens: <code>ts(2)</code> for <code>2024-01-15 10:00:00</code>,
 <code>ts(3)</code> for <code>Jan 15 10:00:00</code>. The no-format hint names the count when the
 sampled lines agree on one. Use <code>--cols-sep '|'</code> for a different separator.</p>
-<h2 id="5-patterns-regex">5. Patterns: <code>regex:</code><a class="headerlink" href="#5-patterns-regex" title="Permanent link">&para;</a></h2>
+<h3 id="5-patterns-regex">5. Patterns: <code>regex:</code><a class="headerlink" href="#5-patterns-regex" title="Permanent link">&para;</a></h3>
 <p>When columns aren't enough — brackets, quotes, <code>key=</code> prefixes — write a regex
 with <strong>named groups</strong>. Each group becomes a field; <code>:int</code>, <code>:float</code>, <code>:bool</code>
 convert it.</p>
@@ -2106,7 +2141,7 @@ convert it.</p>
   <a href="#one-event-spans-several-lines">multi-line event</a>.</li>
 </ul>
 <p><code>kelora --help-regex</code> has more patterns and common mistakes.</p>
-<h2 id="6-finish-the-job-in-a-script">6. Finish the job in a script<a class="headerlink" href="#6-finish-the-job-in-a-script" title="Permanent link">&para;</a></h2>
+<h3 id="6-finish-the-job-in-a-script">6. Finish the job in a script<a class="headerlink" href="#6-finish-the-job-in-a-script" title="Permanent link">&para;</a></h3>
 <p>Often the line has a clean prefix and a messy rest: free text with
 <code>key=value</code> pairs, embedded JSON, a bracketed host. Parse the prefix, then pull
 fields out of the remainder in <code>--exec</code>.</p>
@@ -2352,8 +2387,8 @@ parsing:</p>
 <p>Lines are joined with spaces by default; add <code>--multiline-join=newline</code> to keep
 the line structure (<code>java</code>, <code>python</code>, and <code>go</code> already join with newlines). Multiline grouping happens
 before parsing, so the joined block must still match your format — free-text
-parsers (<code>line</code>, <code>raw</code>, regex with a trailing <code>.*</code>, the built-in application
-formats) handle that. Details: <code>kelora --help-multiline</code> and
+parsers (<code>line</code>, <code>raw</code>, regex with a trailing <code>.*</code>, layouts that end in the
+message such as <code>log4j</code> or <code>glog</code>) handle that. Details: <code>kelora --help-multiline</code> and
 <a href="../../reference/multiline/">Multiline reference</a>.</p>
 <h2 id="prefixes-added-by-other-tools">Prefixes added by other tools<a class="headerlink" href="#prefixes-added-by-other-tools" title="Permanent link">&para;</a></h2>
 <p><code>docker compose logs</code> and similar tools prepend <code>name |</code> to each line.
