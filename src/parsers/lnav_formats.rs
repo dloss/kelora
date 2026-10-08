@@ -151,16 +151,21 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
             "2024/06/12 08:00:00 [warn] 12#0: using uninitialized variable",
         ],
     },
-    // Apache (and CUPS-style) error log:
+    // Apache httpd error log:
     // `[Wed Oct 11 14:32:52.123456 2024] [core:error] [pid 35:tid 4] [client 1.2.3.4:60223] msg`
     // One regex covers both Apache 2.4 (module:level, pid/tid, client:port) and the
     // older 2.2 layout (bare level, no pid/client) via optional groups. The 2.4
     // timestamp carries subseconds the adaptive parser doesn't know, so pin it
     // (the optional `%.f` also matches the 2.2 timestamp, which has none).
+    //
+    // The timestamp is spelled out (Apache's `Www Mmm DD HH:MM:SS[.ffffff] YYYY`)
+    // rather than "anything in brackets": the looser form also claimed other
+    // `[ts] [x] ...` layouts — spdlog's `[2024-01-02 ...] [logger] [info] msg`,
+    // pacman's `[2024-...] [ALPM] ...` — and reported the logger name as `level`.
     LnavFormat {
         name: "apache-error",
         patterns: &[
-            r"\[(?P<ts>[^\]]+)\] \[(?:(?P<module>[^:\]]+):)?(?P<level>\w+)\](?: \[pid (?P<pid:int>\d+)(?::tid (?P<tid:int>\d+))?\])?(?: \[client (?P<client>[^\]]+)\])? (?P<msg>.*)",
+            r"\[(?P<ts>[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})? \d{4})\] \[(?:(?P<module>[^:\]]+):)?(?P<level>\w+)\](?: \[pid (?P<pid:int>\d+)(?::tid (?P<tid:int>\d+))?\])?(?: \[client (?P<client>[^\]]+)\])? (?P<msg>.*)",
         ],
         ts_format: Some("%a %b %d %H:%M:%S%.f %Y"),
         samples: &[
@@ -521,6 +526,22 @@ mod tests {
         assert!(detect("hello world").is_none());
         // A bare date without a level should not match the generic format.
         assert!(detect("2024-01-02T15:04:05Z just a message without level").is_none());
+    }
+
+    #[test]
+    fn apache_error_requires_apache_timestamp() {
+        // Other `[timestamp] [word] ...` layouts must not be read as Apache error
+        // logs: the bracketed word would land in `level`.
+        for line in [
+            "[2014-10-31 23:46:59.678] [my_loggername] [info] Some message", // spdlog
+            "[2024-01-02T15:04:05+0100] [ALPM] installed foo (1.0-1)",       // pacman
+        ] {
+            assert_ne!(
+                detect(line).map(|fmt| fmt.name),
+                Some("apache-error"),
+                "{line:?} must not detect as apache-error"
+            );
+        }
     }
 
     #[test]

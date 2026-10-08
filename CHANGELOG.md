@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`parse_json()` follows `-f json`** - It now returns arrays, strings, numbers and `()` for `null`, not just maps, so a file holding one JSON array can be read with `-f line -M all -e 'emit_each(e.line.parse_json())'`. Duplicate keys take the last value and integers beyond 64 bits stay exact, as with `-f json`. Text that isn't JSON, which the old version accepted (trailing commas, expressions like `1 + 2`), is now a runtime error.
 - **Hint for JSON array files** - Auto-detection read a file holding one JSON array as `line` and suggested `cols:` or `-f json,line`, neither of which reads it. The hint now names the command that does: `-f line -M all -e 'emit_each(e.line.parse_json())'`.
 
+### Fixed
+
+- **`apache-error` no longer claims other bracketed logs** - Auto-detection read any line shaped `[timestamp] [word] message` as an Apache error log, so spdlog lines (`[2024-01-02 15:04:05.678] [mylogger] [info] …`) and pacman lines (`[…] [ALPM] …`) came out with the logger name in `level`. The format now requires Apache's own timestamp (`Fri Oct 11 14:32:52 2024`, with or without microseconds); such lines are read as `line` until they get a format of their own.
+
 ## [2.2.1] - 2026-10-08
 
 The 2.2.0 release notes left out 26 changes that are in 2.2.0. They are now listed in the [2.2.0 section](https://github.com/dloss/kelora/blob/main/CHANGELOG.md#220---2026-10-07) — read its **Breaking** section if you skipped it.
