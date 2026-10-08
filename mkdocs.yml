@@ -35,6 +35,7 @@ theme:
 
 hooks:
   - dev/docs_tty_hook.py
+  - dev/docs_cli_reference.py
 
 plugins:
   - search:
@@ -102,6 +103,7 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - attr_list
+  - def_list
   - md_in_html
   - tables
   - toc:

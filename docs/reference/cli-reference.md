@@ -9,11 +9,4 @@ Topic references in the terminal: `--help-formats`, `--help-time`,
 `--help-multiline`, `--help-regex`, `--help-rhai`, `--help-functions`,
 `--help-examples`.
 
-```python exec="on" idprefix=""
-import sys
-
-sys.path.insert(0, "dev")
-from docs_cli_reference import help_text, render
-
-print(render(help_text()))
-```
+<!-- kelora --help -->
