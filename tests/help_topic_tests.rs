@@ -30,7 +30,9 @@ fn test_help_formats_topic() {
         "\nraw\n",
         "\nregex:<pattern>\n",
         "\nsyslog\n",
-        "Built-in application-log formats",
+        "\nlog4j\n",
+        "\ncri\n",
+        "\ns3\n",
         "auto (default)",
         "auto-per-file",
     ] {

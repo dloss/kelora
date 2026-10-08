@@ -177,10 +177,9 @@ pub struct Cli {
     #[arg(long = "no-input", help_heading = "Input Options")]
     pub no_input: bool,
 
-    /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
+    /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cri, apache-error, glog, haproxy, iso8601-level, log4j, nginx-error, postgres, python-logging, redis, s3, cols:<spec>, regex:<pattern>. Fields of each: --help-formats.
     /// With 'auto', the format is detected from the first non-empty line (stdin) or a sample of the file (files: the head plus, for larger plain files, a few probe windows deeper in); a file that mixes formats is parsed with a cascade of the detected formats automatically. For mixed stdin streams pass a cascade (below) explicitly.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
-    /// Built-in application-log formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, postgres, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event, unless the record already has one of its own (that value is kept).
     /// Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier).
     /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'.
@@ -1599,7 +1598,7 @@ fn parse_format_value(s: &str) -> Result<String, String> {
                 };
                 return Err(format!(
                     "Unknown or unsupported format '{}' in cascade list '{}'. \
-Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and built-in application-log formats ({}).{}",
+Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, {}.{}",
                     part.trim(),
                     s,
                     crate::parsers::lnav_formats::names_csv(),
@@ -1620,7 +1619,7 @@ Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and bui
                 return Ok(s.to_string());
             }
             Err(format!(
-                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a built-in application-log format ({})",
+                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, {}, cols:<spec>, regex:<pattern>",
                 s,
                 crate::parsers::lnav_formats::names_csv()
             ))

@@ -17,7 +17,7 @@ echo '{"timestamp":"2024-01-15T10:30:00Z","created_at":"2024-01-15T10:31:00Z"}' 
   | kelora -j --ts-field created_at
 ```
 
-Parsers that produce a timestamp (syslog, combined, cri, the built-in application-log formats) put it in `ts`.
+Parsers that produce a timestamp (`syslog`, `combined`, `cri`, `log4j`, `glog`, … — see [Input Formats](formats.md#input-formats)) put it in `ts`.
 
 Without `--ts-format`, common layouts are recognized automatically: RFC 3339/ISO 8601 (with `T` or space, any fraction, `Z` or offset), Apache `15/Jan/2024:10:30:00 +0000`, syslog `Jan 15 10:30:00`, Python `2024-01-15 10:30:00,123`, and Unix epochs as numbers or numeric strings:
 

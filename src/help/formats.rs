@@ -9,6 +9,11 @@ Specify with -f, --input-format <format>
 
 Concrete formats (parse input directly; listed alphabetically):
 
+apache-error
+  Apache httpd error log
+  ([Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client ...] msg)
+  Fields: ts, level, msg [module, pid, tid, client]
+
 cef
   ArcSight Common Event Format
   Fields: cefver, vendor, product, version, eventid, event, severity
@@ -35,6 +40,12 @@ combined
           [identity, user, bytes, referer, user_agent, request_time]
   Note: Fields in brackets are optional (omitted if value is "-")
 
+cri
+  Kubernetes CRI/containerd container log (2024-07-17T12:12:05.0Z stdout F msg)
+  Fields: ts, stream (stdout/stderr), tag (F full / P partial), msg
+  Note: Auto-detected before logfmt/csv, so a JSON or logfmt payload in msg
+        does not hide it
+
 csv / tsv / csvnh / tsvnh
   Comma/tab-separated values, with/without headers
   Fields: Header names or c1, c2, c3...
@@ -46,6 +57,26 @@ csv / tsv / csvnh / tsvnh
   Quoted fields may contain embedded newlines (RFC 4180); such records are
   reassembled before parsing in both sequential and -P/--parallel mode.
 
+glog
+  Go glog and Kubernetes klog (I0102 15:04:05.123456 1 main.go:42] msg)
+  Fields: ts, level (I/W/E/F), msg, pid, source
+  Note: No year in the timestamp; 'ts' is dated near the current year (like
+        syslog). Pass --input-year YYYY for an archived log
+
+haproxy
+  HAProxy HTTP/TCP traffic log, as written through syslog
+  Fields: host, proc, pid, client_ip, client_port, accept_date, frontend,
+          backend, server, timers, status, bytes_read, termination_state,
+          connection counters, msg (HTTP request line); no level
+  Note: Its lines are syslog lines, so -f auto detects them as 'syslog';
+        pass -f haproxy
+  Note: Keeps a curated set of columns; the full line is in 'meta.line'
+
+iso8601-level
+  ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
+  Also: space instead of T, [...] around the timestamp, ',' fractions
+  Fields: ts, level, msg
+
 json (-j)
   JSON Lines format, one object per line
   Fields: All JSON keys preserved with types
@@ -54,9 +85,34 @@ line
   Plain text, one event per line (trailing newline/CR trimmed)
   Fields: line
 
+log4j
+  log4j / Java logging (2024-01-02 15:04:05,123 INFO [main] logger - msg)
+  Fields: ts, level, msg, thread, logger
+
 logfmt
   Heroku-style key=value pairs
   Fields: All parsed keys
+
+nginx-error
+  nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
+  Fields: ts, level, msg, pid, tid
+
+postgres
+  PostgreSQL log with the default log_line_prefix '%m [%p] '
+  (2024-01-02 15:04:05.123 UTC [1234] LOG:  msg)
+  Fields: ts, level, msg, pid, log_tz
+  Note: A custom prefix (user@db, app name, ...) won't match; use -f regex:
+  Note: Multi-line statements (tab-indented continuation lines) need
+        -M indent; without it those lines are parse errors. -f postgres,line
+        keeps them as separate 'line' events instead
+  Note: 'ts' is read in --input-tz (default UTC); the logged zone
+        abbreviation is kept in 'log_tz' but not applied (abbreviations are
+        ambiguous). For a non-UTC server pass e.g. --input-tz Europe/Berlin
+
+python-logging
+  Python logging, '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  (2024-01-02 15:04:05,123 - myapp.db - INFO - msg)
+  Fields: ts, level, msg, logger
 
 raw
   Plain text, one event per line, preserved verbatim — unlike 'line', no
@@ -72,55 +128,28 @@ regex:<pattern>
   Types: (?P<name:int>...), (?P<name:float>...), (?P<name:bool>...)
   Note: Pattern automatically anchored with ^...$
 
+redis
+  Redis 3+ server log (12345:M 06 Feb 2024 12:00:00.123 * msg)
+  Fields: ts, level (marker . - * #), msg, pid, role
+
+s3
+  AWS S3 server access log (owner bucket [date] ip ... "GET ..." 200 ...)
+  Fields: owner, bucket, client, requester, req_id, op, key, method, uri,
+          query, httpver, status, error_code, bytes_sent, obj_size,
+          total_time, turnaround_time, referer, user_agent
+          [version_id, host_id, sig_version, cipher_suite, auth_type,
+           host_header, tls_version - newer logs]; no level or msg
+  Note: Keeps a curated set of columns; the full line is in 'meta.line' for
+        a second-stage parse, e.g.:
+    kelora -f s3 access.log --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
+
 syslog
   RFC5424/RFC3164 system logs
   Fields: pri, facility, severity, level, ts, host, prog, pid, msg
           [msgid, version - RFC5424 only]
 
-Built-in application-log formats
-  A small set of common application-log layouts, parsed with the regex engine:
-    apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
-    cri             Kubernetes CRI/containerd log (2024-07-17T12:12:05.0Z stdout F msg)
-    glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
-    haproxy         HAProxy http/tcp traffic log (via syslog); use -f haproxy
-    iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
-    log4j           log4j / Java (2024-01-02 15:04:05,123 INFO [main] logger - msg)
-    nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
-    postgres        PostgreSQL log, default prefix (2024-01-02 15:04:05.123 UTC [1234] LOG:  msg)
-    python-logging  Python logging default (... ,123 - logger - INFO - msg)
-    redis           Redis 3+ (12345:M 06 Feb 2024 12:00:00.123 * msg)
-    s3              AWS S3 server access log (owner bucket [date] ip ... "GET ..." 200 ...)
-  Select explicitly with -f <name> (e.g. -f log4j), or in a cascade list
-  (e.g. -f log4j,line). Most are also tried during auto-detection, just before
-  the 'line' fallback, so they never override a format detected earlier; when
-  one matches, it emits 'ts' (timestamp), 'level', 'msg', and format-specific
-  extras (thread, logger, pid, ...).
-  Notes: glog omits the year, so 'ts' is dated near the current year (like
-  syslog); pass --input-year YYYY for an archived log. haproxy lines are
-  syslog-wrapped, so under -f auto they are detected
-  as 'syslog' — pass -f haproxy to extract the structured fields. The access-log
-  formats ('s3', 'haproxy') keep only a curated set of useful fields and may
-  drop a long, version-dependent tail; the full raw line is still available in
-  a script as 'line' / 'meta.line', so a dropped column can be recovered with a
-  second-stage parse, e.g.:
-    kelora -f s3 access.log --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
-  'postgres' matches the default log_line_prefix ('%m [%p] '); a customized
-  prefix (user@db, app name, …) won't auto-detect — use -f regex: for those.
-  Multi-line statements (an ERROR/STATEMENT followed by tab-indented query
-  continuation lines) parse cleanly with -M indent, which folds the indented
-  lines into the preceding record; without it those lines are reported as parse
-  errors. -f postgres,line instead keeps them as raw 'line' events.
-  Its 'ts' is naive: it is resolved via --input-tz (default UTC), not the logged
-  zone abbreviation (kept in 'log_tz'), since abbreviations are ambiguous and
-  can't be converted to an offset. UTC-logged servers are correct by default;
-  for a non-UTC server pass --input-tz <IANA> (e.g. --input-tz Europe/Berlin).
-  'cri' is the
-  exception to the "tried last" rule: because a CRI message is often itself JSON
-  or logfmt, it is detected early (before logfmt/csv) so auto-detect works
-  regardless of the payload; its fields are 'ts', 'stream' (stdout/stderr),
-  'tag' (F full / P partial), and 'msg'.
-  Most definitions are adapted from lnav (BSD-3-Clause; see
-  THIRD_PARTY_LICENSES.md); 'cri' is Kelora-original.
+Several of the log layouts above are adapted from lnav (BSD-3-Clause; see
+THIRD_PARTY_LICENSES.md).
 
 Type annotations (csv/tsv/cols/regex)
   A type annotation declares the field's type. A value that cannot satisfy it
@@ -140,7 +169,9 @@ auto (default)
   the file — concatenated rotations, say — is still caught; gzip/zstd files
   sample the head only (compressed streams aren't seekable)
   Detection order: json → cef → syslog → combined → cri → logfmt → csv
-                   → application-log formats (regex) → line
+                   → glog → nginx-error → apache-error → log4j
+                   → python-logging → postgres → redis → s3 → iso8601-level
+                   → line
   Note: Detects once and applies to all lines
   Note: File input only: if the sampled head mixes formats, kelora parses
         with a two-member cascade of the dominant structured format plus the
@@ -164,7 +195,9 @@ auto (default)
 auto-per-file
   Auto-detect format separately for each input file
   Detection order: json → cef → syslog → combined → cri → logfmt → csv
-                   → application-log formats (regex) → line
+                   → glog → nginx-error → apache-error → log4j
+                   → python-logging → postgres → redis → s3 → iso8601-level
+                   → line
   Note: Detects once per file and applies to that file's lines, sampling each
         file's head like 'auto' — a file that mixes formats gets a per-file
         cascade
@@ -180,7 +213,8 @@ auto-per-file
   A record that already has its own '_format' keeps that value: the tag is
     skipped for it (with a warning) rather than overwriting your data
   Stats (--stats) include per-format event counts
-  Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined
+  Allowed in a comma list: every named format except those below (json,
+    line, raw, logfmt, syslog, cef, combined, cri, log4j, ...)
   NOT in a comma list: auto, csv/tsv/csvnh/tsvnh (schema-based)
 
   Repeated -f   (cascade including spec-based parsers)

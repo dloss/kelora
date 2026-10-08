@@ -289,8 +289,8 @@ kelora examples/multiline_stacktrace.log -M timestamp -l error -n 1 -k ts,level,
 Lines are joined with spaces by default; add `--multiline-join=newline` to keep
 the line structure (`java`, `python`, and `go` already join with newlines). Multiline grouping happens
 before parsing, so the joined block must still match your format — free-text
-parsers (`line`, `raw`, regex with a trailing `.*`, the built-in application
-formats) handle that. Details: `kelora --help-multiline` and
+parsers (`line`, `raw`, regex with a trailing `.*`, layouts that end in the
+message such as `log4j` or `glog`) handle that. Details: `kelora --help-multiline` and
 [Multiline reference](../reference/multiline.md).
 
 ## Prefixes added by other tools

@@ -1932,7 +1932,7 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
             if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
                 return Ok(InputFormat::Named(fmt));
             }
-            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a built-in application-log format ({})", spec, crate::parsers::lnav_formats::names_csv()))
+            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, {}, cols:<spec>, regex:<pattern>", spec, crate::parsers::lnav_formats::names_csv()))
         }
     }
 }
@@ -1992,7 +1992,7 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
                     InputFormat::Named(fmt)
                 } else {
                     return Err(anyhow::anyhow!(
-                        "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined, and built-in application-log formats ({})",
+                        "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined, {}",
                         part,
                         crate::parsers::lnav_formats::names_csv()
                     ));

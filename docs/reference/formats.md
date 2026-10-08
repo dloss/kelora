@@ -16,7 +16,16 @@ Input format: `-f, --input-format <format>`. Output format: `-F, --output-format
 | `combined` | Apache/Nginx access logs | `ip`, `ts`, `method`, `path`, `status`, … |
 | `cef` | ArcSight Common Event Format | header fields + extensions |
 | `cri` | Kubernetes CRI/containerd container logs | `ts`, `stream`, `tag`, `msg` |
-| `glog`, `log4j`, `postgres`, … | [Built-in application-log formats](#built-in-application-log-formats) | `ts`, `level`, `msg` + extras |
+| `apache-error` | Apache httpd error log | `ts`, `level`, `msg`, `module`, `pid`, `tid`, `client` |
+| `glog` | Go glog and Kubernetes klog | `ts`, `level`, `msg`, `pid`, `source` |
+| `haproxy` | HAProxy HTTP/TCP traffic log | `client_ip`, `frontend`, `backend`, `server`, `status`, timers, … |
+| `iso8601-level` | ISO 8601 timestamp, level, message | `ts`, `level`, `msg` |
+| `log4j` | log4j / Java logging | `ts`, `level`, `msg`, `thread`, `logger` |
+| `nginx-error` | nginx error log | `ts`, `level`, `msg`, `pid`, `tid` |
+| `postgres` | PostgreSQL log, default prefix | `ts`, `level`, `msg`, `pid`, `log_tz` |
+| `python-logging` | Python `logging` (`asctime - name - levelname - message`) | `ts`, `level`, `msg`, `logger` |
+| `redis` | Redis server log | `ts`, `level`, `msg`, `pid`, `role` |
+| `s3` | AWS S3 server access log | `bucket`, `op`, `key`, `status`, … |
 | `cols:<spec>` | Whitespace- or separator-delimited columns | named in the spec |
 | `regex:<pattern>` | Anything a regex with named groups can match | named groups |
 | `auto-per-file` | Detects separately for each file | depends |
@@ -165,22 +174,26 @@ kelora pod.log -f cri --exec 'e.absorb_json("msg")' --filter 'e.level == "error"
 
 Auto-detection tries `cri` before logfmt and CSV, so a JSON or logfmt payload does not hide it. Docker's `json-file` driver writes one JSON object per line (`log`, `stream`, `time`); use `-f json` for that.
 
-### Built-in Application-Log Formats
+### Server and Application Logs
 
-Fixed layouts parsed with built-in regexes. Select with `-f <name>` or in a comma cascade (`-f log4j,line`). Except for `cri` (above), auto-detection tries them only after every other format and just before the `line` fallback. Most definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause).
+Example lines for the formats from `apache-error` to `s3` in the table above. Select one with `-f <name>` or in a cascade (`-f log4j,line`). Most definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause).
 
-| Format | Example line | Fields besides `ts`, `level`, `msg` |
-|--------|--------------|-------------------------------------|
-| `apache-error` | `[Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client 10.0.0.1] File does not exist` | `module`, `pid`, `tid`, `client` (each optional) |
-| `glog` | `I0102 15:04:05.123456 1 main.go:42] started` | `pid`, `source`; `level` is `I`/`W`/`E`/`F` |
-| `haproxy` | `Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"` | see below |
-| `iso8601-level` | `2024-01-02T15:04:05Z INFO started` (space instead of `T`, `[…]` brackets, and `,` fractions also match) | – |
-| `log4j` | `2024-01-02 15:04:05,123 INFO [main] com.example.App - started` | `thread`, `logger` |
-| `nginx-error` | `2024/01/02 15:04:05 [error] 29#29: open() failed` | `pid`, `tid` |
-| `postgres` | `2024-01-02 15:04:05.123 UTC [1234] LOG:  ready` | `pid`, `log_tz` |
-| `python-logging` | `2024-01-02 15:04:05,123 - myapp.db - INFO - connected` | `logger` |
-| `redis` | `12345:M 06 Feb 2024 12:00:00.123 * Ready` | `pid`, `role`; `level` is the marker `.` `-` `*` `#` |
-| `s3` | AWS S3 server access log | `owner`, `bucket`, `client`, `requester`, `req_id`, `op`, `key`, `method`, `uri`, `query`, `httpver`, `status`, `error_code`, `bytes_sent`, `obj_size`, `total_time`, `turnaround_time`, `referer`, `user_agent`, then (newer logs) `version_id`, `host_id`, `sig_version`, `cipher_suite`, `auth_type`, `host_header`, `tls_version`; no `level`/`msg` |
+| Format | Example line |
+|--------|--------------|
+| `apache-error` | `[Fri Oct 11 14:32:52 2024] [core:error] [pid 1234:tid 5678] [client 10.0.0.1] File does not exist` |
+| `glog` | `I0102 15:04:05.123456 1 main.go:42] started` |
+| `haproxy` | `Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"` |
+| `iso8601-level` | `2024-01-02T15:04:05Z INFO started` (space instead of `T`, `[…]` brackets, and `,` fractions also match) |
+| `log4j` | `2024-01-02 15:04:05,123 INFO [main] com.example.App - started` |
+| `nginx-error` | `2024/01/02 15:04:05 [error] 29#29: open() failed` |
+| `postgres` | `2024-01-02 15:04:05.123 UTC [1234] LOG:  ready` |
+| `python-logging` | `2024-01-02 15:04:05,123 - myapp.db - INFO - connected` |
+| `redis` | `12345:M 06 Feb 2024 12:00:00.123 * Ready` |
+| `s3` | `79a59df9… mybucket [06/Feb/2024:00:00:38 +0000] 192.0.2.3 79a59df9… 3E57427F33A59F07 REST.GET.OBJECT photos/cat.jpg "GET /photos/cat.jpg HTTP/1.1" 200 - 2662 2662 14 12 "-" "aws-cli/2.0" -` |
+
+`apache-error` fields besides `ts`, `level`, `msg` are each optional. `glog` `level` is `I`/`W`/`E`/`F`; `redis` `level` is the marker `.` `-` `*` `#`.
+
+`s3` fields: `owner`, `bucket`, `client`, `requester`, `req_id`, `op`, `key`, `method`, `uri`, `query`, `httpver`, `status`, `error_code`, `bytes_sent`, `obj_size`, `total_time`, `turnaround_time`, `referer`, `user_agent`, then (newer logs) `version_id`, `host_id`, `sig_version`, `cipher_suite`, `auth_type`, `host_header`, `tls_version`. It has no `level` or `msg`.
 
 `haproxy` fields: `host`, `proc`, `pid`, `client_ip`, `client_port`, `accept_date`, `frontend`, `backend`, `server`, timers `tq`/`tw`/`tc`/`tr`/`tt` (HTTP) or `tw`/`tc`/`tt` (TCP), `status` (HTTP), `bytes_read`, `termination_state`, `actconn`, `feconn`, `beconn`, `srv_conn`, `retries`, `srv_queue`, `backend_queue`, `req_headers`/`resp_headers` (when captured), and the request line in `msg` (HTTP). It has no `level`. HAProxy lines are syslog lines, so `-f auto` detects them as `syslog`: pass `-f haproxy`.
 
@@ -269,7 +282,7 @@ Each line is tested in this order, first match wins:
 5. `cri`
 6. `logfmt`
 7. `csv`/`tsv`: at least two commas or tabs. If the first field contains no letters, `csvnh`/`tsvnh`; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit `-f csv` skips this check.
-8. built-in application-log formats
+8. `glog`, `nginx-error`, `apache-error`, `log4j`, `python-logging`, `postgres`, `redis`, `s3`, `iso8601-level` (`haproxy` lines are taken by `syslog` in step 3)
 9. `line`
 
 **Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`; a hint says so, since the extra field changes the output's shape (`--exclude-keys _format` drops it, an explicit `-f json,line` silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
@@ -299,7 +312,7 @@ kelora -f json,line app.log -s                           # adds "Cascade formats
 
 | Members | How to list them |
 |---------|------------------|
-| `json`, `line`, `raw`, `logfmt`, `syslog`, `cef`, `combined`, built-in application-log formats (incl. `cri`) | comma list or repeated `-f` |
+| every other named format (`json`, `line`, `raw`, `logfmt`, `syslog`, `cef`, `combined`, `cri`, `log4j`, …) | comma list or repeated `-f` |
 | `cols:<spec>`, `regex:<pattern>` | repeated `-f` only (a pattern may contain commas) |
 | `auto`, `auto-per-file`, `csv`, `tsv`, `csvnh`, `tsvnh` | not allowed |
 
