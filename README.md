@@ -5,108 +5,49 @@
 
 [![CI](https://github.com/dloss/kelora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dloss/kelora/actions/workflows/ci.yml) [![Crates.io](https://img.shields.io/crates/v/kelora.svg)](https://crates.io/crates/kelora) [![Documentation](https://img.shields.io/badge/docs-kelora.dev-blue)](https://kelora.dev)
 
-**One command for messy logs.** Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, and plain text — with embedded [Rhai](https://rhai.rs) scripting when simple filters aren't enough.
+Kelora is a command-line tool for reading log files. It recognizes
+[20+ formats](https://kelora.dev/latest/reference/formats/) on its own —
+application logs, syslog, web server logs, JSON, CSV — and for any other format
+you describe the layout on the command line. It splits each line into named
+fields and lets you filter, count, and summarize them with short options. For
+logic the options can't express, it has a small scripting language
+([Rhai](https://rhai.rs)).
 
-Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
+A [5-minute introduction video](https://www.youtube.com/watch?v=IwkicmS3RYo)
+shows it in action.
 
-**Ready to dive in? [Jump to install ↓](#installation)**
+## What using it looks like
 
-## A quick tour
-
-*Want to follow along? These commands use sample logs from the repo — `git clone https://github.com/dloss/kelora` or grab the [`examples/`](https://github.com/dloss/kelora/tree/main/examples) directory.*
-
-**You don't even know what's in the file yet. Start there:**
-
-```bash
-kelora examples/web_access_large.log.gz --discover
-```
-
-```
-Field       Type    Seen  Miss   Uniq  Examples
-ip          string  1200    0%  ~1200  "232.53.220.209", "111.136.161.2...
-ts          string  1200    0%  ~1168  "04/Oct/2025:10:16:56 +0200", "0...
-request     string  1200    0%  ~1200  "GET /reintermediate/cross-platf...
-method      string  1200    0%      6  "GET", "PUT", "POST", "PATCH", "...
-path        string  1200    0%  ~1050  "/transform/relationships", "/in...
-protocol    string  1200    0%      3  "HTTP/1.0", "HTTP/1.1", "HTTP/2.0"
-status      int     1200    0%     21  403, 201, 302, 304, 502, 503, 40...
-bytes       int     1200    0%  ~1175  99162, 74740, 70145, 82195, ...
-referer     string  1200    0%  ~1200  "https://www.humanapplications....
-user_agent  string  1200    0%  ~1200  "Opera/9.19 (Windows NT 6.2; en-...
-user        string   580   52%   ~564  "macejkovic8736", "conroy2520", ...
-
-1200 events scanned | format: combined (auto-detected) | timestamp: ts -> meta.parsed_ts
-```
-
-No flags, no regex — Kelora decompressed the gzip, recognized the Apache combined format on its own, and mapped every field with real sample values. (`user` is 52% missing: half these requests are unauthenticated.)
-
-**Mixed formats in one file are the normal case, not the exception:**
+Checkout is failing. [`examples/shop.log`](https://github.com/dloss/kelora/blob/main/examples/shop.log) is the shop's
+plain-text application log. Show only the errors, with the fields you want:
 
 ```bash
-kelora -f json,line examples/mixed_format.log --filter 'e._format == "json"' -k timestamp,level,msg -F csv
+kelora examples/shop.log -l error -k ts,logger,msg -n 3
 ```
 
 ```
-timestamp,level,msg
-2024-01-15T10:00:02Z,INFO,Order 4412 captured for user alice
-2024-01-15T10:00:03Z,WARN,Retrying upstream auth.svc after HTTP 503
-2024-01-15T10:00:05Z,ERROR,Upstream auth.svc timeout after 5000ms
-2024-01-15T10:00:08Z,INFO,Order 4413 captured for user bob
-2024-01-15T10:00:09Z,WARN,Connection pool at 85% capacity
+ts='2026-10-06 14:06:28,793' logger='c.e.shop.InventoryClient'
+  msg='stock lookup for sku 914 failed: 503 Service Unavailable'
+ts='2026-10-06 14:20:14,827' logger='c.e.shop.PaymentClient'
+  msg='payment for order 44643 failed: timeout after 5000ms (provider=adyen)'
+ts='2026-10-06 14:20:25,134' logger='c.e.shop.PaymentClient'
+  msg='payment for order 46371 failed: timeout after 5000ms (provider=adyen)'
 ```
 
-JSON lines and plain text interleaved in the same file — give Kelora a cascade of parsers (`-f json,line`) and it tries each one per line, tagging every event with the winner in `_format`. Keep the structured ones, drop the noise, and emit clean CSV in a single pass.
-
-**And when those logs are a wall of near-duplicate errors that differ only by hostname, UUID, or timestamp — cut straight to what's actually breaking:**
+Group the errors that differ only in IDs and numbers:
 
 ```bash
-kelora examples/syslog_errors.log --drain -k msg
+kelora examples/shop.log -l error --drain -k msg
 ```
 
 ```
-templates (4 items):
-  438: Connection timeout to database host <fqdn> after <duration>
-  187: Upstream <fqdn> returned <num> for request <uuid>
-   94: Failed to acquire lock on resource <path> after <duration>
-   23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
+templates (2 items):
+  17: payment for order <num> failed: timeout after <duration> (provider=adyen)
+   2: stock lookup for sku <num> failed: <num> Service Unavailable
 ```
 
-`-k msg` tells `--drain` which field to mine — here the syslog message — and it groups near-identical lines by inferring where the values varied, so 742 noisy lines collapse into the four patterns causing the noise.
-
-**And when the question is "when did this happen", group events into windows and get one row each:**
-
-```bash
-kelora examples/simple_json.jsonl --span 1m --freq level --span-summary
-```
-
-```
-2024-01-15T10:00:00Z  events=3  level.DEBUG=1 level.INFO=2
-2024-01-15T10:01:00Z  events=2  level.ERROR=1 level.WARN=1
-2024-01-15T10:02:00Z  events=3  level.DEBUG=1 level.INFO=2
-```
-
-`--span` picks the grouping from the value's shape — `1m` for time windows, `500` for every N events, `request_id` for a field, or `--span-idle 5m` for inactivity gaps — and `--span-summary` turns each closed window into a row. Pipe it and the rows switch to tab-separated records for DuckDB or gnuplot.
-
-One tool: understand an unknown file, tame mixed formats, and surface what matters — no temp files, no intermediate scripts, no manual regex.
-
-Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.
-
-Run `kelora` without arguments for an interactive REPL with readline, glob expansion, and history — handy on Windows where shell quoting is awkward.
-
-By default Kelora reformats every event into a readable, colored `key=value` view — regardless of whether the input was JSON, logfmt, or plain text. In a terminal, wide events wrap onto indented continuation lines; when the output is piped or redirected it stays one line per event, so tools like `wc -l` count correctly. Pass `-J` to keep JSON output, `-F logfmt`/`csv`/`tsv` for other formats, `--wrap` to force wrapping through a pipe, or `--no-wrap` to disable it.
-
-## When Kelora helps
-
-Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
-
-- **Chained pipelines collapse into one command.** `grep | awk | jq | script.py` becomes `kelora`, with state preserved across the pipeline instead of lost between pipes.
-- **Messy formats parse cleanly.** Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.
-- **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
-- **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
-
-Kelora favors flexibility over speed: line and level filters are quick, while parsing text formats, scripts, and most summaries are much slower, so cut large files down first ([benchmarks](https://kelora.dev/latest/reference/benchmarks/)). Tools built for one job — `rg`/`grep` for text search, `jq` for JSON — are faster at it; pipe them in front or behind.
-
-The [Cookbook](https://kelora.dev/latest/cookbook/) has ready-made commands for incident triage, web traffic, security, privacy, and monitoring.
+The [documentation](https://kelora.dev) continues this example: which component
+fails, when it started, and how to handle formats Kelora doesn't know.
 
 ## Installation
 
@@ -130,15 +71,16 @@ sudo mv kelora /usr/local/bin/
 cargo install kelora
 ```
 
-On Windows, download [kelora-x86_64-pc-windows-msvc.zip](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip), extract, and add to PATH.
+Windows, `.deb`, `.rpm`, ARM, and BSD builds: see
+[Installation](https://kelora.dev/latest/installation/) and
+[all releases](https://github.com/dloss/kelora/releases).
 
-For Debian/Ubuntu (`.deb`), Fedora/RHEL (`.rpm`), ARM Linux, FreeBSD, OpenBSD, and other platforms: see [all releases](https://github.com/dloss/kelora/releases).
-
-Kelora follows semver starting with v1.0 — CLI flags and Rhai functions are stable.
+Kelora follows semver starting with v1.0 — CLI flags and Rhai functions are
+stable.
 
 ## Documentation
 
-> 📚 **[Read the full documentation at kelora.dev](https://kelora.dev)**
+**[kelora.dev](https://kelora.dev)**
 
 - [Explore a log file](https://kelora.dev/latest/guide/explore/) — the first five minutes
 - [Get logs into shape](https://kelora.dev/latest/guide/parse/) — parsing any format, from auto-detection to regex
@@ -146,23 +88,25 @@ Kelora follows semver starting with v1.0 — CLI flags and Rhai functions are st
 - [How it works](https://kelora.dev/latest/how-it-works/) — the pipeline and processing order
 - [CLI options](https://kelora.dev/latest/reference/cli-reference/) and [functions](https://kelora.dev/latest/reference/functions/)
 
-## Examples
-
-The [`examples/`](https://github.com/dloss/kelora/tree/main/examples) directory contains 60+ sample log files covering JSON, logfmt, syslog, CSV, and more. Use them to test filters, transformations, and edge cases.
-
-For common patterns and usage recipes, run:
-
-```bash
-kelora --help-examples
-```
+Offline, `kelora -h` prints a one-screen summary and `kelora --help` the full
+reference. The [`examples/`](https://github.com/dloss/kelora/tree/main/examples) directory holds the sample logs used
+throughout the docs.
 
 ## Use with AI coding agents
 
-Kelora ships an [Agent Skill](skills/log-analysis/SKILL.md) for Claude Code and compatible coding agents. Drop the [`skills/log-analysis/`](https://github.com/dloss/kelora/tree/main/skills/log-analysis) directory into your agent's skills directory and it gains a curated cheat-sheet for parsing, filtering, and summarizing logs with Kelora — including when to reach for `--discover`, `--drain`, and the `--freq`/`--describe`/`--card` shorthands.
+Kelora ships an [Agent Skill](https://github.com/dloss/kelora/blob/main/skills/log-analysis/SKILL.md) for Claude Code and
+compatible coding agents. Copy the [`skills/log-analysis/`](https://github.com/dloss/kelora/tree/main/skills/log-analysis)
+directory into your agent's skills directory to give it a cheat-sheet for
+parsing, filtering, and summarizing logs with Kelora.
 
 ## How Kelora is built
 
-Kelora is built with agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check. The [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) lists all safeguards and where to send security reports.
+Kelora is built with agentic AI development: AI agents generate all
+implementation and tests, and I steer requirements rather than writing or
+reviewing code. Validation relies on an extensive automated test suite plus
+`cargo audit` and `cargo deny`. Kelora is local-only with no networking or
+telemetry, enforced by a CI check. The [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) lists all
+safeguards and where to send security reports.
 
 This is a single-developer spare-time project, and support is best-effort.
 
@@ -170,4 +114,7 @@ This is a single-developer spare-time project, and support is best-effort.
 
 Kelora is open source software licensed under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE).
 
-The grok pattern engine in `src/drain/grok/` is derived from the [grok](https://github.com/daschl/grok) crate and its bundled patterns from [logstash-patterns-core](https://github.com/logstash-plugins/logstash-patterns-core); it remains under the [Apache License 2.0](https://github.com/dloss/kelora/blob/main/src/drain/grok/LICENSE).
+The grok pattern engine in `src/drain/grok/` is derived from the
+[grok](https://github.com/daschl/grok) crate and its bundled patterns from
+[logstash-patterns-core](https://github.com/logstash-plugins/logstash-patterns-core);
+it remains under the [Apache License 2.0](https://github.com/dloss/kelora/blob/main/src/drain/grok/LICENSE).
