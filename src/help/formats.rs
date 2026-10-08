@@ -99,10 +99,11 @@ nginx-error
   Fields: ts, level, msg, pid, tid
 
 postgres
-  PostgreSQL log with the default log_line_prefix '%m [%p] '
-  (2024-01-02 15:04:05.123 UTC [1234] LOG:  msg)
-  Fields: ts, level, msg, pid, log_tz
-  Note: A custom prefix (user@db, app name, ...) won't match; use -f regex:
+  PostgreSQL log with the default log_line_prefix '%m [%p] ' or the
+  Debian/Ubuntu package's '%m [%p] %q%u@%d '
+  (2024-01-02 15:04:05.123 UTC [1234] app@shop ERROR:  msg)
+  Fields: ts, level, msg, pid, log_tz [user, db - Debian prefix, sessions only]
+  Note: Other prefixes (app name, client host, ...) won't match; use -f regex:
   Note: Multi-line statements (tab-indented continuation lines) need
         -M indent; without it those lines are parse errors. -f postgres,line
         keeps them as separate 'line' events instead

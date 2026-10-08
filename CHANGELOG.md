@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Debian and Ubuntu PostgreSQL logs parse fully** - The Debian/Ubuntu package sets `log_line_prefix = '%m [%p] %q%u@%d '`, so every line from a client session carries `user@db` (`… [5871] app@shop ERROR:  …`). `postgres` matched only the server's own lines and left the session lines, including all query errors and failed logins, as `line`. Those lines now parse, with the new fields `user` and `db`.
 - **Debian and Ubuntu syslog files are read as syslog** - rsyslog on Debian (since 2022) and Ubuntu writes `/var/log/syslog` and `/var/log/auth.log` with RFC 3339 timestamps (`2025-08-31T09:36:55.418891+02:00 host sshd[1186]: …`). kelora read those files as `line`, and `-f syslog` rejected every line. They now parse like other RFC 3164 lines, with `ts`, `host`, `prog`, `pid` and `msg`.
 - **`apache-error` no longer claims other bracketed logs** - Auto-detection read any line shaped `[timestamp] [word] message` as an Apache error log, so spdlog lines (`[2024-01-02 15:04:05.678] [mylogger] [info] …`) and pacman lines (`[…] [ALPM] …`) came out with the logger name in `level`. The format now requires Apache's own timestamp (`Fri Oct 11 14:32:52 2024`, with or without microseconds); such lines are read as `line` until they get a format of their own.
 

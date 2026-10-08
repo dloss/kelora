@@ -22,7 +22,7 @@ Input format: `-f, --input-format <format>`. Output format: `-F, --output-format
 | `iso8601-level` | ISO 8601 timestamp, level, message | `ts`, `level`, `msg` |
 | `log4j` | log4j / Java logging | `ts`, `level`, `msg`, `thread`, `logger` |
 | `nginx-error` | nginx error log | `ts`, `level`, `msg`, `pid`, `tid` |
-| `postgres` | PostgreSQL log, default prefix | `ts`, `level`, `msg`, `pid`, `log_tz` |
+| `postgres` | PostgreSQL log, default or Debian prefix | `ts`, `level`, `msg`, `pid`, `log_tz`, `user`, `db` |
 | `python-logging` | Python `logging` (`asctime - name - levelname - message`) | `ts`, `level`, `msg`, `logger` |
 | `redis` | Redis server log | `ts`, `level`, `msg`, `pid`, `role` |
 | `s3` | AWS S3 server access log | `bucket`, `op`, `key`, `status`, … |
@@ -211,7 +211,7 @@ kelora -f s3 access.log --exec 'e.last_col = meta.line.extract_regex("(\\S+)$", 
 Format notes:
 
 - `glog` timestamps have no year; see [Year and timezone](time-reference.md#year-and-timezone).
-- `postgres` matches only the default `log_line_prefix = '%m [%p] '`. For a custom prefix use `-f regex:`. Multi-line `STATEMENT`s (tab-indented continuation lines) need `-M indent`; without it the continuation lines are parse errors. `-f postgres,line` keeps them as separate `line` events instead.
+- `postgres` matches the default `log_line_prefix = '%m [%p] '` and the Debian/Ubuntu package's `'%m [%p] %q%u@%d '`, whose session lines add `user` and `db` (`… [5871] app@shop ERROR:  …`). For another prefix use `-f regex:`. Multi-line `STATEMENT`s (tab-indented continuation lines) need `-M indent`; without it the continuation lines are parse errors. `-f postgres,line` keeps them as separate `line` events instead.
 - `postgres` `ts` is naive. The logged zone abbreviation is kept in `log_tz` but not applied, because abbreviations like `CST` or `IST` are ambiguous. The timestamp is read in `--input-tz` (default UTC). For a server whose `log_timezone` is not UTC, pass e.g. `--input-tz Europe/Berlin`.
 
 ### Column Format

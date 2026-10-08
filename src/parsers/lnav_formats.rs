@@ -218,18 +218,23 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // logged", not "the zone applied to this timestamp"; it is kept as a
     // ground-truth label for inspection.
     //
-    // NOTE: log_line_prefix is operator-configurable; this matches the common
-    // default. Non-default prefixes (adding user@db, app name, etc.) won't match
-    // auto-detection — reach those with `-f regex:` or a custom prefix parser.
+    // NOTE: log_line_prefix is operator-configurable. This matches PostgreSQL's
+    // default `%m [%p] ` and Debian/Ubuntu's packaged `%m [%p] %q%u@%d `, whose
+    // session lines add `user@db` (captured as `user` and `db`; server-process
+    // lines omit it because of `%q`). Other prefixes (app name, client host, …)
+    // won't match — reach those with `-f regex:`.
     LnavFormat {
         name: "postgres",
         patterns: &[
-            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) (?P<log_tz>[A-Z]{2,5}) \[(?P<pid:int>\d+)\] (?P<level>LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG[1-5]?|STATEMENT|DETAIL|HINT|CONTEXT):\s+(?P<msg>.*)",
+            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) (?P<log_tz>[A-Z]{2,5}) \[(?P<pid:int>\d+)\] (?:(?P<user>[^@\s]+)@(?P<db>\S+) )?(?P<level>LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG[1-5]?|STATEMENT|DETAIL|HINT|CONTEXT):\s+(?P<msg>.*)",
         ],
         ts_format: None,
         samples: &[
             "2024-01-02 15:04:05.123 UTC [1234] LOG:  database system is ready to accept connections",
             "2024-06-12 08:00:00.001 UTC [5678] ERROR:  relation \"users\" does not exist",
+            // Debian/Ubuntu package prefix `%m [%p] %q%u@%d `
+            "2026-10-08 10:24:32.373 UTC [5871] app@shop ERROR:  relation \"order_items\" does not exist at character 15",
+            "2026-10-08 10:24:30.101 UTC [5866] [unknown]@[unknown] LOG:  connection received: host=127.0.0.1 port=50412",
         ],
     },
     // Redis (3.0+): `pid:role date level msg`, e.g.
@@ -542,6 +547,29 @@ mod tests {
                 "{line:?} must not detect as apache-error"
             );
         }
+    }
+
+    #[test]
+    fn postgres_debian_prefix_extracts_user_and_db() {
+        let line = "2026-10-08 10:24:34.463 UTC [5885] app@shop FATAL:  password authentication failed for user \"app\"";
+        let fmt = detect(line).expect("Debian postgres line should detect");
+        assert_eq!(fmt.name, "postgres");
+        let parser = crate::parsers::MultiRegexParser::new(fmt.patterns, false).unwrap();
+        let event = parser.parse(line).unwrap();
+        let field = |name: &str| event.fields.get(name).unwrap().to_string();
+        assert_eq!(field("user"), "app");
+        assert_eq!(field("db"), "shop");
+        assert_eq!(field("level"), "FATAL");
+        assert_eq!(
+            field("msg"),
+            "password authentication failed for user \"app\""
+        );
+
+        // Server-process lines carry no user@db; the fields are absent.
+        let line = "2026-10-08 10:24:27.285 UTC [5844] LOG:  database system is ready to accept connections";
+        let event = parser.parse(line).unwrap();
+        assert!(!event.fields.contains_key("user"));
+        assert!(!event.fields.contains_key("db"));
     }
 
     #[test]
