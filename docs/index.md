@@ -1,11 +1,11 @@
 # Kelora
 
-Kelora is a command-line tool for reading log files. It recognizes common
-formats on its own — application logs, syslog, web server logs, JSON, CSV —
-and for any other format you describe the layout in one option. It splits each
-line into named fields and lets you filter, count, and summarize them with
-short options. For logic the options can't express, it has a small scripting
-language.
+Kelora is a command-line tool for reading log files. It recognizes
+[20+ formats](reference/formats.md) on its own — application logs, syslog, web
+server logs, JSON, CSV — and for any other format you describe the layout on
+the command line. It splits each line into named fields and lets you filter,
+count, and summarize them with short options. For logic the options can't
+express, it has a small scripting language.
 
 [Install Kelora](installation.md){ .md-button } [Explore a log file](guide/explore.md){ .md-button }
 
