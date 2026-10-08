@@ -106,11 +106,11 @@ The [Cookbook](cookbook/index.md) has ready-made commands for common questions.
 
 Kelora is open source under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE);
 a few included third-party files are under Apache-2.0.
-It runs locally: no networking, no telemetry, enforced by a CI check.
+It runs locally: no networking, no telemetry, enforced by a CI check. The
+[security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) lists
+this and the other safeguards, and where to send security reports.
 
-Kelora is an experiment in agentic AI development: AI agents write all
+Kelora is built with agentic AI development: AI agents write all
 implementation and tests, and I steer requirements
 ([more](faq.md#was-kelora-built-with-ai)). It is a single-developer spare-time
-project with best-effort support; review the
-[security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before
-using it on sensitive data.
+project with best-effort support.

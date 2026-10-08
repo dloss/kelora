@@ -56,12 +56,11 @@ No. Kelora has no networking code and sends no telemetry; a CI check
 
 ## Was Kelora built with AI?
 
-Yes. Kelora is an experiment in agentic development: AI agents write the
-implementation and the tests, while the maintainer sets requirements and
-validates behavior. An extensive test suite, `cargo audit`, and `cargo deny`
-run on every change. Read the
-[security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md)
-before using Kelora on sensitive data.
+Yes. AI agents write the implementation and the tests, while the maintainer
+sets requirements and validates behavior. An extensive test suite,
+`cargo audit`, and `cargo deny` run on every change. The
+[security policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) lists
+all safeguards and where to send security reports.
 
 ## Where do I report bugs or ask questions?
 

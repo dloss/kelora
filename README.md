@@ -162,9 +162,9 @@ Kelora ships an [Agent Skill](skills/log-analysis/SKILL.md) for Claude Code and 
 
 ## How Kelora is built
 
-Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check.
+Kelora is built with agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check. The [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) lists all safeguards and where to send security reports.
 
-This is a single-developer spare-time project, and support is best-effort. Review the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before using it on sensitive data in production.
+This is a single-developer spare-time project, and support is best-effort.
 
 ## License
 
