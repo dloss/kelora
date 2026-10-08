@@ -27,6 +27,17 @@ kelora examples/quickstart.log -f 'cols:ts(3) level *msg' --input-year 2024 -l e
 `absorb_json` turns the JSON inside `msg` into fields.
 [Get Logs into Shape](../guide/parse.md#6-finish-the-job-in-a-script)
 
+## A file that is one JSON array
+
+Exports often hold `[{...}, {...}]` instead of one object per line. Read the
+whole file as one event, parse it, and emit each element as its own event:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/json_array.json -f line -M all -e 'emit_each(e.line.parse_json())' -l error
+```
+
+[One event per array element](../guide/scripting.md#one-event-per-array-element)
+
 ## Keep only the JSON lines (or only the rest)
 
 ```bash exec="on" source="above" result="ansi"

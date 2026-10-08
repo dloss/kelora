@@ -70,7 +70,7 @@ text.parse_combined()                Parse Apache/Nginx combined log line (#{} i
                                      trailing fields; no error — check with: if m.len() == 0 { ... })
 text.parse_content_disposition()     Parse Content-Disposition header parameters (#{} if unparseable)
 text.parse_email()                   Parse email address into parts (#{} if unparseable)
-text.parse_json()                    Parse JSON string into map/array (invalid JSON raises an error)
+text.parse_json()                    Parse JSON text into map, array or scalar, like -f json (invalid JSON raises an error)
 text.parse_jwt()                     Parse JWT into header/claims (+ exp/iat/nbf as datetimes) without verification (#{} if unparseable)
 text.parse_kv([sep [,kv_sep]])       Split key-value pairs from text (skips tokens without separator; NOT quote-aware — use parse_logfmt for quoted/typed values)
 text.parse_logfmt()                  Parse logfmt line into structured fields (#{} if any token is malformed)

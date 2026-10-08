@@ -112,6 +112,15 @@ impl<'de> Deserialize<'de> for DynamicValue {
     }
 }
 
+/// Parse any JSON text (object, array or scalar) into a `Dynamic` with the same
+/// value semantics as `-f json`. Backs the `parse_json()` Rhai function: unlike
+/// Rhai's built-in, this never evaluates the text as script.
+pub fn parse_json_value(text: &str) -> Result<Dynamic, String> {
+    serde_json::from_str::<DynamicValue>(text)
+        .map(|DynamicValue(v)| v)
+        .map_err(|e| clean_json_error(&e))
+}
+
 /// Top-level object: deserialized straight into a `FieldMap`, avoiding both the
 /// `serde_json::Value::Object` indexmap and a second pass to build our map.
 struct EventFields(FieldMap);

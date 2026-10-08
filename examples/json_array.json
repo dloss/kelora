@@ -1,0 +1,32 @@
+[
+  {
+    "timestamp": "2024-01-15T10:00:00Z",
+    "level": "INFO",
+    "service": "auth",
+    "message": "User login",
+    "user": "alice"
+  },
+  {
+    "timestamp": "2024-01-15T10:00:07Z",
+    "level": "ERROR",
+    "service": "payments",
+    "message": "Card declined",
+    "user": "bob",
+    "amount": 129.5
+  },
+  {
+    "timestamp": "2024-01-15T10:00:12Z",
+    "level": "WARN",
+    "service": "auth",
+    "message": "Password retry",
+    "user": "carol"
+  },
+  {
+    "timestamp": "2024-01-15T10:00:20Z",
+    "level": "ERROR",
+    "service": "payments",
+    "message": "Gateway timeout",
+    "user": "alice",
+    "amount": 42.0
+  }
+]

@@ -178,6 +178,7 @@ Examples follow a naming convention for easy discovery:
 Start here to understand Kelora's format auto-detection:
 
 - `simple_json.jsonl` - Structured JSON logs
+- `json_array.json` - One pretty-printed JSON array instead of JSON lines (parse with `-M all` and `parse_json()`)
 - `simple_csv.csv` - Comma-separated values with headers
 - `simple_tsv.tsv` - Tab-separated values
 - `simple_logfmt.log` - Logfmt key=value format

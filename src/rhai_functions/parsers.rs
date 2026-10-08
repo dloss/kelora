@@ -1100,6 +1100,21 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("parse_combined", parse_combined_impl);
     engine.register_fn("parse_jwt", parse_jwt_impl);
 
+    // Replaces Rhai's built-in parse_json, which evaluates its input as a Rhai
+    // expression (so a log line could call print(), exit(), append_file(), ...)
+    // and only returns maps.
+    engine.register_fn(
+        "parse_json",
+        |text: &str| -> Result<Dynamic, Box<rhai::EvalAltResult>> {
+            crate::parsers::json::parse_json_value(text).map_err(|e| {
+                Box::new(rhai::EvalAltResult::ErrorRuntime(
+                    format!("parse_json: invalid JSON: {e}").into(),
+                    rhai::Position::NONE,
+                ))
+            })
+        },
+    );
+
     // Parse key-value pairs from a string
     engine.register_fn("parse_kv", |text: &str| -> Map {
         parse_kv_impl(text, None, "=")
@@ -1243,6 +1258,92 @@ mod tests {
         assert!(!result.contains_key("expires_at"));
         assert!(!result.contains_key("issued_at"));
         assert!(!result.contains_key("not_before"));
+    }
+
+    #[test]
+    fn test_parse_json_returns_any_json_value() {
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let arr: Array = engine.eval(r#"parse_json(`[1, {"a": "x"}]`)"#).unwrap();
+        assert_eq!(arr.len(), 2);
+        assert_eq!(arr[0].as_int().unwrap(), 1);
+
+        let map: Map = engine
+            .eval(r#"parse_json(`{"a": null, "b": 1.5, "c": [true]}`)"#)
+            .unwrap();
+        assert!(map["a"].is_unit());
+        assert_eq!(map["b"].as_float().unwrap(), 1.5);
+
+        assert_eq!(engine.eval::<String>(r#"parse_json(`"s"`)"#).unwrap(), "s");
+        assert_eq!(engine.eval::<i64>(r#"parse_json("42")"#).unwrap(), 42);
+        assert!(engine
+            .eval::<Dynamic>(r#"parse_json("null")"#)
+            .unwrap()
+            .is_unit());
+    }
+
+    #[test]
+    fn test_parse_json_matches_jsonl_semantics() {
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        // Duplicate keys: last wins. `\/` is a valid escape.
+        let map: Map = engine
+            .eval(r#"parse_json(`{"a": 1, "a": 2, "p": "x\/y"}`)"#)
+            .unwrap();
+        assert_eq!(map["a"].as_int().unwrap(), 2);
+        assert_eq!(map["p"].clone().into_string().unwrap(), "x/y");
+
+        // Integers beyond i64 keep full precision instead of becoming floats.
+        let big: Dynamic = engine
+            .eval(r#"parse_json("12345678901234567890")"#)
+            .unwrap();
+        assert!(!big.is_float());
+        assert_eq!(big.to_string(), "12345678901234567890");
+    }
+
+    #[test]
+    fn test_parse_json_rejects_invalid_json() {
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        for bad in [
+            r#"{"a": [1, 2,]}"#,
+            r#"{"a": 1} trailing"#,
+            r#"{a: 1}"#,
+            r#"{"a": 1 + 2}"#,
+            "",
+        ] {
+            let err = engine
+                .eval::<Dynamic>(&format!("parse_json({bad:?})"))
+                .unwrap_err();
+            assert!(
+                err.to_string().contains("parse_json: invalid JSON"),
+                "{bad}: {err}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_json_never_evaluates_input() {
+        // Rhai's built-in parse_json evaluates its input as an expression, so
+        // data could call registered functions. Ours must not.
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Arc;
+
+        let called = Arc::new(AtomicBool::new(false));
+        let flag = called.clone();
+        let mut engine = Engine::new();
+        engine.register_fn("side_effect", move || {
+            flag.store(true, Ordering::SeqCst);
+            1_i64
+        });
+        register_functions(&mut engine);
+
+        let result = engine.eval::<Dynamic>(r#"parse_json(`{"a": side_effect()}`)"#);
+        assert!(result.is_err());
+        assert!(!called.load(Ordering::SeqCst));
     }
 
     #[test]

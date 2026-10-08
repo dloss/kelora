@@ -215,12 +215,14 @@ if a.len() == 0 { e.parse_failed = true } else { e += a }
 To parse a field and merge it into the event in one step, with a status report, see the [`absorb_*` functions](#event-manipulation).
 
 #### `text.parse_json()`
-Parse a JSON string into a map or array. Invalid JSON is a runtime error.
+Parse JSON text into a map, array or scalar, with the same value rules as `-f json` (duplicate keys: last wins; integers too large for 64 bits stay exact). Invalid JSON is a runtime error. The text is only parsed, never evaluated.
 
 ```rhai
 e.data = e.payload.parse_json();
 e.value = e.data["key"];
 ```
+
+For a file that holds one JSON array, see [A file that is one JSON array](../cookbook/parsing.md#a-file-that-is-one-json-array).
 
 #### `text.parse_logfmt()`
 Parse a logfmt line; quote-aware, and numbers and booleans are typed.

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Security
+
+- **`parse_json()` no longer runs code from the data it parses** - It was Rhai's built-in, which evaluates its input as a script expression: a log line such as `{"a": exit(7)}` stopped the run and hid every later line, `{"a": print("…")}` printed, and with `--allow-fs-writes` `append_file()` wrote files. kelora now provides its own `parse_json()` that only parses JSON. Upgrade if you run `parse_json()` on logs that others can write to; `absorb_json()`, `extract_json()` and `-f json` were not affected.
+
+### Changed
+
+- **`parse_json()` follows `-f json`** - It now returns arrays, strings, numbers and `()` for `null`, not just maps, so a file holding one JSON array can be read with `-f line -M all -e 'emit_each(e.line.parse_json())'`. Duplicate keys take the last value and integers beyond 64 bits stay exact, as with `-f json`. Text that isn't JSON, which the old version accepted (trailing commas, expressions like `1 + 2`), is now a runtime error.
+
 ## [2.2.1] - 2026-10-08
 
 The 2.2.0 release notes left out 26 changes that are in 2.2.0. They are now listed in the [2.2.0 section](https://github.com/dloss/kelora/blob/main/CHANGELOG.md#220---2026-10-07) — read its **Breaking** section if you skipped it.
