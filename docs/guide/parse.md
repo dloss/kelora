@@ -8,14 +8,14 @@ fails silently.
 For the fields, try these approaches in order and stop at the first one that
 works:
 
-| | Use when | Tool |
+| Step | Situation | What to use |
 |---|---|---|
-| 1 | The format is common | nothing — auto-detection |
-| 2 | You know the format, or detection guessed wrong | `-f json`, `-f logfmt`, `-f syslog`, … |
-| 3 | One file mixes formats | cascade: `-f json,line` |
-| 4 | Whitespace-separated columns | `-f 'cols:ts(2) level *msg'` |
-| 5 | Anything with a pattern | `-f 'regex:(?P<ts>\S+) …'` |
-| 6 | Fields are buried inside a text field | `absorb_kv()`, `extract_regex()`, … in `--exec` |
+| [1](#1-let-auto-detection-do-it) | The format is common | nothing — auto-detection |
+| [2](#2-name-the-format) | You know the format, or detection guessed wrong | `-f json`, `-f logfmt`, `-f syslog`, … |
+| [3](#3-mixed-files-try-several-parsers-per-line) | One file mixes formats | cascade: `-f json,line` |
+| [4](#4-columns-cols) | Whitespace-separated columns | `-f 'cols:ts(2) level *msg'` |
+| [5](#5-patterns-regex) | Anything with a pattern | `-f 'regex:(?P<ts>\S+) …'` |
+| [6](#6-finish-the-job-in-a-script) | Fields are buried inside a text field | `absorb_kv()`, `extract_regex()`, … in `--exec` |
 
 Then [check the timestamp](#get-the-timestamp-right). If one event spans
 several lines, [join them first](#one-event-spans-several-lines).
@@ -33,7 +33,9 @@ For a field-by-field profile with types and sample values, use `--discover`
 (`-d`); its last line also names the timestamp field. Use `-v` to see which
 format was detected.
 
-## 1. Let auto-detection do it
+## Split lines into fields
+
+### 1. Let auto-detection do it
 
 With no `-f`, Kelora samples the input and picks a parser. It recognizes JSON,
 syslog, CEF, Apache/Nginx access logs, Kubernetes CRI, logfmt, CSV/TSV, and a
@@ -49,7 +51,7 @@ deeper in). If a file mixes a dominant format with stray text lines, it
 switches to a cascade automatically (see 3 below). On stdin, it uses the first
 line only.
 
-## 2. Name the format
+### 2. Name the format
 
 Pass `-f` when detection guesses wrong, or in scripts, so a future detection
 change can't surprise you. `-j` is short for `-f json`.
@@ -69,7 +71,7 @@ kelora -f 'csv status:int bytes:int' examples/simple_csv.csv -k path,status,byte
 [Format reference](../reference/formats.md) lists every format and the fields
 it produces; `kelora --help-formats` prints the same in the terminal.
 
-## 3. Mixed files: try several parsers per line
+### 3. Mixed files: try several parsers per line
 
 A comma-separated list is a **cascade**: each line goes to the first parser
 that accepts it, and the event records the winner in `_format`. Typical case:
@@ -93,7 +95,7 @@ doesn't match and can sit anywhere.
 Different formats in different *files* (JSON from one service, logfmt from
 another)? Use `-f auto-per-file` to detect each file separately.
 
-## 4. Columns: `cols:`
+### 4. Columns: `cols:`
 
 For logs whose fields are separated by whitespace, describe the columns in
 order:
@@ -118,7 +120,7 @@ Count the timestamp's whitespace tokens: `ts(2)` for `2024-01-15 10:00:00`,
 `ts(3)` for `Jan 15 10:00:00`. The no-format hint names the count when the
 sampled lines agree on one. Use `--cols-sep '|'` for a different separator.
 
-## 5. Patterns: `regex:`
+### 5. Patterns: `regex:`
 
 When columns aren't enough — brackets, quotes, `key=` prefixes — write a regex
 with **named groups**. Each group becomes a field; `:int`, `:float`, `:bool`
@@ -144,7 +146,7 @@ kelora examples/regex_custom_format.log \
 
 `kelora --help-regex` has more patterns and common mistakes.
 
-## 6. Finish the job in a script
+### 6. Finish the job in a script
 
 Often the line has a clean prefix and a messy rest: free text with
 `key=value` pairs, embedded JSON, a bracketed host. Parse the prefix, then pull
