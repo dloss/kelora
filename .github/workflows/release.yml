@@ -271,6 +271,7 @@ jobs:
       id-token: write      # Required for build provenance attestation
       attestations: write  # Required for build provenance attestation
     strategy:
+      fail-fast: false
       matrix:
         openbsd_release: ["7.9", "7.8"]
     steps:
@@ -316,6 +317,7 @@ jobs:
       id-token: write      # Required for build provenance attestation
       attestations: write  # Required for build provenance attestation
     strategy:
+      fail-fast: false
       matrix:
         freebsd_release: ["14.3", "13.5"]
     steps:
