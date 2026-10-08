@@ -2140,14 +2140,24 @@
 <td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>thread</code>, <code>logger</code></td>
 </tr>
 <tr>
+<td><code>monolog</code></td>
+<td>PHP Monolog (Laravel, Symfony)</td>
+<td><code>ts</code>, <code>channel</code>, <code>level</code>, <code>msg</code>, <code>context</code>, <code>extra</code></td>
+</tr>
+<tr>
+<td><code>mysql-error</code></td>
+<td>MySQL and MariaDB error log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>thread</code>, <code>err_code</code>, <code>subsystem</code></td>
+</tr>
+<tr>
 <td><code>nginx-error</code></td>
 <td>nginx error log</td>
 <td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>tid</code></td>
 </tr>
 <tr>
 <td><code>postgres</code></td>
-<td>PostgreSQL log, default prefix</td>
-<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>log_tz</code></td>
+<td>PostgreSQL log, default or Debian prefix</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>log_tz</code>, <code>user</code>, <code>db</code></td>
 </tr>
 <tr>
 <td><code>python-logging</code></td>
@@ -2163,6 +2173,16 @@
 <td><code>s3</code></td>
 <td>AWS S3 server access log</td>
 <td><code>bucket</code>, <code>op</code>, <code>key</code>, <code>status</code>, …</td>
+</tr>
+<tr>
+<td><code>spring-boot</code></td>
+<td>Spring Boot default log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>pid</code>, <code>app</code>, <code>thread</code>, <code>logger</code></td>
+</tr>
+<tr>
+<td><code>tomcat</code></td>
+<td>Tomcat catalina log</td>
+<td><code>ts</code>, <code>level</code>, <code>msg</code>, <code>thread</code>, <code>source</code></td>
 </tr>
 <tr>
 <td><code>cols:&lt;spec&gt;</code></td>
@@ -2188,7 +2208,7 @@
 </table>
 <p>A line that a parser rejects is a parse error: it is counted, reported on stderr and skipped. <code>--strict</code> aborts on it instead.</p>
 <h3 id="json-format">JSON Format<a class="headerlink" href="#json-format" title="Permanent link">&para;</a></h3>
-<p>One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error.</p>
+<p>One JSON object per line. All keys become fields with their JSON types (string, int, float, bool, null, nested map, array). A top-level array is a parse error; for a file that holds one JSON array, see <a href="../../cookbook/parsing/#a-file-that-is-one-json-array">A file that is one JSON array</a>.</p>
 <p>For pretty-printed objects that span several lines, join them first: <code>-j -M 'regex:match=^\{'</code> (each object starts with <code>{</code> in column 1), or <code>-j -M all</code> for a single document. See <a href="../multiline/">multiline.md</a>.</p>
 <h3 id="line-and-raw-formats">Line and Raw Formats<a class="headerlink" href="#line-and-raw-formats" title="Permanent link">&para;</a></h3>
 <table>
@@ -2267,7 +2287,9 @@
 <h3 id="syslog-format">Syslog Format<a class="headerlink" href="#syslog-format" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&lt;165&gt;1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&lt;34&gt;Jan 15 10:30:00 myhost myapp[1234]: Connection failed
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>2024-01-15T10:30:00.123456+00:00 myhost myapp[1234]: Connection failed
 </code></pre></div>
+<p>The third line is the RFC 3164 layout with an RFC 3339 timestamp, as rsyslog writes <code>/var/log/syslog</code> by default on Debian and Ubuntu; it is parsed as RFC 3164 and its timestamp carries the year and offset.</p>
 <table>
 <thead>
 <tr>
@@ -2587,7 +2609,7 @@
 </code></pre></div>
 <p>Auto-detection tries <code>cri</code> before logfmt and CSV, so a JSON or logfmt payload does not hide it. Docker's <code>json-file</code> driver writes one JSON object per line (<code>log</code>, <code>stream</code>, <code>time</code>); use <code>-f json</code> for that.</p>
 <h3 id="server-and-application-logs">Server and Application Logs<a class="headerlink" href="#server-and-application-logs" title="Permanent link">&para;</a></h3>
-<p>Example lines for the formats from <code>apache-error</code> to <code>s3</code> in the table above. Select one with <code>-f &lt;name&gt;</code> or in a cascade (<code>-f log4j,line</code>). Most definitions are adapted from <a href="https://lnav.org">lnav</a> (BSD-3-Clause).</p>
+<p>Example lines for the formats from <code>apache-error</code> to <code>tomcat</code> in the table above. Select one with <code>-f &lt;name&gt;</code> or in a cascade (<code>-f log4j,line</code>). Most definitions are adapted from <a href="https://lnav.org">lnav</a> (BSD-3-Clause).</p>
 <table>
 <thead>
 <tr>
@@ -2617,6 +2639,14 @@
 <td><code>2024-01-02 15:04:05,123 INFO [main] com.example.App - started</code></td>
 </tr>
 <tr>
+<td><code>monolog</code></td>
+<td><code>[2026-10-08 10:30:51] local.WARNING: Unusually large cart {"items":25,"threshold":10}</code></td>
+</tr>
+<tr>
+<td><code>mysql-error</code></td>
+<td><code>2026-10-08T10:20:09.168138Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password !</code> (MariaDB: <code>2026-10-08 10:23:44 7 [Warning] Access denied for user …</code>)</td>
+</tr>
+<tr>
 <td><code>nginx-error</code></td>
 <td><code>2024/01/02 15:04:05 [error] 29#29: open() failed</code></td>
 </tr>
@@ -2636,6 +2666,14 @@
 <td><code>s3</code></td>
 <td><code>79a59df9… mybucket [06/Feb/2024:00:00:38 +0000] 192.0.2.3 79a59df9… 3E57427F33A59F07 REST.GET.OBJECT photos/cat.jpg "GET /photos/cat.jpg HTTP/1.1" 200 - 2662 2662 14 12 "-" "aws-cli/2.0" -</code></td>
 </tr>
+<tr>
+<td><code>spring-boot</code></td>
+<td><code>2026-10-08T10:22:17.721Z  WARN 1 --- [demo] [nio-8080-exec-7] com.example.demo.DemoController : Order 4711 not found</code></td>
+</tr>
+<tr>
+<td><code>tomcat</code></td>
+<td><code>08-Oct-2026 10:27:32.174 SEVERE [Catalina-utility-2] org.apache.tomcat.util.digester.Digester.fatalError Parse fatal error at line [12] column [3]</code></td>
+</tr>
 </tbody>
 </table>
 <p><code>apache-error</code> fields besides <code>ts</code>, <code>level</code>, <code>msg</code> are each optional. <code>glog</code> <code>level</code> is <code>I</code>/<code>W</code>/<code>E</code>/<code>F</code>; <code>redis</code> <code>level</code> is the marker <code>.</code> <code>-</code> <code>*</code> <code>#</code>.</p>
@@ -2648,8 +2686,11 @@
 <p>Format notes:</p>
 <ul>
 <li><code>glog</code> timestamps have no year; see <a href="../time-reference/#year-and-timezone">Year and timezone</a>.</li>
-<li><code>postgres</code> matches only the default <code>log_line_prefix = '%m [%p] '</code>. For a custom prefix use <code>-f regex:</code>. Multi-line <code>STATEMENT</code>s (tab-indented continuation lines) need <code>-M indent</code>; without it the continuation lines are parse errors. <code>-f postgres,line</code> keeps them as separate <code>line</code> events instead.</li>
+<li><code>postgres</code> matches the default <code>log_line_prefix = '%m [%p] '</code> and the Debian/Ubuntu package's <code>'%m [%p] %q%u@%d '</code>, whose session lines add <code>user</code> and <code>db</code> (<code>… [5871] app@shop ERROR:  …</code>). For another prefix use <code>-f regex:</code>. Multi-line <code>STATEMENT</code>s (tab-indented continuation lines) need <code>-M indent</code>; without it the continuation lines are parse errors. <code>-f postgres,line</code> keeps them as separate <code>line</code> events instead.</li>
 <li><code>postgres</code> <code>ts</code> is naive. The logged zone abbreviation is kept in <code>log_tz</code> but not applied, because abbreviations like <code>CST</code> or <code>IST</code> are ambiguous. The timestamp is read in <code>--input-tz</code> (default UTC). For a server whose <code>log_timezone</code> is not UTC, pass e.g. <code>--input-tz Europe/Berlin</code>.</li>
+<li><code>monolog</code> keeps <code>context</code> and <code>extra</code> as the JSON text Monolog wrote; read them with <code>e.context.parse_json()</code>. Laravel writes an exception's stack trace into <code>context</code> across many lines: group them with <code>-M timestamp</code>.</li>
+<li><code>mysql-error</code> covers MySQL 5.7/8 and MariaDB; <code>err_code</code> and <code>subsystem</code> exist only in MySQL 8 lines. <code>thread</code> is the connection id, 0 for the server itself.</li>
+<li><code>spring-boot</code> matches Spring Boot's default layout, with or without the <code>[app]</code> group of 3.x and later. Lines with an application group or a tracing id fall through to <code>iso8601-level</code>. Stack traces need <code>-M timestamp</code>, as do <code>tomcat</code>'s.</li>
 </ul>
 <h3 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h3>
 <p><code>-f 'cols:&lt;spec&gt;'</code> splits on whitespace (runs of spaces count as one separator), or on the string given with <code>--cols-sep</code>.</p>
@@ -2748,11 +2789,13 @@
 <li><code>combined</code></li>
 <li><code>cri</code></li>
 <li><code>logfmt</code></li>
-<li><code>csv</code>/<code>tsv</code>: at least two commas or tabs. If the first field contains no letters, <code>csvnh</code>/<code>tsvnh</code>; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit <code>-f csv</code> skips this check.</li>
-<li><code>glog</code>, <code>nginx-error</code>, <code>apache-error</code>, <code>log4j</code>, <code>python-logging</code>, <code>postgres</code>, <code>redis</code>, <code>s3</code>, <code>iso8601-level</code> (<code>haproxy</code> lines are taken by <code>syslog</code> in step 3)</li>
+<li><code>tsv</code>/<code>tsvnh</code>: at least two tabs, with the same header check as <code>csv</code> below. Tab-separated lines are tried here, before the application-log formats, since tabs are a deliberate delimiter.</li>
+<li><code>glog</code>, <code>nginx-error</code>, <code>apache-error</code>, <code>log4j</code>, <code>python-logging</code>, <code>postgres</code>, <code>redis</code>, <code>s3</code>, <code>spring-boot</code>, <code>tomcat</code>, <code>mysql-error</code>, <code>monolog</code>, <code>iso8601-level</code> (<code>haproxy</code> lines are taken by <code>syslog</code> in step 3). These come before comma-separated <code>csv</code> because their layouts are specific, while <code>csv</code> takes any line with two commas.</li>
+<li><code>csv</code>: at least two commas. If the first field contains no letters, <code>csvnh</code>; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit <code>-f csv</code> skips this check.</li>
 <li><code>line</code></li>
 </ol>
 <p><strong>Mixed files:</strong> if the file sample contains more than one format, kelora parses with <code>&lt;dominant format&gt;,line</code>, exactly like an explicit <a href="#cascade-mode">cascade</a>, and each event gets <code>_format</code>; a hint says so, since the extra field changes the output's shape (<code>--exclude-keys _format</code> drops it, an explicit <code>-f json,line</code> silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become <code>line</code> events and a hint prints the explicit <code>-f</code> (e.g. <code>-f json,syslog,line</code>) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.</p>
+<p><strong>JSON arrays:</strong> a sample that starts like a JSON array of objects (<code>[</code> on its own line followed by <code>{</code>, or <code>[{</code>) is read as <code>line</code>, and a hint names the command that reads it. On stdin only <code>[{</code> on the first line is recognized.</p>
 <p><code>-v</code> prints the decision, e.g. <code>Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)</code>.</p>
 <h3 id="auto-detection-per-file">Auto-Detection Per File<a class="headerlink" href="#auto-detection-per-file" title="Permanent link">&para;</a></h3>
 <p><code>-f auto-per-file</code> runs the file detection above separately for each file, so JSON and logfmt files can be read in one run:</p>

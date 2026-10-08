@@ -1101,6 +1101,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-file-that-is-one-json-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A file that is one JSON array
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keep-only-the-json-lines-or-only-the-rest" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1735,6 +1746,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-file-that-is-one-json-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A file that is one JSON array
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keep-only-the-json-lines-or-only-the-rest" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1809,6 +1831,17 @@ instead of <code>msg</code>.</p>
 <p><code>kelora pod.log -e 'e.absorb_json("msg")'</code> — Kelora detects the CRI format, and
 <code>absorb_json</code> turns the JSON inside <code>msg</code> into fields.
 <a href="../../guide/parse/#6-finish-the-job-in-a-script">Get Logs into Shape</a></p>
+<h2 id="a-file-that-is-one-json-array">A file that is one JSON array<a class="headerlink" href="#a-file-that-is-one-json-array" title="Permanent link">&para;</a></h2>
+<p>Exports often hold <code>[{...}, {...}]</code> instead of one object per line. Read the
+whole file as one event, parse it, and emit each element as its own event:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/json_array.json<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>-M<span class="w"> </span>all<span class="w"> </span>-e<span class="w"> </span><span class="s1">'emit_each(e.line.parse_json())'</span><span class="w"> </span>-l<span class="w"> </span>error
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:00:07Z' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">ERROR</span>' <span class=" -Color -Color-Green">message</span>='Card declined'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">amount</span>=129.5 <span class=" -Color -Color-Green">service</span>='payments' <span class=" -Color -Color-Green">user</span>='bob'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:00:20Z' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">ERROR</span>' <span class=" -Color -Color-Green">message</span>='Gateway timeout'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">amount</span>=42.0 <span class=" -Color -Color-Green">service</span>='payments' <span class=" -Color -Color-Green">user</span>='alice'
+</code></pre></div>
+<p><a href="../../guide/scripting/#one-event-per-array-element">One event per array element</a></p>
 <h2 id="keep-only-the-json-lines-or-only-the-rest">Keep only the JSON lines (or only the rest)<a class="headerlink" href="#keep-only-the-json-lines-or-only-the-rest" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/mixed_format.log<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e._format == "line"'</span><span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>

@@ -7104,10 +7104,11 @@ into <code>()</code>, which removes the field on assignment, so <code>!= ()</cod
 </code></pre></div>
 <p>To parse a field and merge it into the event in one step, with a status report, see the <a href="#event-manipulation"><code>absorb_*</code> functions</a>.</p>
 <h4 id="textparse_json"><code>text.parse_json()</code><a class="headerlink" href="#textparse_json" title="Permanent link">&para;</a></h4>
-<p>Parse a JSON string into a map or array. Invalid JSON is a runtime error.</p>
+<p>Parse JSON text into a map, array or scalar, with the same value rules as <code>-f json</code> (duplicate keys: last wins; integers too large for 64 bits stay exact). Invalid JSON is a runtime error. The text is only parsed, never evaluated.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>e.data = e.payload.parse_json();
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>e.value = e.data["key"];
 </code></pre></div>
+<p>For a file that holds one JSON array, see <a href="../../cookbook/parsing/#a-file-that-is-one-json-array">A file that is one JSON array</a>.</p>
 <h4 id="textparse_logfmt"><code>text.parse_logfmt()</code><a class="headerlink" href="#textparse_logfmt" title="Permanent link">&para;</a></h4>
 <p>Parse a logfmt line; quote-aware, and numbers and booleans are typed.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>let f = e.line.parse_logfmt();                   // 'level=info msg="hi there" n=3'
