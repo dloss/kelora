@@ -48,9 +48,9 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
     //    This prefix is highly specific, but the message after it is frequently
     //    JSON or logfmt, so it must be claimed *before* the logfmt and CSV steps
     //    (a JSON message's commas would otherwise trip CSV; key=value pairs would
-    //    trip logfmt). Unlike the other named formats — which are only tried as
-    //    the last step before `line` — CRI gets a dedicated early detector so
-    //    auto-detection works regardless of the message payload.
+    //    trip logfmt). Unlike the other named formats — which are tried after
+    //    logfmt — CRI gets a dedicated early detector so auto-detection works
+    //    regardless of the message payload.
     if let Some(fmt) = detect_cri(trimmed) {
         return Ok(ConfigInputFormat::Named(fmt));
     }
@@ -60,21 +60,31 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
         return Ok(ConfigInputFormat::Logfmt);
     }
 
-    // 7. CSV/TSV detection
-    if let Some(csv_format) = detect_csv_variants(trimmed) {
-        return Ok(csv_format);
+    // 7. TSV. Tabs are a deliberate delimiter, so a tab-separated export of
+    //    log records (`2024-01-02 10:00:00<TAB>INFO<TAB>started`) stays TSV
+    //    rather than being read as an application log in step 8.
+    if trimmed.matches('\t').count() >= 2 {
+        if let Some(tsv_format) = detect_csv_variants(trimmed) {
+            return Ok(tsv_format);
+        }
     }
 
-    // 8. Built-in named application-log formats adapted from lnav.
-    //    Tried last (just before the line fallback) so it can only reclassify
-    //    input that would otherwise become `line` — never a format already
-    //    detected above. Returns the named format (regex-backed) so the notice
-    //    and stats show its name (e.g. "log4j") rather than a bare "regex".
+    // 8. Built-in named application-log formats (mostly adapted from lnav).
+    //    Each is a regex anchored on a specific layout, so they go ahead of the
+    //    CSV step, which claims any line with two commas: a Monolog line's JSON
+    //    context or a Java timestamp's `,123` millis plus a comma in the message
+    //    would otherwise turn an app log into CSV columns. Returns the named
+    //    format (regex-backed) so the notice and stats show its name.
     if let Some(fmt) = crate::parsers::lnav_formats::detect(trimmed) {
         return Ok(ConfigInputFormat::Named(fmt));
     }
 
-    // 9. Fallback to line format
+    // 9. CSV (and TSV lines step 7 passed over)
+    if let Some(csv_format) = detect_csv_variants(trimmed) {
+        return Ok(csv_format);
+    }
+
+    // 10. Fallback to line format
     Ok(ConfigInputFormat::Line)
 }
 

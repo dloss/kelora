@@ -1,0 +1,79 @@
+[2026-10-08T10:32:02.948896+00:00] app.INFO: Worker starting {"php":"8.5.11","queues":["emails","invoices"],"concurrency":4} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:02.966231+00:00] app.DEBUG: Loaded configuration [] {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:02.967558+00:00] db.INFO: Connected to database {"dsn":"mysql:host=db;dbname=shop","pool":10} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:02.969056+00:00] queue.NOTICE: Queue {name} has {count} pending jobs {"name":"invoices","count":37} []
+[2026-10-08T10:32:02.970454+00:00] queue.INFO: Processing job {"job_id":"job-4001","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:02.972584+00:00] queue.INFO: Job done {"job_id":"job-4001","duration_ms":57,"memory_mb":0.89} []
+[2026-10-08T10:32:03.004280+00:00] queue.INFO: Processing job {"job_id":"job-4002","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.006602+00:00] queue.INFO: Job done {"job_id":"job-4002","duration_ms":94,"memory_mb":0.89} []
+[2026-10-08T10:32:03.038640+00:00] queue.INFO: Processing job {"job_id":"job-4003","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.041093+00:00] queue.INFO: Job done {"job_id":"job-4003","duration_ms":131,"memory_mb":0.89} []
+[2026-10-08T10:32:03.074147+00:00] queue.INFO: Processing job {"job_id":"job-4004","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.075929+00:00] queue.INFO: Job done {"job_id":"job-4004","duration_ms":168,"memory_mb":0.89} []
+[2026-10-08T10:32:03.107550+00:00] queue.INFO: Processing job {"job_id":"job-4005","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.109756+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1205],"time_ms":2050} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.111168+00:00] queue.INFO: Job done {"job_id":"job-4005","duration_ms":205,"memory_mb":0.89} []
+[2026-10-08T10:32:03.142730+00:00] queue.INFO: Processing job {"job_id":"job-4006","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.144541+00:00] queue.INFO: Job done {"job_id":"job-4006","duration_ms":242,"memory_mb":0.89} []
+[2026-10-08T10:32:03.176171+00:00] queue.INFO: Processing job {"job_id":"job-4007","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.177729+00:00] queue.ERROR: Job failed {"job_id":"job-4007","exception":"[object] (PaymentException(code: 402): Charge for invoice INV-2026-7 failed at /work/worker.php:44)\n[previous exception] [object] (PDOException(code: 0): SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock at /work/worker.php:42)"} []
+[2026-10-08T10:32:03.179110+00:00] queue.WARNING: Retrying job {"job_id":"job-4007","attempt":2,"delay_s":30} []
+[2026-10-08T10:32:03.180854+00:00] queue.INFO: Processing job {"job_id":"job-4008","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.182390+00:00] queue.INFO: Job done {"job_id":"job-4008","duration_ms":66,"memory_mb":0.89} []
+[2026-10-08T10:32:03.213636+00:00] queue.INFO: Processing job {"job_id":"job-4009","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.215146+00:00] queue.INFO: Job done {"job_id":"job-4009","duration_ms":103,"memory_mb":0.89} []
+[2026-10-08T10:32:03.246697+00:00] queue.INFO: Processing job {"job_id":"job-4010","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.248871+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1210],"time_ms":1400} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.250701+00:00] queue.INFO: Job done {"job_id":"job-4010","duration_ms":140,"memory_mb":0.89} []
+[2026-10-08T10:32:03.282561+00:00] queue.INFO: Processing job {"job_id":"job-4011","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.284598+00:00] queue.INFO: Job done {"job_id":"job-4011","duration_ms":177,"memory_mb":0.89} []
+[2026-10-08T10:32:03.316134+00:00] queue.INFO: Processing job {"job_id":"job-4012","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.318811+00:00] queue.INFO: Job done {"job_id":"job-4012","duration_ms":214,"memory_mb":0.89} []
+[2026-10-08T10:32:03.350609+00:00] queue.INFO: Processing job {"job_id":"job-4013","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.352671+00:00] queue.INFO: Job done {"job_id":"job-4013","duration_ms":251,"memory_mb":0.89} []
+[2026-10-08T10:32:03.384842+00:00] queue.INFO: Processing job {"job_id":"job-4014","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.387678+00:00] queue.INFO: Job done {"job_id":"job-4014","duration_ms":38,"memory_mb":0.89} []
+[2026-10-08T10:32:03.419677+00:00] queue.INFO: Processing job {"job_id":"job-4015","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.421364+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1215],"time_ms":750} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.422784+00:00] queue.INFO: Job done {"job_id":"job-4015","duration_ms":75,"memory_mb":0.89} []
+[2026-10-08T10:32:03.454403+00:00] queue.INFO: Processing job {"job_id":"job-4016","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.456191+00:00] queue.INFO: Job done {"job_id":"job-4016","duration_ms":112,"memory_mb":0.89} []
+[2026-10-08T10:32:03.488596+00:00] queue.INFO: Processing job {"job_id":"job-4017","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.490659+00:00] queue.INFO: Job done {"job_id":"job-4017","duration_ms":149,"memory_mb":0.89} []
+[2026-10-08T10:32:03.522225+00:00] queue.INFO: Processing job {"job_id":"job-4018","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.523837+00:00] queue.INFO: Job done {"job_id":"job-4018","duration_ms":186,"memory_mb":0.89} []
+[2026-10-08T10:32:03.555453+00:00] queue.INFO: Processing job {"job_id":"job-4019","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.558477+00:00] queue.INFO: Job done {"job_id":"job-4019","duration_ms":223,"memory_mb":0.89} []
+[2026-10-08T10:32:03.591985+00:00] queue.INFO: Processing job {"job_id":"job-4020","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.594891+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1220],"time_ms":2600} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.596622+00:00] queue.INFO: Job done {"job_id":"job-4020","duration_ms":260,"memory_mb":0.89} []
+[2026-10-08T10:32:03.628431+00:00] queue.INFO: Processing job {"job_id":"job-4021","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.630905+00:00] queue.INFO: Job done {"job_id":"job-4021","duration_ms":47,"memory_mb":0.89} []
+[2026-10-08T10:32:03.662563+00:00] queue.INFO: Processing job {"job_id":"job-4022","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.663900+00:00] queue.INFO: Job done {"job_id":"job-4022","duration_ms":84,"memory_mb":0.89} []
+[2026-10-08T10:32:03.695681+00:00] queue.INFO: Processing job {"job_id":"job-4023","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.697995+00:00] queue.ERROR: Job failed {"job_id":"job-4023","exception":"[object] (PaymentException(code: 402): Charge for invoice INV-2026-23 failed at /work/worker.php:44)\n[previous exception] [object] (PDOException(code: 0): SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock at /work/worker.php:42)"} []
+[2026-10-08T10:32:03.699602+00:00] queue.WARNING: Retrying job {"job_id":"job-4023","attempt":2,"delay_s":30} []
+[2026-10-08T10:32:03.701167+00:00] queue.INFO: Processing job {"job_id":"job-4024","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.702790+00:00] queue.INFO: Job done {"job_id":"job-4024","duration_ms":158,"memory_mb":0.89} []
+[2026-10-08T10:32:03.734383+00:00] queue.INFO: Processing job {"job_id":"job-4025","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.735772+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1225],"time_ms":1950} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.737630+00:00] queue.INFO: Job done {"job_id":"job-4025","duration_ms":195,"memory_mb":0.89} []
+[2026-10-08T10:32:03.769215+00:00] queue.INFO: Processing job {"job_id":"job-4026","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.770651+00:00] queue.INFO: Job done {"job_id":"job-4026","duration_ms":232,"memory_mb":0.89} []
+[2026-10-08T10:32:03.802431+00:00] queue.INFO: Processing job {"job_id":"job-4027","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.804402+00:00] queue.INFO: Job done {"job_id":"job-4027","duration_ms":269,"memory_mb":0.89} []
+[2026-10-08T10:32:03.836550+00:00] queue.INFO: Processing job {"job_id":"job-4028","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.838568+00:00] queue.INFO: Job done {"job_id":"job-4028","duration_ms":56,"memory_mb":0.89} []
+[2026-10-08T10:32:03.870811+00:00] queue.INFO: Processing job {"job_id":"job-4029","type":"SendInvoiceEmail","attempt":1} []
+[2026-10-08T10:32:03.872536+00:00] queue.INFO: Job done {"job_id":"job-4029","duration_ms":93,"memory_mb":0.89} []
+[2026-10-08T10:32:03.904096+00:00] queue.INFO: Processing job {"job_id":"job-4030","type":"GeneratePdf","attempt":1} []
+[2026-10-08T10:32:03.906426+00:00] db.WARNING: Slow query detected {"sql":"SELECT * FROM invoices WHERE customer_id = ?","bindings":[1230],"time_ms":1300} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.907809+00:00] queue.INFO: Job done {"job_id":"job-4030","duration_ms":130,"memory_mb":0.89} []
+[2026-10-08T10:32:03.939269+00:00] app.INFO: Message with an embedded newline {"note":"context value\nwith newline"} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.940699+00:00] app.INFO: Unicode and quotes: Grüße "quoted" \backslash {"path":"/var/www/app/storage","ratio":0.75,"enabled":true,"nothing":null} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.941898+00:00] app.ERROR: Uncaught exception while generating report {"exception":"[object] (DivisionByZeroError(code: 0): Division by zero at /work/worker.php:58)"} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.943146+00:00] app.CRITICAL: Disk usage above threshold {"mount":"/var","used_pct":96.2} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.944400+00:00] app.ALERT: Payment provider unreachable {"provider":"stripe","timeout_s":10} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.945851+00:00] app.EMERGENCY: Shutting down: out of database connections [] {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}
+[2026-10-08T10:32:03.947043+00:00] app.INFO: Worker stopped {"processed":28,"failed":2,"uptime_s":3} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}

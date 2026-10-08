@@ -342,6 +342,14 @@ Tailmap uses percentile-based symbols: `_` (below p90), `1` (p90-p95), `2` (p95-
 - `sampling_hash.jsonl.gz` - Deterministic sampling (compressed)
 - `web_access_large.log.gz` - Large file processing (compressed)
 
+Real captures from the software itself (unedited; `laravel.log` keeps whole records only), one per built-in application-log format:
+
+- `spring_boot.log` - Spring Boot 3.5 app with a stack trace (`spring-boot`)
+- `tomcat_catalina.log` - Tomcat 11 console log with SEVERE parse errors and traces (`tomcat`)
+- `mysql_error.log`, `mariadb_error.log` - MySQL 8.4 and MariaDB 11.4 error logs (`mysql-error`)
+- `monolog.log` - plain PHP Monolog with context and extra (`monolog`)
+- `laravel.log` - Laravel 13 log with multi-line exception traces (`monolog`, `-M 'regex:match=^\[\d{4}-'`)
+
 ### Stress Tests (`nightmare_*`)
 
 Complex scenarios for testing performance and correctness:

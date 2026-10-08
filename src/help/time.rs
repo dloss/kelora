@@ -55,7 +55,7 @@ Common examples:
 Timezone policy (how the zone is decided):
   - Numeric offset present (e.g. +0200, -0700): always honored as-is.
   - No offset (naive: syslog, log4j, python-logging, glog, apache-error,
-    postgres, ...): resolved with --input-tz, which defaults to UTC. Set
+    postgres, tomcat, ...): resolved with --input-tz, which defaults to UTC. Set
     --input-tz <zone> (or the TZ env var) if your source logs local time,
     otherwise every timestamp is shifted silently and so are --since/--until,
     --span boundaries, and ordering.

@@ -30,12 +30,12 @@
 //!   distinct layouts (e.g. AWS S3 `std`/`std-v2`, HAProxy http/tcp), which
 //!   cannot be folded into one regex because Rust's engine forbids reusing a
 //!   capture-group name across alternation branches.
-//! - Detection runs *after* every existing detector and immediately before the
-//!   `line` fallback (see [`crate::parsers::auto_detect`]). It can therefore only
-//!   reclassify input that would otherwise have become `line`, so it never
-//!   changes a format Kelora already detected. (Consequence: syslog-transported
-//!   formats like HAProxy are claimed by the syslog detector under `-f auto`;
-//!   reach them with `-f <name>`.)
+//! - Detection runs after the wire-format detectors (json, cef, syslog,
+//!   combined, cri, logfmt) and before csv and the `line` fallback (see
+//!   [`crate::parsers::auto_detect`]). Ahead of csv because csv claims any line
+//!   with two commas, and app logs often have them. (Consequence:
+//!   syslog-transported formats like HAProxy are claimed by the syslog detector
+//!   under `-f auto`; reach them with `-f <name>`.)
 //! - A match is returned as `InputFormat::Named`, carrying the format's name and
 //!   patterns, so it can be displayed, selected via `-f <name>`, and reused
 //!   across the parser-build/timestamp/strict pipeline unchanged.
@@ -287,6 +287,87 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
         samples: &[
             r#"Feb 06 12:14:14 localhost haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET /index.html HTTP/1.1""#,
             r#"Feb 06 12:14:15 localhost haproxy[14389]: 10.0.1.2:33320 [06/Feb/2024:12:14:15.123] tcp-in mysql/db1 0/0/5007 1230 -- 1/1/1/1/0 0/0"#,
+        ],
+    },
+    // Spring Boot's default console/file layout (logback, `defaults.xml`):
+    // `%d %5p ${PID} --- [app] [%15.15t] %-40.40logger{39} : %m`, e.g.
+    // `2026-10-08T10:22:17.721Z  WARN 1 --- [demo] [nio-8080-exec-7] com.example.DemoController : msg`.
+    // Spring Boot 3.x/4.x write an ISO timestamp with offset and `[app] `; 2.x a
+    // naive `yyyy-MM-dd HH:mm:ss.SSS` and no app — both resolve adaptively. Thread
+    // and logger are padded/left-truncated to fixed widths; the padding is
+    // dropped. An application group or tracing correlation id adds more bracket
+    // groups; those lines don't match and fall through to `iso8601-level`.
+    // Must precede `iso8601-level`, which would otherwise claim these lines
+    // with pid, thread and logger left in `msg`. Written from real 2.7, 3.5 and
+    // 4.1 captures.
+    LnavFormat {
+        name: "spring-boot",
+        patterns: &[
+            r"(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})?)\s+(?P<level>ERROR|WARN|INFO|DEBUG|TRACE) (?P<pid:int>\d+) --- (?:\[(?P<app>[^\]]+)\] )?\[\s*(?P<thread>[^\]]*)\] (?P<logger>\S+)\s+: (?P<msg>.*)",
+        ],
+        ts_format: None,
+        samples: &[
+            "2026-10-08T10:22:17.721Z  WARN 1 --- [demo] [nio-8080-exec-7] com.example.demo.DemoController          : Order 4711 not found, returning empty result",
+            "2026-10-08 10:22:31.616  INFO 1 --- [           main] com.example.demo.DemoApplication         : Starting DemoApplication v0.0.1-SNAPSHOT using Java 21.0.12.1",
+        ],
+    },
+    // Tomcat's console/catalina log (JULI `OneLineFormatter`, fixed in code):
+    // `08-Oct-2026 10:27:32.174 SEVERE [main] org.apache.Foo.method msg`.
+    // Levels are java.util.logging's (SEVERE, WARNING, INFO, CONFIG, FINE…).
+    // `source` is the logging class and method. The `dd-MMM-yyyy` date isn't in
+    // the adaptive list, so it is pinned. Written from a real Tomcat 11 capture.
+    LnavFormat {
+        name: "tomcat",
+        patterns: &[
+            r"(?P<ts>\d{2}-[A-Z][a-z]{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3}) (?P<level>SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST) \[(?P<thread>[^\]]*)\] (?P<source>\S+) (?P<msg>.*)",
+        ],
+        ts_format: Some("%d-%b-%Y %H:%M:%S%.f"),
+        samples: &[
+            "08-Oct-2026 10:27:21.755 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [/usr/local/tomcat/webapps/ROOT]",
+            "08-Oct-2026 10:27:32.174 SEVERE [Catalina-utility-2] org.apache.tomcat.util.digester.Digester.fatalError Parse fatal error at line [12] column [3]",
+        ],
+    },
+    // MySQL 8 and MariaDB error log:
+    // `2026-10-08T10:20:05.980494Z 0 [System] [MY-015017] [Server] msg` (MySQL;
+    // the `[MY-n] [Subsystem]` pair is absent in 5.7) and
+    // `2026-10-08 10:23:24 0 [Note] InnoDB: msg` (MariaDB). `thread` is the
+    // connection id (0 for the server itself). The docker entrypoint's own
+    // `… [Note] [Entrypoint]: …` lines have no thread id and don't match.
+    // Adapted from lnav's `mysql_error_log`, checked against real MySQL 8.0/8.4
+    // and MariaDB 11.4 captures.
+    LnavFormat {
+        name: "mysql-error",
+        patterns: &[
+            r"(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?) (?P<thread:int>\d+) \[(?P<level>System|ERROR|Error|Warning|Note)\](?: \[(?P<err_code>MY-\d+)\] \[(?P<subsystem>[^\]]+)\])? (?P<msg>.*)",
+        ],
+        ts_format: None,
+        samples: &[
+            "2026-10-08T10:20:05.980494Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.",
+            "2026-10-08 10:23:50 12 [Warning] Aborted connection 12 to db: 'unconnected' user: 'unauthenticated' host: '127.0.0.1' (This connection closed normally without authentication)",
+        ],
+    },
+    // Monolog's default `LineFormatter` (PHP; Laravel, Symfony):
+    // `[%datetime%] %channel%.%level_name%: %message% %context% %extra%`.
+    // Plain Monolog writes `2026-10-08T10:32:02.948896+00:00` and always prints
+    // context and extra (`[]` when empty); Laravel writes `2026-10-08 10:30:50`
+    // and drops empty ones. `context` and `extra` are kept as the JSON text
+    // Monolog wrote (parse them with `parse_json()`); `extra` is matched only
+    // when flat, which processors' output is. Laravel exceptions span many
+    // lines inside `context`; group them with `-M`.
+    // Adapted from lnav's `laravel_log`, checked against real Laravel 13 and
+    // Monolog 3 captures.
+    LnavFormat {
+        name: "monolog",
+        patterns: &[
+            // Context and extra both present (plain Monolog).
+            r"\[(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?)\] (?P<channel>[\w.-]+?)\.(?P<level>DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERGENCY): (?P<msg>.*?) (?P<context>\{.*\}|\[\]) (?P<extra>\{[^{}]*\}|\[\])\s*",
+            // At most a context (Laravel drops empty context and extra).
+            r"\[(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?)\] (?P<channel>[\w.-]+?)\.(?P<level>DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERGENCY): (?P<msg>.*?)(?: (?P<context>\{.*\}|\[\]))?\s*",
+        ],
+        ts_format: None,
+        samples: &[
+            r#"[2026-10-08T10:32:02.948896+00:00] app.INFO: Worker starting {"php":"8.5.11","queues":["emails","invoices"],"concurrency":4} {"host":"fd9ff9f8d00f","uid":"e191406","process_id":1}"#,
+            r#"[2026-10-08 10:30:51] local.WARNING: Unusually large cart {"items":25,"threshold":10} "#,
         ],
     },
     // Generic ISO-8601 prefixed application log (catch-all, kept last):
@@ -573,6 +654,48 @@ mod tests {
     }
 
     #[test]
+    fn monolog_splits_context_and_extra() {
+        let fmt = by_name("monolog").unwrap();
+        let parser = crate::parsers::MultiRegexParser::new(fmt.patterns, false).unwrap();
+        let field = |line: &str, name: &str| {
+            parser
+                .parse(line)
+                .unwrap()
+                .fields
+                .get(name)
+                .map(|v| v.to_string())
+        };
+
+        // Plain Monolog: context and extra, nested JSON in the context.
+        let line = r#"[2026-10-08T10:32:02.948896+00:00] app.INFO: Worker starting {"queues":["emails"],"cfg":{"n":4}} {"host":"fd9f","process_id":1}"#;
+        assert_eq!(field(line, "msg").as_deref(), Some("Worker starting"));
+        assert_eq!(
+            field(line, "context").as_deref(),
+            Some(r#"{"queues":["emails"],"cfg":{"n":4}}"#)
+        );
+        assert_eq!(
+            field(line, "extra").as_deref(),
+            Some(r#"{"host":"fd9f","process_id":1}"#)
+        );
+
+        // Empty context and extra print as `[]`.
+        let line = "[2026-10-08T10:32:02.968000+00:00] app.DEBUG: Loaded configuration [] []";
+        assert_eq!(field(line, "msg").as_deref(), Some("Loaded configuration"));
+
+        // Laravel: context only, trailing space; or neither.
+        let line = r#"[2026-10-08 10:30:51] local.WARNING: Unusually large cart {"items":25} "#;
+        assert_eq!(field(line, "msg").as_deref(), Some("Unusually large cart"));
+        assert_eq!(field(line, "context").as_deref(), Some(r#"{"items":25}"#));
+        assert_eq!(field(line, "extra"), None);
+        let line = "[2026-10-08 10:30:51] local.INFO: Inventory sync requested  ";
+        assert_eq!(
+            field(line, "msg").as_deref(),
+            Some("Inventory sync requested")
+        );
+        assert_eq!(field(line, "context"), None);
+    }
+
+    #[test]
     fn typed_fields_are_converted() {
         // glog pid is annotated :int and should arrive as an integer.
         let fmt = detect("I0102 15:04:05.123456 1234 server.go:42] hi").unwrap();
@@ -610,6 +733,7 @@ mod tests {
                 "glog" => Some("%m%d %H:%M:%S%.f"),
                 "redis" => Some("%d %b %Y %H:%M:%S%.f"),
                 "apache-error" => Some("%a %b %d %H:%M:%S%.f %Y"),
+                "tomcat" => Some("%d-%b-%Y %H:%M:%S%.f"),
                 _ => None,
             };
             assert_eq!(

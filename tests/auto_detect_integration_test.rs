@@ -1159,3 +1159,38 @@ fn test_auto_detect_json_array_file_hints_recipe() {
     assert_eq!(exit_code, 0, "{stderr}");
     assert_eq!(stdout.lines().count(), 2, "{stdout}");
 }
+
+/// Real captures of the application-log formats each detect as their own format,
+/// and every record in them parses. Counts are the records in each fixture; the
+/// remaining lines are stack traces, banners or docker-entrypoint output, which
+/// the auto-built cascade keeps as `line`.
+#[test]
+fn test_real_app_log_fixtures_detect_as_their_format() {
+    for (fixture, format, records) in [
+        ("examples/tomcat_catalina.log", "tomcat", 57),
+        ("examples/spring_boot.log", "spring-boot", 28),
+        ("examples/mysql_error.log", "mysql-error", 42),
+        ("examples/mariadb_error.log", "mysql-error", 103),
+        ("examples/monolog.log", "monolog", 79),
+        ("examples/laravel.log", "monolog", 15),
+    ] {
+        let (stdout, stderr, exit_code) = run_kelora(&["-v", "-F", "json", fixture]);
+        assert_eq!(exit_code, 0, "{fixture}: {stderr}");
+        assert!(
+            stderr.contains(&format!("Auto-detected format: {format} "))
+                || stderr.contains(&format!("Auto-detected format: cascade({format},line)")),
+            "{fixture} should detect as {format}: {stderr}"
+        );
+        let parsed = stdout
+            .lines()
+            .filter(|line| {
+                let event: serde_json::Value = serde_json::from_str(line).unwrap();
+                event.get("level").is_some()
+                    && event
+                        .get("_format")
+                        .is_none_or(|f| f.as_str() == Some(format))
+            })
+            .count();
+        assert_eq!(parsed, records, "{fixture}: records parsed as {format}");
+    }
+}

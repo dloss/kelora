@@ -21,11 +21,15 @@ Input format: `-f, --input-format <format>`. Output format: `-F, --output-format
 | `haproxy` | HAProxy HTTP/TCP traffic log | `client_ip`, `frontend`, `backend`, `server`, `status`, timers, … |
 | `iso8601-level` | ISO 8601 timestamp, level, message | `ts`, `level`, `msg` |
 | `log4j` | log4j / Java logging | `ts`, `level`, `msg`, `thread`, `logger` |
+| `monolog` | PHP Monolog (Laravel, Symfony) | `ts`, `channel`, `level`, `msg`, `context`, `extra` |
+| `mysql-error` | MySQL and MariaDB error log | `ts`, `level`, `msg`, `thread`, `err_code`, `subsystem` |
 | `nginx-error` | nginx error log | `ts`, `level`, `msg`, `pid`, `tid` |
 | `postgres` | PostgreSQL log, default or Debian prefix | `ts`, `level`, `msg`, `pid`, `log_tz`, `user`, `db` |
 | `python-logging` | Python `logging` (`asctime - name - levelname - message`) | `ts`, `level`, `msg`, `logger` |
 | `redis` | Redis server log | `ts`, `level`, `msg`, `pid`, `role` |
 | `s3` | AWS S3 server access log | `bucket`, `op`, `key`, `status`, … |
+| `spring-boot` | Spring Boot default log | `ts`, `level`, `msg`, `pid`, `app`, `thread`, `logger` |
+| `tomcat` | Tomcat catalina log | `ts`, `level`, `msg`, `thread`, `source` |
 | `cols:<spec>` | Whitespace- or separator-delimited columns | named in the spec |
 | `regex:<pattern>` | Anything a regex with named groups can match | named groups |
 | `auto-per-file` | Detects separately for each file | depends |
@@ -179,7 +183,7 @@ Auto-detection tries `cri` before logfmt and CSV, so a JSON or logfmt payload do
 
 ### Server and Application Logs
 
-Example lines for the formats from `apache-error` to `s3` in the table above. Select one with `-f <name>` or in a cascade (`-f log4j,line`). Most definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause).
+Example lines for the formats from `apache-error` to `tomcat` in the table above. Select one with `-f <name>` or in a cascade (`-f log4j,line`). Most definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause).
 
 | Format | Example line |
 |--------|--------------|
@@ -188,11 +192,15 @@ Example lines for the formats from `apache-error` to `s3` in the table above. Se
 | `haproxy` | `Feb 06 12:14:14 lb haproxy[14389]: 10.0.1.2:33317 [06/Feb/2024:12:14:14.655] http-in static/srv1 10/0/30/69/109 200 2750 - - ---- 1/1/1/1/0 0/0 "GET / HTTP/1.1"` |
 | `iso8601-level` | `2024-01-02T15:04:05Z INFO started` (space instead of `T`, `[…]` brackets, and `,` fractions also match) |
 | `log4j` | `2024-01-02 15:04:05,123 INFO [main] com.example.App - started` |
+| `monolog` | `[2026-10-08 10:30:51] local.WARNING: Unusually large cart {"items":25,"threshold":10}` |
+| `mysql-error` | `2026-10-08T10:20:09.168138Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password !` (MariaDB: `2026-10-08 10:23:44 7 [Warning] Access denied for user …`) |
 | `nginx-error` | `2024/01/02 15:04:05 [error] 29#29: open() failed` |
 | `postgres` | `2024-01-02 15:04:05.123 UTC [1234] LOG:  ready` |
 | `python-logging` | `2024-01-02 15:04:05,123 - myapp.db - INFO - connected` |
 | `redis` | `12345:M 06 Feb 2024 12:00:00.123 * Ready` |
 | `s3` | `79a59df9… mybucket [06/Feb/2024:00:00:38 +0000] 192.0.2.3 79a59df9… 3E57427F33A59F07 REST.GET.OBJECT photos/cat.jpg "GET /photos/cat.jpg HTTP/1.1" 200 - 2662 2662 14 12 "-" "aws-cli/2.0" -` |
+| `spring-boot` | `2026-10-08T10:22:17.721Z  WARN 1 --- [demo] [nio-8080-exec-7] com.example.demo.DemoController : Order 4711 not found` |
+| `tomcat` | `08-Oct-2026 10:27:32.174 SEVERE [Catalina-utility-2] org.apache.tomcat.util.digester.Digester.fatalError Parse fatal error at line [12] column [3]` |
 
 `apache-error` fields besides `ts`, `level`, `msg` are each optional. `glog` `level` is `I`/`W`/`E`/`F`; `redis` `level` is the marker `.` `-` `*` `#`.
 
@@ -213,6 +221,9 @@ Format notes:
 - `glog` timestamps have no year; see [Year and timezone](time-reference.md#year-and-timezone).
 - `postgres` matches the default `log_line_prefix = '%m [%p] '` and the Debian/Ubuntu package's `'%m [%p] %q%u@%d '`, whose session lines add `user` and `db` (`… [5871] app@shop ERROR:  …`). For another prefix use `-f regex:`. Multi-line `STATEMENT`s (tab-indented continuation lines) need `-M indent`; without it the continuation lines are parse errors. `-f postgres,line` keeps them as separate `line` events instead.
 - `postgres` `ts` is naive. The logged zone abbreviation is kept in `log_tz` but not applied, because abbreviations like `CST` or `IST` are ambiguous. The timestamp is read in `--input-tz` (default UTC). For a server whose `log_timezone` is not UTC, pass e.g. `--input-tz Europe/Berlin`.
+- `monolog` keeps `context` and `extra` as the JSON text Monolog wrote; read them with `e.context.parse_json()`. Laravel writes an exception's stack trace into `context` across many lines: group them with `-M 'regex:match=^\[\d{4}-'`.
+- `mysql-error` covers MySQL 5.7/8 and MariaDB; `err_code` and `subsystem` exist only in MySQL 8 lines. `thread` is the connection id, 0 for the server itself.
+- `spring-boot` matches Spring Boot's default layout, with or without the `[app]` group of 3.x and later. Lines with an application group or a tracing id fall through to `iso8601-level`. Stack traces need `-M timestamp`, as do `tomcat`'s.
 
 ### Column Format
 
@@ -284,9 +295,10 @@ Each line is tested in this order, first match wins:
 4. `combined`
 5. `cri`
 6. `logfmt`
-7. `csv`/`tsv`: at least two commas or tabs. If the first field contains no letters, `csvnh`/`tsvnh`; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit `-f csv` skips this check.
-8. `glog`, `nginx-error`, `apache-error`, `log4j`, `python-logging`, `postgres`, `redis`, `s3`, `iso8601-level` (`haproxy` lines are taken by `syslog` in step 3)
-9. `line`
+7. `tsv`/`tsvnh`: at least two tabs, with the same header check as `csv` below. Tab-separated lines are tried here, before the application-log formats, since tabs are a deliberate delimiter.
+8. `glog`, `nginx-error`, `apache-error`, `log4j`, `python-logging`, `postgres`, `redis`, `s3`, `spring-boot`, `tomcat`, `mysql-error`, `monolog`, `iso8601-level` (`haproxy` lines are taken by `syslog` in step 3). These come before comma-separated `csv` because their layouts are specific, while `csv` takes any line with two commas.
+9. `csv`: at least two commas. If the first field contains no letters, `csvnh`; otherwise the first line must read as a header row (a field holding prose or a full datetime marks it as data, so a log message with commas is not mistaken for CSV). An explicit `-f csv` skips this check.
+10. `line`
 
 **Mixed files:** if the file sample contains more than one format, kelora parses with `<dominant format>,line`, exactly like an explicit [cascade](#cascade-mode), and each event gets `_format`; a hint says so, since the extra field changes the output's shape (`--exclude-keys _format` drops it, an explicit `-f json,line` silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become `line` events and a hint prints the explicit `-f` (e.g. `-f json,syslog,line`) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.
 

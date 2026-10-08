@@ -10,8 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **`parse_json()` no longer runs code from the data it parses** - It was Rhai's built-in, which evaluates its input as a script expression: a log line such as `{"a": exit(7)}` stopped the run and hid every later line, `{"a": print("…")}` printed, and with `--allow-fs-writes` `append_file()` wrote files. kelora now provides its own `parse_json()` that only parses JSON. Upgrade if you run `parse_json()` on logs that others can write to; `absorb_json()`, `extract_json()` and `-f json` were not affected.
 
+### Added
+
+- **Four more built-in application-log formats** - `spring-boot` (Spring Boot 2.x–4.x default layout: `pid`, `app`, `thread`, `logger`), `tomcat` (Tomcat's catalina/console log: `thread`, `source`), `mysql-error` (MySQL 5.7/8 and MariaDB error logs: `thread`, `err_code`, `subsystem`) and `monolog` (PHP Monolog, as written by Laravel and Symfony: `channel`, plus `context` and `extra` as JSON text). They are auto-detected and selectable with `-f <name>`. Spring Boot logs were read as `iso8601-level` with pid, thread and logger stuck in `msg`; the others were read as `line` or CSV. Each was written against logs captured from the real software, now in `examples/`.
+
 ### Changed
 
+- **App-log formats are detected before CSV** - Auto-detection tried CSV, which takes any line with two commas, before the built-in application-log formats. Plain Monolog files (JSON context) and Java logs with `,123` milliseconds and a comma in the message were read as CSV columns. The application-log formats now come first. Tab-separated input is still tried as TSV before them, and other files that read as CSV before only change if their lines match one of those formats.
 - **`parse_json()` follows `-f json`** - It now returns arrays, strings, numbers and `()` for `null`, not just maps, so a file holding one JSON array can be read with `-f line -M all -e 'emit_each(e.line.parse_json())'`. Duplicate keys take the last value and integers beyond 64 bits stay exact, as with `-f json`. Text that isn't JSON, which the old version accepted (trailing commas, expressions like `1 + 2`), is now a runtime error.
 - **Hint for JSON array files** - Auto-detection read a file holding one JSON array as `line` and suggested `cols:` or `-f json,line`, neither of which reads it. The hint now names the command that does: `-f line -M all -e 'emit_each(e.line.parse_json())'`.
 

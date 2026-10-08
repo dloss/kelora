@@ -94,6 +94,18 @@ logfmt
   Heroku-style key=value pairs
   Fields: All parsed keys
 
+monolog
+  PHP Monolog line format, as written by Laravel and Symfony
+  ([2024-01-02 15:04:05] local.ERROR: msg {"user_id":1} {"host":"web1"})
+  Fields: ts, channel, level, msg [context, extra - the JSON text as written]
+  Note: Read context with e.context.parse_json(). Laravel exceptions span many
+        lines; group them with -M 'regex:match=^\[\d{4}-'
+
+mysql-error
+  MySQL 5.7/8 and MariaDB error log
+  (2024-01-02T15:04:05.123456Z 0 [Warning] [MY-010068] [Server] msg)
+  Fields: ts, level, msg, thread [err_code, subsystem - MySQL 8 only]
+
 nginx-error
   nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
   Fields: ts, level, msg, pid, tid
@@ -145,11 +157,24 @@ s3
         a second-stage parse, e.g.:
     kelora -f s3 access.log --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
 
+spring-boot
+  Spring Boot default console/file log, 2.x to 4.x
+  (2024-01-02T15:04:05.123Z  INFO 1 --- [app] [main] c.e.DemoApp : msg)
+  Fields: ts, level, msg, pid, thread, logger [app - 3.x and later]
+  Note: Lines with an application group or a tracing id don't match and are
+        read by iso8601-level. Stack traces need -M timestamp
+
 syslog
   RFC5424/RFC3164 system logs, including rsyslog's RFC 3339 timestamps
   (2025-08-31T09:36:55.418891+02:00 host prog[pid]: msg; Debian/Ubuntu default)
   Fields: pri, facility, severity, level, ts, host, prog, pid, msg
           [msgid, version - RFC5424 only]
+
+tomcat
+  Tomcat catalina/console log (java.util.logging OneLineFormatter)
+  (08-Oct-2026 10:27:32.174 SEVERE [main] org.apache.Foo.method msg)
+  Fields: ts, level (SEVERE/WARNING/INFO/...), msg, thread, source
+  Note: Stack traces need -M timestamp
 
 Several of the log layouts above are adapted from lnav (BSD-3-Clause; see
 THIRD_PARTY_LICENSES.md).
@@ -171,9 +196,10 @@ auto (default)
   deeper offsets (1/4, 1/2, 3/4, tail), so a format change partway through
   the file — concatenated rotations, say — is still caught; gzip/zstd files
   sample the head only (compressed streams aren't seekable)
-  Detection order: json → cef → syslog → combined → cri → logfmt → csv
+  Detection order: json → cef → syslog → combined → cri → logfmt → tsv
                    → glog → nginx-error → apache-error → log4j
-                   → python-logging → postgres → redis → s3 → iso8601-level
+                   → python-logging → postgres → redis → s3 → spring-boot
+                   → tomcat → mysql-error → monolog → iso8601-level → csv
                    → line
   Note: Detects once and applies to all lines
   Note: File input only: if the sampled head mixes formats, kelora parses
@@ -197,9 +223,10 @@ auto (default)
 
 auto-per-file
   Auto-detect format separately for each input file
-  Detection order: json → cef → syslog → combined → cri → logfmt → csv
+  Detection order: json → cef → syslog → combined → cri → logfmt → tsv
                    → glog → nginx-error → apache-error → log4j
-                   → python-logging → postgres → redis → s3 → iso8601-level
+                   → python-logging → postgres → redis → s3 → spring-boot
+                   → tomcat → mysql-error → monolog → iso8601-level → csv
                    → line
   Note: Detects once per file and applies to that file's lines, sampling each
         file's head like 'auto' — a file that mixes formats gets a per-file

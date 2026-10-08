@@ -177,7 +177,7 @@ pub struct Cli {
     #[arg(long = "no-input", help_heading = "Input Options")]
     pub no_input: bool,
 
-    /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cri, apache-error, glog, haproxy, iso8601-level, log4j, nginx-error, postgres, python-logging, redis, s3, cols:<spec>, regex:<pattern>. Fields of each: --help-formats.
+    /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cri, apache-error, glog, haproxy, iso8601-level, log4j, monolog, mysql-error, nginx-error, postgres, python-logging, redis, s3, spring-boot, tomcat, cols:<spec>, regex:<pattern>. Fields of each: --help-formats.
     ///
     /// With 'auto', the format is detected from the first non-empty line (stdin) or a sample of the file (files: the head plus, for larger plain files, a few probe windows deeper in); a file that mixes formats is parsed with a cascade of the detected formats automatically. For mixed stdin streams pass a cascade (below) explicitly.
     ///
