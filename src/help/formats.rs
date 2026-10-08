@@ -145,7 +145,8 @@ s3
     kelora -f s3 access.log --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
 
 syslog
-  RFC5424/RFC3164 system logs
+  RFC5424/RFC3164 system logs, including rsyslog's RFC 3339 timestamps
+  (2025-08-31T09:36:55.418891+02:00 host prog[pid]: msg; Debian/Ubuntu default)
   Fields: pri, facility, severity, level, ts, host, prog, pid, msg
           [msgid, version - RFC5424 only]
 

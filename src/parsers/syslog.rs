@@ -12,6 +12,15 @@ fn multiline_aware_regex(pattern: &str) -> Result<Regex, regex::Error> {
         .build()
 }
 
+/// Words that name a log level in `timestamp LEVEL message` application logs.
+fn is_level_word(word: &str) -> bool {
+    const LEVELS: &[&str] = &[
+        "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "WARNING", "ERROR", "ERR", "FATAL", "CRIT",
+        "CRITICAL",
+    ];
+    LEVELS.iter().any(|level| level.eq_ignore_ascii_case(word))
+}
+
 pub struct SyslogParser {
     rfc5424_regex: Regex,
     rfc3164_regex: Regex,
@@ -36,8 +45,13 @@ impl SyslogParser {
         // with `ts='Job 15 12:00:00'` — a fabricated timestamp that then failed
         // chrono parsing anyway. No real RFC3164 line is rejected by the
         // tightening; only never-were-syslog lines are.
+        //
+        // The timestamp may also be RFC 3339 with an offset
+        // (`2025-08-31T09:36:55.418891-07:00 host prog[pid]: msg`): rsyslog's
+        // built-in RSYSLOG_FileFormat, which Debian (since 2022) and Ubuntu
+        // write to /var/log/syslog by default. Same layout otherwise.
         let rfc3164_regex = multiline_aware_regex(
-            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d)\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
+            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2}))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
         ).context("Failed to compile RFC3164 regex")?;
 
         Ok(Self {
@@ -178,6 +192,26 @@ impl SyslogParser {
     /// Try to parse as RFC3164 format
     fn try_parse_rfc3164(&self, line: &str) -> Option<Event> {
         if let Some(captures) = self.rfc3164_regex.captures(line) {
+            // Other ISO-timestamped logs also fit `ts host prog: msg`:
+            // `2024-01-02T15:04:05Z INFO app::server: listening` (Rust tracing
+            // and similar) with the level read as the host, and AWS ELB's
+            // `ts lb-name 10.0.0.1:2817 ...` with the client IP read as the
+            // program. No syslog host is named like a level and no program name
+            // lacks a letter, so such lines are left to other formats.
+            let iso_ts = captures
+                .get(2)
+                .is_some_and(|ts| ts.as_str().starts_with(|c: char| c.is_ascii_digit()));
+            if iso_ts
+                && (captures
+                    .get(3)
+                    .is_some_and(|host| is_level_word(host.as_str()))
+                    || captures.get(4).is_some_and(|prog| {
+                        !prog.as_str().chars().any(|c| c.is_ascii_alphabetic())
+                    }))
+            {
+                return None;
+            }
+
             // Pre-allocate with expected field count
             let mut event = Event::with_capacity(line.to_string(), 8);
 
@@ -286,6 +320,42 @@ mod tests {
             assert!(
                 EventParser::parse(&parser, line).is_ok(),
                 "genuine RFC3164 line must still parse: {line}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_rfc3339_timestamp_in_traditional_layout() {
+        // rsyslog's default file format on current Debian/Ubuntu.
+        let parser = SyslogParser::new().unwrap();
+        let line = "2026-10-08T10:19:52.609836+00:00 rs-host myapp[4242]: failed to connect to db";
+        let event = EventParser::parse(&parser, line).unwrap();
+        let field = |name: &str| event.fields.get(name).unwrap().to_string();
+        assert_eq!(field("ts"), "2026-10-08T10:19:52.609836+00:00");
+        assert_eq!(field("host"), "rs-host");
+        assert_eq!(field("prog"), "myapp");
+        assert_eq!(event.fields.get("pid").unwrap().as_int().unwrap(), 4242);
+        assert_eq!(field("msg"), "failed to connect to db");
+        assert!(event.parsed_ts.is_some(), "RFC 3339 ts should resolve");
+
+        assert!(EventParser::parse(&parser, "2026-10-08T10:19:52Z host sshd: ok").is_ok());
+    }
+
+    #[test]
+    fn test_rfc3339_app_log_is_not_syslog() {
+        // `ts LEVEL target: msg` must not become host=LEVEL, prog=target.
+        let parser = SyslogParser::new().unwrap();
+        for line in [
+            "2024-01-02T15:04:05.123456Z  INFO myapp::server: listening on 0.0.0.0:8080",
+            "2024-01-02T15:04:05Z error worker: job failed",
+            // AWS classic ELB access log: the client IP is not a program.
+            "2015-05-13T23:39:43.945958Z my-loadbalancer 192.168.131.39:2817 10.0.0.1:80 0.000073 0.001048 0.000057 200 200 0 29 \"GET http://www.example.com:80/ HTTP/1.1\" \"curl/7.38.0\" - -",
+            // No offset: not what rsyslog writes.
+            "2024-01-02T15:04:05 host prog: msg",
+        ] {
+            assert!(
+                EventParser::parse(&parser, line).is_err(),
+                "{line:?} must not parse as syslog"
             );
         }
     }
