@@ -6,8 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-08
+
+The 2.2.0 release notes left out 26 changes that are in 2.2.0. They are now listed in the [2.2.0 section](https://github.com/dloss/kelora/blob/main/CHANGELOG.md#220---2026-10-07) — read its **Breaking** section if you skipped it.
+
+### Fixed
+
+- **Format lists name every format** - `-h`, the `-f` help and unknown-format errors lumped cri, apache-error, glog, haproxy, iso8601-level, log4j, nginx-error, postgres, python-logging, redis and s3 together as "built-in application-log formats". They are now named one by one, and each has its own entry in `--help-formats` and the format reference.
+- **Documentation** - The CLI reference page links each option, and several guide pages are clarified (estimated `Uniq` counts, when summaries print as a table or TSV, how to get numbers from parsed strings).
+
+## [2.2.0] - 2026-10-07
+
+Headline change: rewritten documentation, with every example executed at build time. The code changes are fixes found while verifying it and an issue sweep over spans and hints — read **Breaking** if you use `absorb_regex()`, `span.metric()` or `--span-idle` ids.
+
 ### Breaking
 
+- **`absorb_regex()` keeps the source field when the pattern doesn't match** - It used to delete the field on every non-matching line, so `-e 'e.absorb_regex("msg", …)'` erased the message of each line the pattern was not written for. Now, like the other `absorb_*` functions, it leaves the field untouched and returns `status: "empty"`. Output can change shape: non-matching events keep a field they used to lose. If you relied on the deletion, remove the field when `status` is `"empty"`: `if e.absorb_regex("msg", re).status == "empty" { e.msg = () }`.
 - **`span.metric()` returns `()` for metrics with no per-window value** - It returned `0` for omitted non-additive metrics such as percentiles, so `p95=0` read as data. Additive metrics with no delta still return `0`. (#419)
 - **Idle span ids use `Z`** - `--span-idle` ids wrote UTC as `+00:00` while time span ids used `Z`. Both now use `Z`. (#421)
 
@@ -19,8 +33,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Warning when `--multiline` joins far too many lines** - A start rule that matches only some records silently collapsed thousands of lines into a few events. kelora now warns at end of run when events average 3+ lines over 50+ lines and most of the joined lines start at column 0. Indented stack traces don't trigger it. (#361)
 - **Hint when an auto-detected cascade adds `_format`** - With `-f auto` on a mixed file, every event gained a `_format` field, and kelora only said so under `-v`. A hint now names the cascade and the field. (#407)
 
+### Changed
+
+- **Documentation rewritten** - The site at kelora.dev is reorganized into a guide (one page per job: explore, parse, filter, scripts, summarize, time, spans, cross-event logic, output, big files, configuration), a cookbook of runnable recipes, a "How it works" page, and reference pages. Every example is executed at build time and the build fails on a broken example or link. The CLI reference is now generated from `kelora --help`. Old URLs redirect to their new pages; the "What's New in 2.0" page now points to the 2.0.0 section of this changelog.
+
 ### Fixed
 
+- **`absorb_*()` no longer drops a payload key named like the source field** - `e.absorb_json("msg")` on a `msg` holding `{"msg":"listening","port":8080}` set `port` but lost `msg`: the source field was deleted after the merge, taking the merged value with it. This is the common shape of Kubernetes/CRI logs. The same applied to `absorb_logfmt`, `absorb_kv` (when nothing was left over), `absorb_jwt`, and `absorb_regex`. The extracted value now survives.
+- **nginx access logs with a bare `$request_time` parse as `combined`** - The combined parser accepted the trailing request time only in quotes (`"0.123"`), but many nginx `log_format` lines write it bare (`... "curl/8.0" 0.123`). Such logs fell back to plain `line` events; they now parse, with `request_time` as a number.
+- **`--since`/`--until` no longer create empty `--span` windows outside the range** - Events the time range dropped still opened time spans, so `--since 10:00 --until 12:00 --span 15m --span-summary` printed `events=0` rows for 09:30 or 12:15. Those events now leave the spans alone; counts inside the range are unchanged.
+- **`map.flatten_field(name)` can be called** - It was registered in a way Rhai couldn't match, so every call failed with "Function not found".
+- **`to_datetime(text, format, tz)` honours the zone hint and offsets in the text** - A timestamp without an offset was read as UTC and only then converted to `tz`, so `to_datetime("15.01.2024 09:00", "%d.%m.%Y %H:%M", "Europe/Berlin")` gave 09:00 UTC instead of 08:00 UTC; the zone now says where the wall-clock time was recorded, as documented and as `--input-tz` does. Separately, a format with `%z` parsed the offset but then ignored it: `"10:30:00+05:00"` came out as 10:30 UTC instead of 05:30 UTC. If you relied on the old zone-hint result, drop the zone argument and convert with `.to_timezone(tz)`.
+- **No "Metrics recorded; rerun with -m" hint when a span hook uses the metrics** - With `--span-close` or `--span-summary`, the per-window metrics are already consumed, but kelora still suggested rerunning with `-m`.
+- **`--merge-sorted` no longer aborts on a blank line** - A blank line anywhere in an input, including the empty last line many tools write, stopped the merge with `failed to parse line for --merge-sorted ... Invalid JSON: EOF`, although a normal read of the same file skips it. Blank lines are now skipped while merging, and error messages still report the correct line numbers.
 - **`--span` warns about month and year units** - `1M` and `1y` are fixed lengths (30.44 and 365.25 days) aligned to the Unix epoch, so the rows drifted off calendar boundaries without any notice. They still run, now with a warning. A spec that starts with a digit but isn't a duration (`1mo`) now lists the accepted units instead of giving a field-name error. The docs now state that windows are epoch-aligned in UTC, so `--span 1w` runs Thursday to Wednesday. (#415)
 - **Sub-millisecond `--span` no longer aborts** - `--span 500us` divided by zero and crashed. It is now a usage error. (#414)
 - **Hint for a `--span` field no event has** - A misspelled `--span FIELD` silently put every event into one `(unset)` span. A hint now names the field and suggests the nearest real one. (#416)
@@ -36,34 +61,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Map rows stay aligned without timestamps** - In `levelmap`/`keymap`/`tailmap`, `line N` labels are now padded to a fixed width. (#375)
 - **Parallel multiline messages lost a run of spaces mid-sentence.**
 - **Documentation** - The docs now state what each `parse_*` function returns on unparseable input (#363), and that `-l` can undercount parse errors on json/logfmt (#401).
-
-## [2.2.0] - 2026-10-07
-
-Headline change: rewritten documentation, with every example executed at build time. The code changes are fixes found while verifying it — read **Breaking** if you use `absorb_regex()`.
-
-### Breaking
-
-- **`absorb_regex()` keeps the source field when the pattern doesn't match** - It used to delete the field on every non-matching line, so `-e 'e.absorb_regex("msg", …)'` erased the message of each line the pattern was not written for. Now, like the other `absorb_*` functions, it leaves the field untouched and returns `status: "empty"`. Output can change shape: non-matching events keep a field they used to lose. If you relied on the deletion, remove the field when `status` is `"empty"`: `if e.absorb_regex("msg", re).status == "empty" { e.msg = () }`.
-
-### Changed
-
-- **Documentation rewritten** - The site at kelora.dev is reorganized into a guide (one page per job: explore, parse, filter, scripts, summarize, time, spans, cross-event logic, output, big files, configuration), a cookbook of runnable recipes, a "How it works" page, and reference pages. Every example is executed at build time and the build fails on a broken example or link. The CLI reference is now generated from `kelora --help`. Old URLs redirect to their new pages; the "What's New in 2.0" page now points to the 2.0.0 section of this changelog.
-
-### Fixed
-
-- **`absorb_*()` no longer drops a payload key named like the source field** - `e.absorb_json("msg")` on a `msg` holding `{"msg":"listening","port":8080}` set `port` but lost `msg`: the source field was deleted after the merge, taking the merged value with it. This is the common shape of Kubernetes/CRI logs. The same applied to `absorb_logfmt`, `absorb_kv` (when nothing was left over), `absorb_jwt`, and `absorb_regex`. The extracted value now survives.
-
-- **nginx access logs with a bare `$request_time` parse as `combined`** - The combined parser accepted the trailing request time only in quotes (`"0.123"`), but many nginx `log_format` lines write it bare (`... "curl/8.0" 0.123`). Such logs fell back to plain `line` events; they now parse, with `request_time` as a number.
-
-- **`--since`/`--until` no longer create empty `--span` windows outside the range** - Events the time range dropped still opened time spans, so `--since 10:00 --until 12:00 --span 15m --span-summary` printed `events=0` rows for 09:30 or 12:15. Those events now leave the spans alone; counts inside the range are unchanged.
-
-- **`map.flatten_field(name)` can be called** - It was registered in a way Rhai couldn't match, so every call failed with "Function not found".
-
-- **`to_datetime(text, format, tz)` honours the zone hint and offsets in the text** - A timestamp without an offset was read as UTC and only then converted to `tz`, so `to_datetime("15.01.2024 09:00", "%d.%m.%Y %H:%M", "Europe/Berlin")` gave 09:00 UTC instead of 08:00 UTC; the zone now says where the wall-clock time was recorded, as documented and as `--input-tz` does. Separately, a format with `%z` parsed the offset but then ignored it: `"10:30:00+05:00"` came out as 10:30 UTC instead of 05:30 UTC. If you relied on the old zone-hint result, drop the zone argument and convert with `.to_timezone(tz)`.
-
-- **No "Metrics recorded; rerun with -m" hint when a span hook uses the metrics** - With `--span-close` or `--span-summary`, the per-window metrics are already consumed, but kelora still suggested rerunning with `-m`.
-
-- **`--merge-sorted` no longer aborts on a blank line** - A blank line anywhere in an input, including the empty last line many tools write, stopped the merge with `failed to parse line for --merge-sorted ... Invalid JSON: EOF`, although a normal read of the same file skips it. Blank lines are now skipped while merging, and error messages still report the correct line numbers.
 
 ## [2.1.1] - 2026-09-28
 
@@ -1084,7 +1081,8 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/dloss/kelora/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/dloss/kelora/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/dloss/kelora/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/dloss/kelora/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/dloss/kelora/compare/v2.0.1...v2.1.0
