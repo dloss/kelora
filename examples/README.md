@@ -348,7 +348,7 @@ Real captures from the software itself (unedited; `laravel.log` keeps whole reco
 - `tomcat_catalina.log` - Tomcat 11 console log with SEVERE parse errors and traces (`tomcat`)
 - `mysql_error.log`, `mariadb_error.log` - MySQL 8.4 and MariaDB 11.4 error logs (`mysql-error`)
 - `monolog.log` - plain PHP Monolog with context and extra (`monolog`)
-- `laravel.log` - Laravel 13 log with multi-line exception traces (`monolog`, `-M 'regex:match=^\[\d{4}-'`)
+- `laravel.log` - Laravel 13 log with multi-line exception traces (`monolog`, `-M timestamp`)
 
 ### Stress Tests (`nightmare_*`)
 

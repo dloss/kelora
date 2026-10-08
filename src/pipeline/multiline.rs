@@ -220,7 +220,7 @@ impl MultilineChunker {
             joined.push_str(line.trim_end_matches(['\n', '\r']));
             if !is_line_blank(line) {
                 self.event_lines += 1;
-                if idx > 0 && !is_line_indented(line) {
+                if idx > 0 && !is_line_indented(line) && !is_php_frame(line) {
                     self.unindented_continuations += 1;
                 }
             }
@@ -303,6 +303,39 @@ impl TimestampDetector {
 
         false
     }
+}
+
+/// Whether `--multiline timestamp` would find event starts in `lines`: at
+/// least `PRESET_TS_HINT_HEADERS` of them begin with a timestamp of one locked
+/// family. The same threshold makes a preset run suggest `timestamp`, so the
+/// detection hint and the preset hint agree.
+pub fn has_timestamp_headers<'a>(lines: impl IntoIterator<Item = &'a str>) -> bool {
+    let mut detector = TimestampDetector::new(None, false);
+    let needed = PRESET_TS_HINT_HEADERS as usize;
+    lines
+        .into_iter()
+        .filter(|line| detector.is_header(line))
+        .take(needed)
+        .count()
+        == needed
+}
+
+/// A PHP stack frame (`#3 /app/src/Foo.php(42): Foo->bar()`, `#12 {main}`):
+/// `#<n> ` followed by a `.php(<line>)` location or the closing `{main}`.
+/// These start at column 0 but are trace continuations, like Java's indented
+/// `at` lines.
+pub fn is_php_frame(line: &str) -> bool {
+    let Some(rest) = line.strip_prefix('#') else {
+        return false;
+    };
+    let digits = rest.chars().take_while(char::is_ascii_digit).count();
+    if digits == 0 {
+        return false;
+    }
+    let Some(frame) = rest[digits..].strip_prefix(' ') else {
+        return false;
+    };
+    frame.starts_with("{main}") || frame.contains(".php(")
 }
 
 fn is_line_blank(line: &str) -> bool {
@@ -540,7 +573,8 @@ impl Chunker for MultilineChunker {
         }
         let mean = self.event_lines as f64 / self.events_emitted as f64;
         let continuations = self.event_lines - self.events_emitted.min(self.event_lines);
-        // Stack-trace continuations are mostly indented (`\tat ...`, `  File ...`);
+        // Stack-trace continuations are mostly indented (`\tat ...`, `  File ...`)
+        // or PHP frames (`#0 /app/Foo.php(12): …`, not counted as unindented);
         // joined lines that mostly start at column 0 look like records in their
         // own right that the start rule failed to recognize. Require two thirds.
         let unindented_dominate = self.unindented_continuations * 3 >= continuations * 2;
@@ -891,6 +925,28 @@ mod tests {
 
     /// Below the minimum line count the ratio is not worth a warning, and a
     /// run that found no boundary at all gets the no-boundary hint instead.
+    #[test]
+    fn php_frames_do_not_count_as_unindented_continuations() {
+        // Laravel: each record's trace is a `[stacktrace]` line, column-0 PHP
+        // frames and a closing `"}` — correct grouping, not a missed start.
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+        let mut input = String::new();
+        for record in 0..4 {
+            input.push_str(&format!(
+                "[2026-10-08 10:30:5{record}] local.ERROR: boom {{\"exception\":\"x\n"
+            ));
+            input.push_str("[stacktrace]\n");
+            for frame in 0..15 {
+                input.push_str(&format!("#{frame} /app/src/Foo.php({frame}): f()\n"));
+            }
+            input.push_str("#15 {main}\n\"} \n");
+        }
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 4);
+        assert_eq!(chunker.excessive_joining(), None);
+    }
+
     #[test]
     fn excessive_joining_needs_enough_lines_and_a_boundary() {
         let mut chunker =

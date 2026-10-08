@@ -317,14 +317,14 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // Tomcat's console/catalina log (JULI `OneLineFormatter`, fixed in code):
     // `08-Oct-2026 10:27:32.174 SEVERE [main] org.apache.Foo.method msg`.
     // Levels are java.util.logging's (SEVERE, WARNING, INFO, CONFIG, FINE…).
-    // `source` is the logging class and method. The `dd-MMM-yyyy` date isn't in
-    // the adaptive list, so it is pinned. Written from a real Tomcat 11 capture.
+    // `source` is the logging class and method. The adaptive parser resolves
+    // its `dd-MMM-yyyy` date. Written from a real Tomcat 11 capture.
     LnavFormat {
         name: "tomcat",
         patterns: &[
             r"(?P<ts>\d{2}-[A-Z][a-z]{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3}) (?P<level>SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST) \[(?P<thread>[^\]]*)\] (?P<source>\S+) (?P<msg>.*)",
         ],
-        ts_format: Some("%d-%b-%Y %H:%M:%S%.f"),
+        ts_format: None,
         samples: &[
             "08-Oct-2026 10:27:21.755 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [/usr/local/tomcat/webapps/ROOT]",
             "08-Oct-2026 10:27:32.174 SEVERE [Catalina-utility-2] org.apache.tomcat.util.digester.Digester.fatalError Parse fatal error at line [12] column [3]",
@@ -736,7 +736,6 @@ mod tests {
                 "glog" => Some("%m%d %H:%M:%S%.f"),
                 "redis" => Some("%d %b %Y %H:%M:%S%.f"),
                 "apache-error" => Some("%a %b %d %H:%M:%S%.f %Y"),
-                "tomcat" => Some("%d-%b-%Y %H:%M:%S%.f"),
                 _ => None,
             };
             assert_eq!(

@@ -639,7 +639,8 @@ fn get_initial_timestamp_formats() -> Vec<String> {
         "%d %b %Y, %H:%M".to_string(),         // "12 Feb 2006, 19:17"
         "%a %b %d %H:%M:%S %Y".to_string(),    // Classic Unix timestamp
         "%d-%b-%y %I:%M:%S.%f %p".to_string(), // Oracle format
-        "%b %d, %Y %I:%M:%S %p".to_string(),   // Java SimpleDateFormat
+        "%d-%b-%Y %H:%M:%S%.f".to_string(), // Tomcat/java.util.logging (08-Oct-2026 10:27:32.174)
+        "%b %d, %Y %I:%M:%S %p".to_string(), // Java SimpleDateFormat
     ]
 }
 
@@ -1077,6 +1078,19 @@ mod tests {
         assert_eq!(dt.year(), 2023);
         assert_eq!(dt.month(), 7);
         assert_eq!(dt.day(), 4);
+    }
+
+    #[test]
+    fn test_tomcat_juli_timestamp() {
+        // Tomcat's OneLineFormatter date; `-M timestamp` relies on this too.
+        let mut parser = AdaptiveTsParser::new();
+        let dt = parser
+            .parse_ts_with_config("08-Oct-2026 10:27:32.174", None, Some("UTC"))
+            .expect("tomcat timestamp");
+        assert_eq!(dt.to_rfc3339(), "2026-10-08T10:27:32.174+00:00");
+        assert!(parser
+            .parse_header_kind("08-Oct-2026 10:27:32.174")
+            .is_some());
     }
 
     #[test]

@@ -83,9 +83,9 @@ pub struct DetectedFormat {
     /// word the `-v` notice.
     pub probe_lines: usize,
     /// A stack-trace shape spotted in the sampled lines, if any. Feeds the
-    /// advisory "consider --multiline <preset>" hint; never affects the
+    /// advisory "consider --multiline <strategy>" hint; never affects the
     /// detected format itself.
-    pub multiline_hint: Option<&'static MultilineSignature>,
+    pub multiline_hint: Option<MultilineSignature>,
     /// Structured formats the sample contained that `format` does not parse
     /// (auto-built cascades are capped at one structured member plus `line`).
     /// Display names in specificity order; feeds the advisory hint only.
@@ -104,27 +104,38 @@ pub struct DetectedFormat {
     pub json_array: bool,
 }
 
-/// A multiline (stack-trace) shape that detection can spot in its sample and
-/// map to the `--multiline` preset that handles it.
-#[derive(Debug)]
+/// A multiline (stack-trace) shape that detection spotted in its sample, and
+/// the `--multiline` strategy to suggest for it.
+#[derive(Debug, Clone, Copy)]
 pub struct MultilineSignature {
     /// Human-readable name for the hint text, e.g. "Java stack traces".
     pub description: &'static str,
-    /// The `--multiline` preset to suggest.
-    pub preset: &'static str,
+    /// The `--multiline` strategy to suggest: `timestamp` when the sample's
+    /// records start with timestamps, otherwise the language preset.
+    pub strategy: &'static str,
 }
 
-static JAVA_TRACES: MultilineSignature = MultilineSignature {
+/// A trace shape and the language preset that handles it, if there is one.
+struct TraceShape {
+    description: &'static str,
+    preset: Option<&'static str>,
+}
+
+static JAVA_TRACES: TraceShape = TraceShape {
     description: "Java stack traces",
-    preset: "java",
+    preset: Some("java"),
 };
-static PYTHON_TRACES: MultilineSignature = MultilineSignature {
+static PYTHON_TRACES: TraceShape = TraceShape {
     description: "Python tracebacks",
-    preset: "python",
+    preset: Some("python"),
 };
-static GO_TRACES: MultilineSignature = MultilineSignature {
+static GO_TRACES: TraceShape = TraceShape {
     description: "Go panics/goroutine dumps",
-    preset: "go",
+    preset: Some("go"),
+};
+static PHP_TRACES: TraceShape = TraceShape {
+    description: "PHP stack traces",
+    preset: None,
 };
 
 /// Scan sampled lines for high-confidence stack-trace shapes.
@@ -135,42 +146,62 @@ static GO_TRACES: MultilineSignature = MultilineSignature {
 /// occur outside their language's traces. The multiline *behavior* stays
 /// opt-in: merging lines changes event boundaries (counts, filters, spans),
 /// which is never guessed at — see `--help-multiline`.
-pub fn detect_multiline_signature<'a, I>(lines: I) -> Option<&'static MultilineSignature>
+///
+/// When the records around the traces start with timestamps, the suggestion is
+/// `--multiline timestamp`, which keeps every line of a record together; a
+/// preset joins only the trace lines it recognizes (and, run on such input,
+/// says so). PHP has no preset, so its traces are only suggested `timestamp`.
+pub fn detect_multiline_signature<'a, I>(lines: I) -> Option<MultilineSignature>
 where
     I: IntoIterator<Item = &'a str>,
 {
-    for line in lines {
-        let trimmed = line.trim_start();
-        let indented = trimmed.len() != line.len();
+    let lines: Vec<&str> = lines.into_iter().collect();
+    let shape = lines.iter().find_map(|line| trace_shape(line))?;
+    let strategy = if crate::pipeline::multiline::has_timestamp_headers(lines.iter().copied()) {
+        "timestamp"
+    } else {
+        shape.preset?
+    };
+    Some(MultilineSignature {
+        description: shape.description,
+        strategy,
+    })
+}
 
-        // Java/JVM frame (`\tat com.example.Foo.bar(Foo.java:42)`, possibly
-        // with a trailing `~[jar:…]`) or a `Caused by:` chain header.
-        if (indented
-            && trimmed.starts_with("at ")
-            && trimmed.contains('(')
-            && trimmed.contains(')'))
-            || trimmed.starts_with("Caused by: ")
-        {
-            return Some(&JAVA_TRACES);
-        }
+fn trace_shape(line: &str) -> Option<&'static TraceShape> {
+    let trimmed = line.trim_start();
+    let indented = trimmed.len() != line.len();
 
-        // Python traceback header or an indented frame line
-        // (`  File "app.py", line 12, in main`).
-        if trimmed.starts_with("Traceback (most recent call last):")
-            || (indented && trimmed.starts_with("File \"") && trimmed.contains(", line "))
-        {
-            return Some(&PYTHON_TRACES);
-        }
+    // Java/JVM frame (`\tat com.example.Foo.bar(Foo.java:42)`, possibly
+    // with a trailing `~[jar:…]`) or a `Caused by:` chain header.
+    if (indented && trimmed.starts_with("at ") && trimmed.contains('(') && trimmed.contains(')'))
+        || trimmed.starts_with("Caused by: ")
+    {
+        return Some(&JAVA_TRACES);
+    }
 
-        // Go runtime panic or goroutine dump header (`goroutine 7 [running]:`)
-        // — both start at column 0.
-        if line.starts_with("panic: ")
-            || (line.starts_with("goroutine ")
-                && line.contains(" [")
-                && line.trim_end().ends_with("]:"))
-        {
-            return Some(&GO_TRACES);
-        }
+    // Python traceback header or an indented frame line
+    // (`  File "app.py", line 12, in main`).
+    if trimmed.starts_with("Traceback (most recent call last):")
+        || (indented && trimmed.starts_with("File \"") && trimmed.contains(", line "))
+    {
+        return Some(&PYTHON_TRACES);
+    }
+
+    // Go runtime panic or goroutine dump header (`goroutine 7 [running]:`)
+    // — both start at column 0.
+    if line.starts_with("panic: ")
+        || (line.starts_with("goroutine ")
+            && line.contains(" [")
+            && line.trim_end().ends_with("]:"))
+    {
+        return Some(&GO_TRACES);
+    }
+
+    // PHP frame (`#3 /app/src/Foo.php(42): Foo->bar()`, `#12 {main}`), as in
+    // an uncaught exception or Laravel's `[stacktrace]` block.
+    if crate::pipeline::multiline::is_php_frame(line) {
+        return Some(&PHP_TRACES);
     }
     None
 }
@@ -754,7 +785,7 @@ static MULTILINE_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
 /// out this run — same once-per-run rule as the hints above.
 static UNPARSED_FORMATS_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
 
-/// Build the advisory "consider --multiline <preset>" hint (💡) when the
+/// Build the advisory "consider --multiline <strategy>" hint (💡) when the
 /// detection sample contained a stack-trace shape.
 ///
 /// Only advises — the multiline behavior itself stays opt-in, because merging
@@ -769,7 +800,7 @@ pub fn multiline_hint_message(config: &KeloraConfig, detected: &DetectedFormat) 
     }
     Some(config.format_hint_message(&format!(
         "Input contains {}; without multiline handling each trace line becomes its own event. Consider --multiline {} (see --help-multiline).",
-        signature.description, signature.preset
+        signature.description, signature.strategy
     )))
 }
 
@@ -1174,7 +1205,7 @@ mod tests {
         ] {
             let sig =
                 detect_multiline_signature(lines.iter().copied()).expect("java signature expected");
-            assert_eq!(sig.preset, "java");
+            assert_eq!(sig.strategy, "java");
         }
 
         // Python: header and indented File frame.
@@ -1184,7 +1215,7 @@ mod tests {
         ] {
             let sig = detect_multiline_signature(lines.iter().copied())
                 .expect("python signature expected");
-            assert_eq!(sig.preset, "python");
+            assert_eq!(sig.strategy, "python");
         }
 
         // Go: panic line and goroutine dump header.
@@ -1194,7 +1225,52 @@ mod tests {
         ] {
             let sig =
                 detect_multiline_signature(lines.iter().copied()).expect("go signature expected");
-            assert_eq!(sig.preset, "go");
+            assert_eq!(sig.strategy, "go");
+        }
+    }
+
+    #[test]
+    fn multiline_signature_suggests_timestamp_for_timestamped_records() {
+        // Records that start with timestamps: `timestamp` keeps each record
+        // whole, so it beats the language preset.
+        let lines = [
+            "2026-10-08T10:22:17.721Z  WARN 1 --- [demo] [exec-7] c.e.DemoController : slow",
+            "2026-10-08T10:22:18.654Z ERROR 1 --- [demo] [exec-8] c.e.DemoController : failed",
+            "java.lang.NullPointerException: input is null",
+            "\tat com.example.demo.DemoController.process(DemoController.java:37)",
+            "2026-10-08T10:22:18.821Z  INFO 1 --- [demo] [exec-9] c.e.DemoController : ok",
+        ];
+        let sig = detect_multiline_signature(lines.iter().copied()).expect("java traces");
+        assert_eq!(sig.description, "Java stack traces");
+        assert_eq!(sig.strategy, "timestamp");
+    }
+
+    #[test]
+    fn multiline_signature_detects_php_frames() {
+        let laravel = [
+            "[2026-10-08 10:30:50] local.INFO: Order viewed {\"order_id\":1042} ",
+            "[2026-10-08 10:30:51] local.WARNING: Unusually large cart {\"items\":25} ",
+            "[2026-10-08 10:30:59] local.ERROR: Division by zero {\"exception\":\"[object] (DivisionByZeroError(code: 0))",
+            "[stacktrace]",
+            "#0 /work/shop/vendor/laravel/framework/src/Illuminate/Routing/Route.php(254): run()",
+            "#1 {main}",
+            "\"} ",
+        ];
+        let sig = detect_multiline_signature(laravel.iter().copied()).expect("php traces");
+        assert_eq!(sig.description, "PHP stack traces");
+        assert_eq!(sig.strategy, "timestamp");
+
+        // PHP has no preset: without timestamped records there is nothing to suggest.
+        let bare = [
+            "PHP Fatal error:  Uncaught Exception: boom",
+            "#0 /app/index.php(3): f()",
+            "#1 {main}",
+        ];
+        assert!(detect_multiline_signature(bare.iter().copied()).is_none());
+
+        // `#` lines that aren't frames.
+        for line in ["#1 priority item", "# comment", "#12{main}", "#x /a.php(1)"] {
+            assert!(!crate::pipeline::multiline::is_php_frame(line), "{line:?}");
         }
     }
 
@@ -1278,7 +1354,7 @@ mod tests {
         let detected = detect_format_from_files(&[path], false).expect("detection");
 
         let sig = detected.multiline_hint.expect("signature expected");
-        assert_eq!(sig.preset, "java");
+        assert_eq!(sig.strategy, "java");
     }
 
     #[test]

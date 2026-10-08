@@ -99,7 +99,7 @@ monolog
   ([2024-01-02 15:04:05] local.ERROR: msg {"user_id":1} {"host":"web1"})
   Fields: ts, channel, level, msg [context, extra - the JSON text as written]
   Note: Read context with e.context.parse_json(). Laravel exceptions span many
-        lines; group them with -M 'regex:match=^\[\d{4}-'
+        lines; group them with -M timestamp
 
 mysql-error
   MySQL 5.7/8 and MariaDB error log
@@ -174,7 +174,7 @@ tomcat
   Tomcat catalina/console log (java.util.logging OneLineFormatter)
   (08-Oct-2026 10:27:32.174 SEVERE [main] org.apache.Foo.method msg)
   Fields: ts, level (SEVERE/WARNING/INFO/...), msg, thread, source
-  Note: Stack traces need -M java
+  Note: Stack traces need -M timestamp
 
 Several of the log layouts above are adapted from lnav (BSD-3-Clause; see
 THIRD_PARTY_LICENSES.md).
