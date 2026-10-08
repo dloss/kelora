@@ -19,6 +19,9 @@ found the timestamp in `ts`. The field names in the first column are what you
 use in every later command. If you see a single `line` field instead, the
 format wasn't recognized — see [Get Logs into Shape](parse.md).
 
+A `~` in **Uniq** marks an estimate (within about 1%), which keeps memory low
+on large files.
+
 ## How much, and over what period?
 
 `--stats` (`-s`) summarizes the run: event counts, parse errors, time span,
@@ -37,16 +40,19 @@ order you give:
 kelora examples/web_access_large.log.gz -k ts,status,method,path -n 3
 ```
 
+The default output is `key='value'` with the timestamp, level, and message
+first. In a terminal, long events wrap onto indented lines; piped output keeps
+one event per line. For JSON or CSV, see
+[Export the results](#export-the-results).
+
+Choose what each event shows:
+
 | Option | Shows |
 |---|---|
 | `-k a,b,c` | only these fields, in this order |
 | `-K a,b` | everything except these fields |
 | `-c` | only the core fields: timestamp, level, message |
 | `-b` | values without field names |
-
-The default output is `key='value'` with the timestamp, level, and message
-first. In a terminal, long events wrap onto indented lines; piped output keeps
-one event per line.
 
 ## What's common, what's rare?
 
@@ -98,7 +104,7 @@ kelora examples/web_access_large.log.gz --filter 'e.status >= 500' -k ts,status,
 (`--since`, `--until`) need no expressions. [Filter](filter.md) covers them
 all.
 
-## Hand it on
+## Export the results
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/web_access_large.log.gz --filter 'e.status >= 500' -k ts,status,path -n 3 -F csv
