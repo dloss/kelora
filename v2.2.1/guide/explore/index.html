@@ -1,0 +1,2187 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.2.1/guide/explore/">
+      
+      
+        <link rel="prev" href="../../installation/">
+      
+      
+        <link rel="next" href="../parse/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Explore a Log File - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#explore-a-log-file" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Explore a Log File
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-fields-are-there" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What fields are there?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-much-and-over-what-period" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much, and over what period?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-some-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read some events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-common-whats-rare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's common, what's rare?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#which-messages-repeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which messages repeat?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-does-it-change-over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How does it change over time?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#narrow-it-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narrow it down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export the results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help-in-the-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help in the terminal
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/security-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-fields-are-there" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What fields are there?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-much-and-over-what-period" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much, and over what period?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-some-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read some events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-common-whats-rare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's common, what's rare?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#which-messages-repeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which messages repeat?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-does-it-change-over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How does it change over time?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#narrow-it-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narrow it down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export the results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help-in-the-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help in the terminal
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="explore-a-log-file">Explore a Log File<a class="headerlink" href="#explore-a-log-file" title="Permanent link">&para;</a></h1>
+<p>The first few minutes with a log you've never seen: what's in it, what it looks
+like, and what stands out. Every command on this page works on any file Kelora
+can parse; the examples use a gzipped web server log from the
+<a href="https://github.com/dloss/kelora/tree/main/examples"><code>examples/</code></a> directory.</p>
+<h2 id="what-fields-are-there">What fields are there?<a class="headerlink" href="#what-fields-are-there" title="Permanent link">&para;</a></h2>
+<p><code>--discover</code> (<code>-d</code>) profiles every field: how often it appears, its type, how
+many distinct values it has, and a few samples.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>-d
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Field       Type    Seen  Miss   Uniq  Examples
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ip          string  1200    0%  ~1200  "71.193.113.161", "224.86.239.106", "79.…
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ts          string  1200    0%  ~1168  "04/Oct/2025:11:39:49 +0200", "04/Oct/20…
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>request     string  1200    0%  ~1200  "GET /reintermediate/e-commerce/cross-pl…
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>method      string  1200    0%      6  "GET", "PUT", "POST", "PATCH", "HEAD", "…
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>path        string  1200    0%  ~1050  "/strategic/24%2f365/ubiquitous/paradigm…
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>protocol    string  1200    0%      3  "HTTP/1.0", "HTTP/1.1", "HTTP/2.0"
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>status      int     1200    0%     21  205, 500, 405, 302, 203, 406, 100, 200, …
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>bytes       int     1200    0%  ~1175  4257, 84118, 17269, 48124, 58636, 30376,…
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>referer     string  1200    0%  ~1200  "http://www.regionalseize.io/synergize/r…
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>user_agent  string  1200    0%  ~1200  "Opera/10.21 (Macintosh; PPC Mac OS X 10…
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>user        string   580   52%   ~564  "kreiger1178", "gerhold6800", "kihn8808"…
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>1200 events scanned · format: combined (auto-detected) · timestamp: ts → meta.parsed_ts
+</code></pre></div>
+<p>Kelora decompressed the file, recognized the Apache/Nginx <code>combined</code> format, and
+found the timestamp in <code>ts</code>. The field names in the first column are what you
+use in every later command. If you see a single <code>line</code> field instead, the
+format wasn't recognized — see <a href="../parse/">Get Logs into Shape</a>.</p>
+<p>A <code>~</code> in <strong>Uniq</strong> marks an estimate (within about 1%), which keeps memory low
+on large files.</p>
+<h2 id="how-much-and-over-what-period">How much, and over what period?<a class="headerlink" href="#how-much-and-over-what-period" title="Permanent link">&para;</a></h2>
+<p><code>--stats</code> (<code>-s</code>) summarizes the run: event counts, parse errors, time span,
+levels, and keys.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>-s
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: combined
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 1200 total, 0 filtered (0.0%), 0 errors (0.0%)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 1200 total, 1200 output, 0 filtered (0.0%)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 91566 lines/s in 13ms
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts (auto-detected) - 1200/1200 parsed (100.0%) — access via meta.parsed_ts.
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2025-10-04T08:00:00+00:00 to 2025-10-04T10:00:41+00:00 (2h)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: bytes,ip,method,path,protocol,referer,request,status,ts,user,user_agent
+</code></pre></div>
+<h2 id="read-some-events">Read some events<a class="headerlink" href="#read-some-events" title="Permanent link">&para;</a></h2>
+<p><code>-n</code> (<code>--take</code>) stops after N events. <code>-k</code> (<code>--keys</code>) picks fields, in the
+order you give:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>-k<span class="w"> </span>ts,status,method,path<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:00 +0200' <span class=" -Color -Color-Green">status</span>=403 <span class=" -Color -Color-Green">method</span>='GET'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">path</span>='/reintermediate/e-commerce/cross-platform'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:12 +0200' <span class=" -Color -Color-Green">status</span>=500 <span class=" -Color -Color-Green">method</span>='PUT'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">path</span>='/infrastructures/customized/portals/enhance'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:13 +0200' <span class=" -Color -Color-Green">status</span>=301 <span class=" -Color -Color-Green">method</span>='PUT'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">path</span>='/enterprise/iterate/integrate/exploit'
+</code></pre></div>
+<p>The default output is <code>key='value'</code> with the timestamp, level, and message
+first. In a terminal, long events wrap onto indented lines; piped output keeps
+one event per line. For JSON or CSV, see
+<a href="#export-the-results">Export the results</a>.</p>
+<p>Choose what each event shows:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-k a,b,c</code></td>
+<td>only these fields, in this order</td>
+</tr>
+<tr>
+<td><code>-K a,b</code></td>
+<td>everything except these fields</td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>only the core fields: timestamp, level, message</td>
+</tr>
+<tr>
+<td><code>-b</code></td>
+<td>values without field names</td>
+</tr>
+</tbody>
+</table>
+<h2 id="whats-common-whats-rare">What's common, what's rare?<a class="headerlink" href="#whats-common-whats-rare" title="Permanent link">&para;</a></h2>
+<p><code>--freq FIELD</code> counts events per value, most frequent first:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--freq<span class="w"> </span>method
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>method       (6 values):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  value   count
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  HEAD      220
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  GET       205
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  PATCH     202
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  PUT       195
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  DELETE    189
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  POST      189
+</code></pre></div>
+<p><code>--describe FIELD</code> summarizes a numeric field (min, max, average, percentiles):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--describe<span class="w"> </span>bytes
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bytes_avg    = 49164.7
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>bytes_count  = 1200
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>bytes_max    = 99902
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>bytes_min    = 41
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>bytes_p50    = 48295.3
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>bytes_p95    = 94002.5
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>bytes_p99    = 98343.3
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>bytes_sum    = 58997670
+</code></pre></div>
+<p>For a field with thousands of distinct values, <code>--freq</code> output is long; pipe
+it to <code>head</code> for the top values (piped output switches to one tab-separated
+row per value). <a href="../summarize/">Summarize</a> has more ways to count.</p>
+<h2 id="which-messages-repeat">Which messages repeat?<a class="headerlink" href="#which-messages-repeat" title="Permanent link">&para;</a></h2>
+<p>Free-text messages rarely repeat exactly — IDs, hostnames, and durations
+differ. <code>--drain</code> groups messages into templates and replaces the parts that
+vary with placeholders:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/app_monitoring.jsonl<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (13 items):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  6: Connection timeout to database host &lt;fqdn&gt;:&lt;num&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  6: Failed login attempt for user &lt;*&gt; from &lt;ipv4&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  5: Cache hit for key &lt;*&gt;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  4: Cache miss for key &lt;*&gt;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  4: Failed to upload file &lt;*&gt; to S3 bucket prod-documents: timeout after &lt;duration&gt;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  4: GET &lt;path&gt; completed in &lt;duration&gt; with status &lt;num&gt;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  4: Rate limit exceeded for API key &lt;*&gt; on endpoint &lt;path&gt;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  2: POST &lt;path&gt; completed in &lt;duration&gt; with status &lt;num&gt;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  2: Payment gateway returned error code &lt;num&gt;: Service Unavailable
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  1: DELETE &lt;path&gt; completed in &lt;duration&gt; with status &lt;num&gt;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  1: PUT &lt;path&gt; completed in &lt;duration&gt; with status &lt;num&gt;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  1: Payment gateway returned error code &lt;num&gt;: Too Many Requests
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  1: Payment gateway returned error code &lt;num&gt;: Unauthorized
+</code></pre></div>
+<h2 id="how-does-it-change-over-time">How does it change over time?<a class="headerlink" href="#how-does-it-change-over-time" title="Permanent link">&para;</a></h2>
+<p><code>-F levelmap</code> prints one character per event, so bursts of errors stand out:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/levelmap-demo.jsonl<span class="w"> </span>-F<span class="w"> </span>levelmap
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-10-25T08:00:00.000Z <span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">WW</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-10-25T08:03:15.000Z <span class=" -Color -Color-BrightCyan">DD</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">DD</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-10-25T08:07:25.000Z <span class=" -Color -Color-BrightCyan">DDD</span><span class=" -Color -Color-BrightRed">E</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">DDDDD</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightRed">CE</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>2024-10-25T08:11:31.000Z <span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightRed">ECE</span><span class=" -Color -Color-BrightYellow">W</span><span class=" -Color -Color-BrightGreen">I</span><span class=" -Color -Color-BrightCyan">D</span><span class=" -Color -Color-BrightGreen">II</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>🔹 <span class=" -Color -Color-BrightRed">C</span> = <span class=" -Color -Color-BrightRed">CRITICAL</span> | <span class=" -Color -Color-BrightCyan">D</span> = <span class=" -Color -Color-BrightCyan">DEBUG</span> | <span class=" -Color -Color-BrightRed">E</span> = <span class=" -Color -Color-BrightRed">ERROR</span> | <span class=" -Color -Color-BrightGreen">I</span> = <span class=" -Color -Color-BrightGreen">INFO</span> | <span class=" -Color -Color-BrightYellow">W</span> = <span class=" -Color -Color-BrightYellow">WARN</span>
+</code></pre></div>
+<p><code>-F keymap -k FIELD</code> does the same for any field (the first character of each
+value); <code>-F tailmap -k FIELD</code> marks slow outliers in a numeric field.</p>
+<h2 id="narrow-it-down">Narrow it down<a class="headerlink" href="#narrow-it-down" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.status &gt;= 500'</span><span class="w"> </span>-k<span class="w"> </span>ts,status,path<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:12 +0200' <span class=" -Color -Color-Green">status</span>=500
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">path</span>='/infrastructures/customized/portals/enhance'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:29 +0200' <span class=" -Color -Color-Green">status</span>=500
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">path</span>='/front-end/transition/partnerships/b2b'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">ts</span>='04/Oct/2025:10:00:46 +0200' <span class=" -Color -Color-Green">status</span>=500
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">path</span>='/clicks-and-mortar/synergistic/benchmark'
+</code></pre></div>
+<p><code>--filter</code> keeps events for which a <a href="../scripting/">Rhai</a> expression is true;
+<code>e</code> is the current event. Level filters (<code>-l error,warn</code>) and time ranges
+(<code>--since</code>, <code>--until</code>) need no expressions. <a href="../filter/">Filter</a> covers them
+all.</p>
+<h2 id="export-the-results">Export the results<a class="headerlink" href="#export-the-results" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.status &gt;= 500'</span><span class="w"> </span>-k<span class="w"> </span>ts,status,path<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>-F<span class="w"> </span>csv
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ts,status,path
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>04/Oct/2025:10:00:12 +0200,500,/infrastructures/customized/portals/enhance
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>04/Oct/2025:10:00:29 +0200,500,/front-end/transition/partnerships/b2b
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>04/Oct/2025:10:00:46 +0200,500,/clicks-and-mortar/synergistic/benchmark
+</code></pre></div>
+<p><code>-J</code> (or <code>-F json</code>) writes JSON Lines, <code>-F csv</code>/<code>-F tsv</code> writes tables with a
+header, and <code>-o FILE</code> writes to a file. See <a href="../output/">Output and Integration</a>.</p>
+<h2 id="getting-help-in-the-terminal">Getting help in the terminal<a class="headerlink" href="#getting-help-in-the-terminal" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kelora -h</code></td>
+<td>one-screen cheat sheet</td>
+</tr>
+<tr>
+<td><code>kelora --help</code></td>
+<td>every option, grouped</td>
+</tr>
+<tr>
+<td><code>kelora --help KEYWORD</code></td>
+<td>options matching a keyword, e.g. <code>kelora --help time</code></td>
+</tr>
+<tr>
+<td><code>kelora --help-functions KEYWORD</code></td>
+<td>built-in functions matching a keyword</td>
+</tr>
+<tr>
+<td><code>kelora --help-formats</code>, <code>--help-time</code>, <code>--help-rhai</code></td>
+<td>topic references</td>
+</tr>
+</tbody>
+</table>
+<p>Run <code>kelora</code> with no arguments to open an interactive prompt with history and
+proper quoting — handy on Windows, where nested quotes are painful.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../installation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Install">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Install
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../parse/" class="md-footer__link md-footer__link--next" aria-label="Next: Get Logs into Shape">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Get Logs into Shape
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>

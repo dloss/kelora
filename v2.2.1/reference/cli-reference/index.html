@@ -1,0 +1,2792 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.2.1/reference/cli-reference/">
+      
+      
+        <link rel="prev" href="../../how-it-works/">
+      
+      
+        <link rel="next" href="../formats/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CLI Options - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cli-options" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CLI Options
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/explore/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/security-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Format Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and Stats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Help Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filtering-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filtering Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Format Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and Stats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Help Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cli-options">CLI Options<a class="headerlink" href="#cli-options" title="Permanent link">&para;</a></h1>
+<p>Every command-line option, grouped as in <code>kelora --help</code>. This page is
+generated from the help text of the Kelora version it documents, so the two
+always agree. In the terminal, <code>kelora --help KEYWORD</code> shows only the options
+matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
+<p>Topic references in the terminal: <code>--help-formats</code>, <code>--help-time</code>,
+<code>--help-multiline</code>, <code>--help-regex</code>, <code>--help-rhai</code>, <code>--help-functions</code>,
+<code>--help-examples</code>.</p>
+<h2 id="arguments">Arguments<a class="headerlink" href="#arguments" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="files"><code>[FILES]...</code></dt>
+<dd>Input files (stdin if not specified, or use "-" to explicitly specify stdin)</dd>
+</dl>
+<h2 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="help"><code>-h, --help</code></dt>
+<dd>Print help (see a summary with <code>-h</code>)</dd>
+<dt id="version"><code>-V, --version</code></dt>
+<dd>Print version</dd>
+</dl>
+<h2 id="input-options">Input Options<a class="headerlink" href="#input-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="no-input"><code>--no-input</code></dt>
+<dd>Run without reading input (useful for scripts that only use <a href="#begin"><code>--begin</code></a>/<a href="#end"><code>--end</code></a> stages)</dd>
+<dt id="input-format"><code>-f, --input-format &lt;FORMAT&gt;</code></dt>
+<dd>
+<p>Input format. Available formats: <code>auto</code> (default), <code>auto-per-file</code>, <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>, <code>csv</code>, <code>tsv</code>, <code>csvnh</code>, <code>tsvnh</code>, <code>combined</code>, <code>cri</code>, <code>apache-error</code>, <code>glog</code>, <code>haproxy</code>, <code>iso8601-level</code>, <code>log4j</code>, <code>nginx-error</code>, <code>postgres</code>, <code>python-logging</code>, <code>redis</code>, <code>s3</code>, <code>cols:&lt;spec&gt;</code>, <code>regex:&lt;pattern&gt;</code>. Fields of each: <a href="#help-formats"><code>--help-formats</code></a>.</p>
+<p>With <code>auto</code>, the format is detected from the first non-empty line (stdin) or a sample of the file (files: the head plus, for larger plain files, a few probe windows deeper in); a file that mixes formats is parsed with a cascade of the detected formats automatically. For mixed stdin streams pass a cascade (below) explicitly.</p>
+<p>Use <code>cols:&lt;spec&gt;</code> for column parsing, <code>regex:&lt;pattern&gt;</code> for regex parsing with named groups, and csv/tsv with optional type annotations.</p>
+<p>Cascade mode: pass a comma-separated list (e.g. <code>json,logfmt,line</code>) to try each parser in order; the first success wins, so put catch-all fallbacks like <code>line</code> or <code>raw</code> last. Adds an <code>_format</code> field to each event, unless the record already has one of its own (that value is kept).</p>
+<p>Repeat <code>-f</code> to build a cascade that includes spec-based parsers: <code>-f</code> json <code>-f 'cols:ts(2) level *msg'</code>. Each <code>-f</code> is tried in order; put catch-alls (<code>line</code>, <code>raw</code>, <code>cols:</code>) last (regex declines non-matching lines, so it can sit earlier).</p>
+<p>Examples:</p>
+<ul>
+<li><code>-f json</code></li>
+<li><code>-f json,line</code></li>
+<li><code>-f json -f 'cols:ts level *msg'</code></li>
+<li><code>-f 'regex:(?P&lt;code:int&gt;\\d+) (?P&lt;msg&gt;.*)'</code></li>
+<li><code>-f 'csv status:int bytes:int'</code></li>
+</ul>
+<p>Default: <code>auto</code></p>
+</dd>
+<dt id="opt-j"><code>-j</code></dt>
+<dd>Shortcut for <a href="#input-format"><code>-f</code></a> json</dd>
+<dt id="file-order"><code>--file-order &lt;ORDER&gt;</code></dt>
+<dd>
+<p>File processing order</p>
+<p>Default: <code>cli</code> · Values: <code>cli</code> <code>name</code> <code>mtime</code></p>
+</dd>
+<dt id="merge-sorted"><code>--merge-sorted</code></dt>
+<dd>Merge already-sorted input files by timestamp; aborts on missing timestamps, parse failures, or per-file disorder</dd>
+<dt id="skip-lines"><code>--skip-lines &lt;N&gt;</code></dt>
+<dd>Skip the first N input lines</dd>
+<dt id="head"><code>--head &lt;N&gt;</code></dt>
+<dd>Read only the first N input lines (stops I/O early, complementing <a href="#take"><code>--take</code></a> which limits output events)</dd>
+<dt id="section-from"><code>--section-from &lt;REGEX&gt;</code></dt>
+<dd>Start emitting sections from the line matching this regex (inclusive start). All <code>--section-*</code> regexes are unanchored; use ^...$ to match a whole line</dd>
+<dt id="section-after"><code>--section-after &lt;REGEX&gt;</code></dt>
+<dd>Start emitting sections after the line matching this regex (exclusive start)</dd>
+<dt id="section-before"><code>--section-before &lt;REGEX&gt;</code></dt>
+<dd>Stop before the line matching this regex (exclusive end)</dd>
+<dt id="section-through"><code>--section-through &lt;REGEX&gt;</code></dt>
+<dd>Stop after emitting the line matching this regex (inclusive end)</dd>
+<dt id="max-sections"><code>--max-sections &lt;N&gt;</code></dt>
+<dd>
+<p>Maximum number of sections to process (default: -1 for unlimited)</p>
+<p>Default: <code>-1</code></p>
+</dd>
+<dt id="keep-lines"><code>--keep-lines &lt;REGEX&gt;</code></dt>
+<dd>Keep only input lines matching this regex pattern (applied before ignore-lines)</dd>
+<dt id="ignore-lines"><code>--ignore-lines &lt;REGEX&gt;</code></dt>
+<dd>Ignore input lines matching this regex pattern</dd>
+<dt id="ts-field"><code>--ts-field &lt;FIELD&gt;</code></dt>
+<dd>Custom timestamp field name for parsing</dd>
+<dt id="ts-format"><code>--ts-format &lt;FORMAT&gt;</code></dt>
+<dd>Custom timestamp format for parsing (uses chrono format strings)</dd>
+<dt id="input-tz"><code>--input-tz &lt;TZ&gt;</code></dt>
+<dd>
+<p>Assume timezone for input timestamps without timezone info (default: the TZ environment variable if set, else UTC). Use <code>local</code> for system local time.</p>
+<p>Examples:</p>
+<ul>
+<li><code>Europe/Berlin</code></li>
+<li><code>local</code></li>
+<li><code>UTC</code></li>
+</ul>
+</dd>
+<dt id="input-year"><code>--input-year &lt;YEAR&gt;</code></dt>
+<dd>
+<p>Supply the year for year-less timestamps (syslog, glog, ...) instead of guessing it from the wall clock. Use <code>auto</code> for the ±1yr heuristic (default).</p>
+<p>Examples:</p>
+<ul>
+<li><code>2005</code></li>
+<li><code>auto</code></li>
+</ul>
+</dd>
+<dt id="multiline"><code>-M, --multiline &lt;STRATEGY&gt;</code></dt>
+<dd>Multi-line event detection strategy. Supply values like <code>timestamp</code>, <code>timestamp:format=%Y-%m-%d %H-%M-%S</code>, <code>indent</code>, <code>blank</code>, <code>regex:match=^START</code>, <code>regex:match=^START:end=^END$</code>, or a language stack-trace preset (<code>java</code>, <code>python</code>, <code>go</code>) for logs without timestamped headers. See <code>kelora --help-multiline</code> for details</dd>
+<dt id="multiline-join"><code>--multiline-join &lt;JOIN&gt;</code></dt>
+<dd>
+<p>Join multiline lines with: space, newline, or empty. Default: space (newline for <a href="#multiline"><code>--multiline all</code></a>)</p>
+<p>Values: <code>space</code> <code>newline</code> <code>empty</code></p>
+</dd>
+<dt id="multiline-timeout"><code>--multiline-timeout &lt;DURATION&gt;</code></dt>
+<dd>Flush a buffered multiline event after this much input inactivity (e.g. <code>400ms</code>, <code>2s</code>; <code>0</code> = never). Default: off when reading regular files, 400ms when reading a stream (stdin, FIFO)</dd>
+<dt id="multiline-max-lines"><code>--multiline-max-lines &lt;N&gt;</code></dt>
+<dd>Split a multiline event after this many buffered lines (safety cap; <code>0</code> = unlimited). Default: 10000. Ignored by <a href="#multiline"><code>--multiline all</code></a></dd>
+<dt id="extract-prefix"><code>--extract-prefix &lt;FIELD&gt;</code></dt>
+<dd>Extract text before separator to specified field (runs before parsing)</dd>
+<dt id="prefix-sep"><code>--prefix-sep &lt;SEP&gt;</code></dt>
+<dd>
+<p>Separator string for prefix extraction (default: pipe <code>|</code>)</p>
+<p>Default: <code>|</code></p>
+</dd>
+<dt id="cols-sep"><code>--cols-sep &lt;SEP&gt;</code></dt>
+<dd>Column separator for <code>cols:&lt;spec&gt;</code> format (default: whitespace)</dd>
+<dt id="max-line-bytes"><code>--max-line-bytes &lt;SIZE&gt;</code></dt>
+<dd>
+<p>Cap the number of bytes a single input line may consume in memory (default 64MiB).</p>
+<p>This is a safety circuit breaker against runaway memory: a newline-free stream — including a tiny gzip/zstd payload that decompresses into one enormous line — would otherwise grow without bound and exhaust RAM. No real log line approaches the default, so it normally never triggers.</p>
+<p>When a line exceeds the cap it is truncated to the cap and a warning (🔸) reports how many lines were clipped; the run still succeeds (exit 0). With <a href="#strict"><code>--strict</code></a> an over-limit line is a hard error (exit 1) instead. Accepts a byte count or an IEC/SI suffix (64MiB, 1GiB, 1048576); 0/off/unlimited disables the cap.</p>
+<p>Reading is streamed, so a large multi-line compressed file is unaffected — only a single over-long line trips this.</p>
+</dd>
+</dl>
+<h2 id="processing-options">Processing Options<a class="headerlink" href="#processing-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="begin"><code>--begin &lt;EXPR&gt;</code></dt>
+<dd>
+<p>Pre-run a Rhai script before any other stage runs.</p>
+<p>Typical use: seed the global <code>conf</code> map with lookup tables or shared context.</p>
+<p>Helpers available only here:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>read_lines(path) -&gt; Array&lt;String&gt;  # UTF-8, one entry per line
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>read_file(path)  -&gt; String         # UTF-8, entire file contents
+</code></pre></div>
+<p>Data stored in <code>conf</code> becomes read-only afterwards. See <a href="#help-rhai"><code>--help-rhai</code></a> for stage order.</p>
+</dd>
+<dt id="filter"><code>--filter &lt;EXPR&gt;</code></dt>
+<dd>
+<p>Boolean filter expression; events where it evaluates to true are kept.</p>
+<p>Can be combined with <a href="#include"><code>--include</code></a> (<a href="#include"><code>-I</code></a>) to call helper functions defined in an include file. Include files used with <code>--filter</code> must contain only function definitions — top-level statements are rejected with an error.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora -I helpers.rhai --filter 'is_error(e.level)' app.log
+</code></pre></div>
+<p>See <a href="#help-rhai"><code>--help-rhai</code></a> for expression syntax.</p>
+</dd>
+<dt id="exec"><code>-e, --exec &lt;EXPR&gt;</code></dt>
+<dd>Transform/process exec scripts evaluated on each event. See <a href="#help-rhai"><code>--help-rhai</code></a> for stage semantics</dd>
+<dt id="exec-file"><code>-E, --exec-file &lt;FILE&gt;</code></dt>
+<dd>Execute script from file (contents run in the exec stage)</dd>
+<dt id="assert"><code>--assert &lt;EXPR&gt;</code></dt>
+<dd>Assertion expressions that must evaluate to true. Violations are reported to stderr; processing continues unless <a href="#strict"><code>--strict</code></a> is enabled. See <a href="#help-rhai"><code>--help-rhai</code></a> for expression syntax</dd>
+<dt id="include"><code>-I, --include &lt;FILE&gt;</code></dt>
+<dd>
+<p>Include a Rhai file of helper functions, loaded into the adjacent script stage.</p>
+<p>Command-line position selects which stage the file applies to:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>--include before a --filter/--exec    → that filter/exec stage
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>--include before the first stage       → the --begin stage (if present)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>--include after the last stage         → the --end stage (if present)
+</code></pre></div>
+<p>Each stage has its own scope: an include's functions are only visible to the stage it is attached to. Repeat <code>--include</code> to share helpers across several stages. An include that attaches to begin/end has no effect unless that <a href="#begin"><code>--begin</code></a>/<a href="#end"><code>--end</code></a> stage exists.</p>
+<p>When used with <a href="#filter"><code>--filter</code></a>, the include file must contain only function definitions. Top-level statements (side effects) are rejected with an error.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora -I helpers.rhai --filter 'is_error(e.level)' app.log
+</code></pre></div>
+</dd>
+<dt id="end"><code>--end &lt;EXPR&gt;</code></dt>
+<dd>Run once after processing completes (post-processing stage). Ideal for summarising metrics or emitting reports. The global <code>metrics</code> map from track_*() calls is accessible here</dd>
+<dt id="allow-fs-writes"><code>--allow-fs-writes</code></dt>
+<dd>Allow Rhai scripts to create directories and write files on disk (required for file helpers like append_file or mkdir)</dd>
+<dt id="window"><code>--window &lt;N&gt;</code></dt>
+<dd>Keep the current event and the N before it in the <code>window</code> array for scripts (window[0] is the current event)</dd>
+<dt id="span"><code>--span &lt;N|DURATION|FIELD&gt;</code></dt>
+<dd>
+<p>Aggregate events into consecutive spans.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>--span &lt;N&gt;         Close after every N events that pass filters.
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>--span &lt;DURATION&gt;  Close on aligned time windows (e.g. 30s, 5m, 1h, 1d).
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>                   Units: ms, s, m, h, d, w. Windows are fixed-length
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                   and aligned to the Unix epoch in UTC, so weeks run
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                   Thursday to Wednesday.
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>--span &lt;FIELD&gt;     Close when the specified field value changes.
+</code></pre></div>
+<p>Use with <a href="#span-close"><code>--span-close</code></a> to run a Rhai snippet when each span finishes.</p>
+</dd>
+<dt id="span-idle"><code>--span-idle &lt;DURATION&gt;</code></dt>
+<dd>Close span after this duration of inactivity (e.g. <code>--span-idle</code> 5m). Requires timestamps and cannot be combined with <a href="#span"><code>--span</code></a>.</dd>
+<dt id="span-close"><code>--span-close &lt;EXPR&gt;</code></dt>
+<dd>
+<p>Run a Rhai snippet when each span closes. For a plain per-window rollup, use <a href="#span-summary"><code>--span-summary</code></a> instead — no script, and its rows survive <a href="#metrics"><code>-m</code></a>/<a href="#freq"><code>--freq</code></a> (a hook's print does not).</p>
+<p>Within the hook, read span.start, span.end, span.first_ts, span.last_ts, span.id, span.label, span.events, span.size, and span.metrics for span context. span.start/span.end are the window bounds (() for count and field spans); span.first_ts/span.last_ts are the timestamps of the first and last events in the span, in every mode. span.metric("name") returns one metric's per-window value or 0 when the window produced none (() for an omitted non-additive metric), and takes a dotted path (span.metric("level.ERROR")); prefer it over indexing span.metrics, which yields () for an omitted zero delta. span.label is span.start as RFC3339 when the mode has one, else span.id, so a hook need not branch on the span mode.</p>
+<p>span.metrics carries per-window values for additive aggregators (count, sum, avg, unique, bucket) and the window's own min and max; non-additive ones (percentiles, cardinality, top, bottom) are omitted with a warning, so use span.events for those. Events are only retained for span.events when this hook is present.</p>
+</dd>
+<dt id="span-summary"><code>--span-summary[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>One rollup row per closed span (implies <a href="#quiet"><code>-q</code></a>/<a href="#quiet"><code>--quiet</code></a>). Requires <a href="#span"><code>--span</code></a> or <a href="#span-idle"><code>--span-idle</code></a>.</p>
+<p>Each row carries the span label, the event count, and every per-window metric from additive track_* calls and track_min/track_max (including those synthesized by <a href="#freq"><code>--freq</code></a>/<a href="#describe"><code>--describe</code></a>).</p>
+<p>Formats: text (key=value lines), tsv (label<code>&lt;TAB&gt;</code>metric<code>&lt;TAB&gt;</code>key<code>&lt;TAB&gt;</code>value records), json (one object per line). Bare <code>--span-summary</code> auto-selects: text on a terminal, tsv when piped or redirected (like <a href="#metrics"><code>-m</code></a>).</p>
+<p>Rows are data on stdout, so <a href="#script-output"><code>--no-script-output</code></a> and <a href="#metrics"><code>-m</code></a> do not suppress them. A window that received no input produces no row, so a time series has gaps where nothing was logged; a window whose events were all removed by <a href="#filter"><code>--filter</code></a>/<a href="#levels"><code>--levels</code></a> still produces a row, with events=0. Windows outside <a href="#since"><code>--since</code></a>/<a href="#until"><code>--until</code></a> never appear.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--span 1m --span-summary               Events per minute
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>-l error --span 5m --span-summary      Errors per 5 minutes
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>--span 1m --freq level --span-summary  Per-minute level breakdown
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>--span-idle 5m --span-summary          Session sizes
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>--span 1m --span-summary=tsv &gt; series.tsv  Time series for a database or plot
+</code></pre></div>
+<p>Note the <code>=</code>: <code>--span-summary=tsv</code> (a space is read as a filename).</p>
+<p>Values:</p>
+<ul>
+<li><code>text</code>: One <code>key=value</code> line per span; nested metrics flatten with a dot</li>
+<li><code>tsv</code>: Long/tidy <code>label&lt;TAB&gt;metric&lt;TAB&gt;key&lt;TAB&gt;value</code> records, one per value</li>
+<li><code>json</code>: One JSON object per span, preserving nested metrics</li>
+</ul>
+</dd>
+<dt id="normalize-ts"><code>--normalize-ts</code></dt>
+<dd>Normalize the primary timestamp field to RFC3339 (ISO 8601 compatible). Modifies event data - affects all output formats</dd>
+</dl>
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="strict"><code>--strict</code></dt>
+<dd>Exit on first error (fail-fast behavior). Use <code>--no-strict</code> to force resilient mode, overriding a config default</dd>
+<dt id="strict-utf8"><code>--strict-utf8</code></dt>
+<dd>
+<p>Abort on the first non-UTF-8 byte instead of the default lossy decoding.</p>
+<p>By default, kelora tolerates non-UTF-8 input the way grep does: invalid byte sequences are replaced with U+FFFD (�) and a diagnostic reports how many lines were affected, so a single bad byte no longer truncates the rest of the stream. Pass <code>--strict-utf8</code> to restore hard failure (exit 1) on invalid UTF-8.</p>
+</dd>
+<dt id="verbose"><code>-v, --verbose...</code></dt>
+<dd>Show detailed error information (use multiple times for more verbosity: <code>-v</code>, -vv, -vvv)</dd>
+</dl>
+<h2 id="filtering-options">Filtering Options<a class="headerlink" href="#filtering-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="levels"><code>-l, --levels &lt;LEVELS&gt;</code></dt>
+<dd>
+<p>Include only events with these log levels (comma-separated, case-insensitive).</p>
+<p>Use comma-separated values for OR logic: <code>--levels</code> ERROR,WARN Multiple flags create sequential AND filters (advanced).</p>
+<p>On json and logfmt input, lines whose text contains none of the levels are skipped before parsing, so their parse errors go uncounted: the parse-error summary can report fewer errors than a run without <code>-l</code>. A run in which no line parses still fails with exit 1. Run without <code>-l</code>, or with <a href="#stats"><code>-s</code></a>/<a href="#stats"><code>--stats</code></a>, to count every parse error.</p>
+</dd>
+<dt id="exclude-levels"><code>-L, --exclude-levels &lt;EXCLUDE_LEVELS&gt;</code></dt>
+<dd>Exclude events with these log levels (comma-separated, case-insensitive).</dd>
+<dt id="keys"><code>-k, --keys &lt;KEYS&gt;</code></dt>
+<dd>
+<p>Output only these fields, in the order given (comma-separated list).</p>
+<p>Acts on whole top-level fields. Nested values that <a href="#discover"><code>--discover</code></a> prints as dotted or bracketed paths (e.g. api.queries, tags[]) are NOT selectable here — flatten them first, e.g. <a href="#exec"><code>--exec 'e.val = e.get_path("api.queries")'</code></a> then <code>-k</code> val. (A top-level field whose literal name contains a dot is matched as-is.)</p>
+</dd>
+<dt id="exclude-keys"><code>-K, --exclude-keys &lt;EXCLUDE_KEYS&gt;</code></dt>
+<dd>
+<p>Exclude these fields from output (comma-separated list).</p>
+<p>Acts on whole top-level fields; nested values (the dotted/bracketed paths shown by <a href="#discover"><code>--discover</code></a>) cannot be dropped here — remove them in an <a href="#exec"><code>--exec</code></a> stage instead.</p>
+</dd>
+<dt id="since"><code>--since &lt;TIME&gt;</code></dt>
+<dd>
+<p>Keep only events at or after this time.</p>
+<p>Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, <code>2024-01-15 12:00</code>, <code>1h</code>, <code>-30m</code>, <code>yesterday</code>). Can also use <code>until+DURATION</code>, <code>until-DURATION</code>, <code>now+DURATION</code>, or <code>now-DURATION</code> anchors.</p>
+<p>Reads the timestamp the parser produced, before any script stage: use <a href="#ts-field"><code>--ts-field</code></a>/<a href="#ts-format"><code>--ts-format</code></a> to change what that is, and a <a href="#filter"><code>--filter</code></a> for a timestamp you build in a script. See <a href="#help-time"><code>--help-time</code></a>.</p>
+</dd>
+<dt id="until"><code>--until &lt;TIME&gt;</code></dt>
+<dd>
+<p>Keep only events at or before this time.</p>
+<p>Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, <code>2024-01-15 12:00</code>, <code>1h</code>, <code>+30m</code>, <code>tomorrow</code>). Can also use <code>since+DURATION</code>, <code>since-DURATION</code>, <code>now+DURATION</code>, or <code>now-DURATION</code> anchors.</p>
+<p>Reads the timestamp the parser produced, before any script stage: use <a href="#ts-field"><code>--ts-field</code></a>/<a href="#ts-format"><code>--ts-format</code></a> to change what that is, and a <a href="#filter"><code>--filter</code></a> for a timestamp you build in a script. See <a href="#help-time"><code>--help-time</code></a>.</p>
+</dd>
+<dt id="take"><code>-n, --take &lt;N&gt;</code></dt>
+<dd>Limit output to the first N events</dd>
+<dt id="before-context"><code>-B, --before-context &lt;N&gt;</code></dt>
+<dd>
+<p>Show N events before each match (requires filtering).</p>
+<p>See <a href="#context"><code>-C</code></a> for how context lines are marked and which filters define a match.</p>
+</dd>
+<dt id="after-context"><code>-A, --after-context &lt;N&gt;</code></dt>
+<dd>
+<p>Show N events after each match (requires filtering).</p>
+<p>See <a href="#context"><code>-C</code></a> for how context lines are marked and which filters define a match.</p>
+</dd>
+<dt id="context"><code>-C, --context &lt;N&gt;</code></dt>
+<dd>
+<p>Show N events before and after each match, like grep <code>-C</code> (requires filtering: <a href="#filter"><code>--filter</code></a>, <a href="#levels"><code>--levels</code></a>/<a href="#levels"><code>-l</code></a>, <a href="#exclude-levels"><code>--exclude-levels</code></a>/<a href="#exclude-levels"><code>-L</code></a>, <a href="#since"><code>--since</code></a>/<a href="#until"><code>--until</code></a>).</p>
+<p>In the default output format each event carries a marker naming its role. Every event appears exactly once, with the marker that describes it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>◉ / *   the match itself (◉ on a color terminal, * otherwise)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>/       before-context: run-up to a later match
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>\       after-context: trails an earlier match
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>|       both at once, between two matches close enough to overlap
+</code></pre></div>
+<p>Markers appear only in the default format; <a href="#output-format"><code>-F</code></a> json/csv/logfmt emit the same events unmarked. They are part of the event line on stdout, so <a href="#no-warnings"><code>--no-warnings</code></a>/<a href="#no-hints"><code>--no-hints</code></a>/<a href="#no-diagnostics"><code>--no-diagnostics</code></a> leave them alone; <a href="#quiet"><code>-q</code></a> and <a href="#silent"><code>--silent</code></a> drop the events entirely.</p>
+<p>A match is an event that passes every filter in the pipeline's leading run of filters, so <a href="#filter"><code>--filter A --filter B -C 2</code></a> and <a href="#filter"><code>--filter A -l error -C 2</code></a> both mean "context around events passing both". The context lines that run selects are neighbours, not matches, so a later <a href="#filter"><code>--filter</code></a> (one placed behind an <a href="#exec"><code>--exec</code></a> or <a href="#assert"><code>--assert</code></a>) does not re-judge them; kelora warns when a filter sits there, since it can drop matches and leave their context behind.</p>
+<p><a href="#since"><code>--since</code></a>/<a href="#until"><code>--until</code></a> stay outside that run: they define which events exist at all, so context is drawn from inside the time window rather than across its edges.</p>
+<p>Requires sequential mode; <a href="#parallel"><code>--parallel</code></a> is ignored with a warning.</p>
+</dd>
+</dl>
+<h2 id="output-options">Output Options<a class="headerlink" href="#output-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="output-format"><code>-F, --output-format &lt;FORMAT&gt;</code></dt>
+<dd>
+<p>Output format.</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>default   Colored key-value output
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>json      JSON Lines (one object per line)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>logfmt    Key=value pairs on one line
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>inspect   Debug view with type information
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>levelmap  Compact level timeline
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>keymap    First-character map for one selected field
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>tailmap   Percentile map for one numeric field
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>csv       Comma-separated with header row
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>tsv       Tab-separated with header row
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>csvnh     CSV without header row
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>tsvnh     TSV without header row
+</code></pre></div>
+<p>See <a href="#help-formats"><code>--help-formats</code></a> for requirements, extracted fields, and examples.</p>
+<p>Default: <code>default</code> · Values: <code>default</code> <code>json</code> <code>logfmt</code> <code>inspect</code> <code>levelmap</code> <code>keymap</code> <code>tailmap</code> <code>csv</code> <code>tsv</code> <code>csvnh</code> <code>tsvnh</code></p>
+</dd>
+<dt id="opt-J"><code>-J</code></dt>
+<dd>Shortcut for <a href="#output-format"><code>-F</code></a> json</dd>
+<dt id="core"><code>-c, --core</code></dt>
+<dd>Output only core fields</dd>
+<dt id="output-file"><code>-o, --output-file &lt;FILE&gt;</code></dt>
+<dd>Output file for formatted events</dd>
+<dt id="quiet"><code>-q, --quiet</code></dt>
+<dd>Suppress events (formatter output)</dd>
+<dt id="warnings"><code>--warnings</code></dt>
+<dd>Show warnings (🔸) — problems that did not stop the run. Overrides a KELORA_NO_WARNINGS / config default and re-enables warnings in data-only modes like <a href="#metrics"><code>--metrics</code></a>/<a href="#drain"><code>--drain</code></a>/<a href="#discover"><code>--discover</code></a></dd>
+<dt id="no-warnings"><code>--no-warnings</code></dt>
+<dd>Suppress warnings (🔸). Errors still print; use <a href="#silent"><code>--silent</code></a> to hide those too</dd>
+<dt id="hints"><code>--hints</code></dt>
+<dd>Show hints (💡) — advisory suggestions (zero-result/typo/format tips). Overrides a KELORA_NO_HINTS / config default and re-enables hints in data-only modes like <a href="#metrics"><code>--metrics</code></a>/<a href="#drain"><code>--drain</code></a>/<a href="#discover"><code>--discover</code></a></dd>
+<dt id="no-hints"><code>--no-hints</code></dt>
+<dd>Suppress hints (💡, zero-result hints, format/typo tips)</dd>
+<dt id="diagnostics"><code>--diagnostics</code></dt>
+<dd>Show both warnings and hints (shortcut for <a href="#warnings"><code>--warnings</code></a> <a href="#hints"><code>--hints</code></a>), even in data-only modes. Error summaries always show unless <a href="#silent"><code>--silent</code></a></dd>
+<dt id="no-diagnostics"><code>--no-diagnostics</code></dt>
+<dd>Suppress both warnings and hints (shortcut for <a href="#no-warnings"><code>--no-warnings</code></a> <a href="#no-hints"><code>--no-hints</code></a>), plus per-line verbose errors. Error and parse summaries still print; use <a href="#silent"><code>--silent</code></a> to hide those too</dd>
+<dt id="silent"><code>--silent</code></dt>
+<dd>Silence pipeline stdout/stderr emitters (events/diagnostics/stats/terminal metrics); script output still allowed. Metrics files still write. Use <code>--no-silent</code> to override a config default</dd>
+<dt id="script-output"><code>--script-output</code></dt>
+<dd>Enable Rhai print/eprint output</dd>
+<dt id="legend"><code>--legend</code></dt>
+<dd>Append a legend to map outputs (levelmap/keymap/tailmap) even when piped. By default the legend shows only when stdout is a terminal</dd>
+<dt id="no-legend"><code>--no-legend</code></dt>
+<dd>Suppress the legend on map outputs (levelmap/keymap/tailmap)</dd>
+</dl>
+<h2 id="default-format-options">Default Format Options<a class="headerlink" href="#default-format-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="brief"><code>-b, --brief</code></dt>
+<dd>Output only field values (omit keys)</dd>
+<dt id="expand-nested"><code>--expand-nested</code></dt>
+<dd>Expand nested structures (maps/arrays) with indentation</dd>
+<dt id="wrap"><code>--wrap</code></dt>
+<dd>Always word-wrap wide events onto indented continuation lines, even when piped or redirected. By default wrapping is enabled only when stdout is a terminal, so piped output stays one line per event</dd>
+<dt id="no-wrap"><code>--no-wrap</code></dt>
+<dd>Never word-wrap; keep each event on a single line</dd>
+<dt id="show-ts-local"><code>-z, --show-ts-local</code></dt>
+<dd>Display timestamps as local RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output</dd>
+<dt id="show-ts-utc"><code>-Z, --show-ts-utc</code></dt>
+<dd>Display timestamps as UTC RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output</dd>
+</dl>
+<h2 id="display-options">Display Options<a class="headerlink" href="#display-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="force-color"><code>--force-color</code></dt>
+<dd>Force colored output</dd>
+<dt id="no-color"><code>--no-color</code></dt>
+<dd>Disable colored output</dd>
+<dt id="mark-gaps"><code>--mark-gaps &lt;DURATION&gt;</code></dt>
+<dd>Insert a centered marker when the time delta between events exceeds the given duration. Example: <code>--mark-gaps</code> 30s prints a divider when consecutive events are separated by &gt;=30s.</dd>
+<dt id="force-emoji"><code>--force-emoji</code></dt>
+<dd>Force emoji prefixes (override auto-detection)</dd>
+<dt id="no-emoji"><code>--no-emoji</code></dt>
+<dd>Disable emoji prefixes</dd>
+</dl>
+<h2 id="performance-options">Performance Options<a class="headerlink" href="#performance-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="parallel"><code>-P, --parallel</code></dt>
+<dd>Enable parallel processing (default: sequential processing). Use <code>--no-parallel</code> to force sequential, overriding a config default</dd>
+<dt id="threads"><code>--threads &lt;N&gt;</code></dt>
+<dd>
+<p>Number of worker threads (0 = auto-detect, one per available core)</p>
+<p>Default: <code>0</code></p>
+</dd>
+<dt id="batch-size"><code>--batch-size &lt;N&gt;</code></dt>
+<dd>Batch size (events per batch) for parallel processing</dd>
+<dt id="batch-timeout"><code>--batch-timeout &lt;MS&gt;</code></dt>
+<dd>
+<p>Flush partially full parallel batches after this idle period (milliseconds). Lower values reduce latency; higher values improve throughput.</p>
+<p>Default: <code>200</code></p>
+</dd>
+<dt id="unordered"><code>--unordered</code></dt>
+<dd>Disable ordered output</dd>
+</dl>
+<h2 id="metrics-and-stats">Metrics and Stats<a class="headerlink" href="#metrics-and-stats" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="stats"><code>-s, --stats[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Show stats only (implies <a href="#quiet"><code>-q</code></a>/<a href="#quiet"><code>--quiet</code></a>).</p>
+<p>Formats: table, json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>-s              Default table format
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>--stats=json    JSON output
+</code></pre></div>
+<p>Use <code>--no-stats</code> to override a config default. Note the <code>=</code>: <code>--stats=json</code> (a space, as in <code>-s json</code>, is read as a filename).</p>
+<p>Values: <code>table</code> <code>json</code></p>
+</dd>
+<dt id="with-stats"><code>--with-stats</code></dt>
+<dd>Show stats alongside events (rare case)</dd>
+<dt id="metrics"><code>-m, --metrics[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Show metrics only (implies <a href="#quiet"><code>-q</code></a>/<a href="#quiet"><code>--quiet</code></a>).</p>
+<p>Formats: short (first 5), full, tsv, json. Bare <code>-m</code> auto-selects: the human-readable table on a terminal, tsv when piped or redirected (like ls).</p>
+<p>tsv emits one tab-separated <code>metric&lt;TAB&gt;key&lt;TAB&gt;value</code> record per line, sorted by count descending, so | head is top-N and | tail is bottom-N.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>-m               Auto (table on a TTY, tsv when piped)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>--metrics=full   Force the table even through a pipe
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>--metrics=tsv    Force the record stream even to a TTY
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>--metrics=short  Abbreviated (first 5 items)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>--metrics=json   JSON output
+</code></pre></div>
+<p>Use <code>--no-metrics</code> to override a config default. Note the <code>=</code>: <code>--metrics=json</code> (a space, as in <code>-m json</code>, is read as a filename).</p>
+<p>Values:</p>
+<ul>
+<li><code>short</code></li>
+<li><code>full</code></li>
+<li><code>json</code></li>
+<li><code>tsv</code>: Tab-separated record stream (one <code>metric&lt;TAB&gt;key&lt;TAB&gt;value</code> row per line, sorted by count/score descending) for piping to head/tail/sort/awk</li>
+</ul>
+</dd>
+<dt id="with-metrics"><code>--with-metrics</code></dt>
+<dd>Show metrics alongside events (rare case)</dd>
+<dt id="metrics-file"><code>--metrics-file &lt;FILE&gt;</code></dt>
+<dd>Persist the metrics map (populated by track_*()) to disk as JSON.</dd>
+<dt id="freq"><code>--freq &lt;FIELD&gt;</code></dt>
+<dd>
+<p>Frequency table: count occurrences per distinct value of FIELD.</p>
+<p>Shorthand for track_freq("FIELD", e.FIELD). Runs after all filters/transforms and implies <a href="#metrics"><code>-m</code></a>. Repeatable or comma-separated (<code>--freq</code> level,service). Nested fields use dotted paths (e.g. user.id). Results are sorted by count descending, so piping the tsv output to head gives the top-N and tail gives the bottom-N (no <code>--top</code>/<code>--bottom</code> flags needed). Control output with <a href="#metrics"><code>--metrics=short</code></a>|full|tsv|json or <a href="#metrics-file"><code>--metrics-file</code></a>.</p>
+<p>Takes a field name, not an expression. To tally a derived value, call track_freq directly in a script stage — it accepts any expression, names the metric itself, and needs no throwaway field:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>-m --exec 'track_freq("hour", meta.parsed_ts.round_to("1h"))'   # per hour
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>-m --exec 'track_freq("class", e.status / 100)'                  # per 1xx/2xx/...
+</code></pre></div>
+<p>By itself <code>--freq</code> tallies the whole run: adding <a href="#span"><code>--span</code></a> does NOT window it. For per-window tallies add <a href="#span-summary"><code>--span-summary</code></a>, which puts each window's deltas in a row:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>--span 1m --freq level --span-summary
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>--freq level
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>--filter 'e.status&gt;=500' --freq url
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>--freq url | head        # top URLs (tsv auto-selected when piped)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>--freq url | tail        # rarest URLs
+</code></pre></div>
+</dd>
+<dt id="describe"><code>--describe &lt;FIELD&gt;</code></dt>
+<dd>
+<p>Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.</p>
+<p>Shorthand for track_stats("FIELD", e.FIELD). Runs after all filters/transforms and implies <a href="#metrics"><code>-m</code></a>. Repeatable or comma-separated (<code>--describe</code> a,b). Non-numeric/missing values are skipped. Control output with <a href="#metrics"><code>--metrics=short</code></a>|full|tsv|json or <a href="#metrics-file"><code>--metrics-file</code></a>.</p>
+<p>Takes a field name, not an expression. For a derived value, call track_stats directly in a script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>-m --exec 'track_stats("seconds", e.duration_ms / 1000.0)'
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>--describe duration_ms
+</code></pre></div>
+</dd>
+<dt id="card"><code>--card &lt;FIELD&gt;</code></dt>
+<dd>
+<p>Estimate the number of distinct values of FIELD (HyperLogLog).</p>
+<p>Shorthand for track_cardinality("FIELD", e.FIELD). Runs after all filters/transforms and implies <a href="#metrics"><code>-m</code></a>. Repeatable or comma-separated (<code>--card</code> user_id,trace_id). Missing values are skipped. The count is approximate (~1% error) but uses constant memory, so it scales to high-cardinality fields where track_freq/track_unique would not. Control output with <a href="#metrics"><code>--metrics=short</code></a>|full|tsv|json or <a href="#metrics-file"><code>--metrics-file</code></a>.</p>
+<p>Takes a field name, not an expression. For a derived value, call track_cardinality directly in a script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>-m --exec 'track_cardinality("prefix", e.client_ip.split(".")[0])'
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>--card user.id
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>--filter 'e.status&gt;=500' --card client_ip
+</code></pre></div>
+</dd>
+</dl>
+<h2 id="template-discovery">Template Discovery<a class="headerlink" href="#template-discovery" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="drain"><code>--drain[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Summarize log templates using Drain (summary-only; requires <a href="#keys"><code>--keys</code></a> with exactly one field; sequential mode only).</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>table (default)  Clean output: count + template
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>full             Detailed: adds line ranges + sample + template ID
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>id               Stable output: template_id + template (sorted by ID)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>json             JSON with all metadata
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>--drain          Clean table (count + template)
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>--drain=full     With line numbers, samples, and IDs
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>--drain=id       Stable ID list for diffs
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>--drain=json     JSON output for scripting
+</code></pre></div>
+<p>Values: <code>table</code> <code>full</code> <code>id</code> <code>json</code></p>
+</dd>
+<dt id="drain-diff"><code>--drain-diff[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Compare template frequencies between a baseline and a target log (summary-only; requires <a href="#keys"><code>--keys</code></a> with exactly one field; sequential mode only).</p>
+<p>Three ways to define baseline and target:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora --drain-diff old.log new.log -k msg      First input is baseline, second is target
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg   One input split at a timestamp
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>kelora --drain-diff --cut-before 'e.msg.contains("deploy")' incident.log -k msg   One input split at the first match
+</code></pre></div>
+<p>Diffs *which message templates occur and how often*, not what the messages say. Output reads like a unified diff:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>--- / +++       name the baseline and target, with each side's event count
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>                and observed span (in the form --cut-at accepts back)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>+               a template only the target has, with its event count
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>-               a template only the baseline had, with its event count
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>*               a template both have, at a materially different rate,
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>                shown as a plain multiple ("14x more")
+</code></pre></div>
+<p>A * row is reported when the change is bigger than sampling noise for the number of events on each side, and big enough to act on (&gt;= 0.5pp of share, or a &gt;= 1.5x change in rate). Templates that change less are this diff's context lines: tallied in the footer as unchanged, not printed. All comparisons use per-side shares, so sides of very different sizes compare fairly.</p>
+<p>Rewording is invisible to it: "timeout after 5s" becoming "timed out after 5s" reads as one - plus one +, never as a modified template. Composes with the pipeline: <a href="#filter"><code>--filter</code></a>/<a href="#exec"><code>--exec</code></a> run before diffing.</p>
+<p>A vacuous comparison is refused rather than reported (exit 1):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>- No event carries the field named by -k: the error names the nearest field it
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  did see, instead of printing an all-empty "nothing changed" report.
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>- One side got every event and the other none (usually a splitter that missed):
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>  every template would be + or - by construction, so the error names the
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>  resolved cut and the span the input covers, or says the predicate never
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>  matched, instead.
+</code></pre></div>
+<p>A field present on only some events warns with the excluded and compared counts.</p>
+<p>Formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>table   Diff-style rows + footer. The default on a terminal.
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>full    The same rows, each followed by indented detail: template id,
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>        both counts and shares, and a sample of a real line it matched.
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>tsv     One 'change&lt;TAB&gt;template_id&lt;TAB&gt;counts&lt;TAB&gt;percents&lt;TAB&gt;template'
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>        record per changed template; no header, no report around it.
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>        The default when stdout is piped or redirected (like -m), so
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>        --drain-diff=table forces the report through a pipe.
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>json    One JSON object (new/gone/freq_changed, per-side totals, the
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>        unchanged tally, spans and exclusion counts; each freq_changed
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>        entry carries delta_pp and a signed z_score for your own
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>        filtering)
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>--drain-diff old.log new.log -k msg
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>--drain-diff=json before.log after.log -k msg
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>--drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>--drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+</code></pre></div>
+<p>Values:</p>
+<ul>
+<li><code>table</code></li>
+<li><code>full</code>: The same rows, each followed by indented detail: template id, the counts and shares the compact row leaves out, and a sample line</li>
+<li><code>json</code></li>
+<li><code>tsv</code>: One tab-separated record per changed template, no header and no surrounding report, for piping to awk/sort/duckdb</li>
+</ul>
+</dd>
+<dt id="cut-at"><code>--cut-at &lt;TIME&gt;</code></dt>
+<dd>
+<p>Timestamp splitting one <a href="#drain-diff"><code>--drain-diff</code></a> input into baseline (before the cut) and target (at/after).</p>
+<p>Accepts the same timestamp formats as <a href="#since"><code>--since</code></a>/<a href="#until"><code>--until</code></a> (e.g., 2026-07-24T14:00:00Z, <code>2026-07-24 14:00</code>, <code>1h</code>, <code>yesterday</code>). See <a href="#help-time"><code>--help-time</code></a>. Events without a parseable timestamp are excluded from the comparison and counted in a warning.</p>
+<p>The cut resolves against the clock, not the log: <code>1h</code> means an hour before now, and a bare <code>14:00</code> means today at 14:00. For a historical log, give an absolute timestamp — a cut that lands outside the data leaves one side empty, which is refused (exit 1) with the span the input actually covers, so a missed first attempt tells you what to use. When you know what the change looks like but not when it happened, <a href="#cut-before"><code>--cut-before</code></a> / <a href="#cut-after"><code>--cut-after</code></a> split on a predicate instead and need no clock.</p>
+<p>Every report states where the split landed (<code>baseline spans .. / target spans ..</code>), in the same form <code>--cut-at</code> accepts back.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>--drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
+</code></pre></div>
+</dd>
+<dt id="cut-before"><code>--cut-before &lt;EXPR&gt;</code></dt>
+<dd>
+<p>Boolean Rhai expression whose first match splits one <a href="#drain-diff"><code>--drain-diff</code></a> input, with the cut placed immediately BEFORE the match: the matching event is the first target event.</p>
+<p>Use this when the matching line is the start of the new regime — a deploy marker, the first error of an incident. Use <a href="#cut-after"><code>--cut-after</code></a> instead when the match is the end of the old one.</p>
+<p>Needs no timestamps and no clock: you say what the change looks like, not when it happened. The boundary latches on the first match, so a predicate that keeps matching still splits the log exactly once, and no events are buffered.</p>
+<p>Same expression syntax as <a href="#filter"><code>--filter</code></a> (see <a href="#help-rhai"><code>--help-rhai</code></a>), and <a href="#include"><code>-I</code></a>/<a href="#include"><code>--include</code></a> helpers are available. A predicate that never matches leaves the target side empty, and one matching the first event leaves the baseline empty; both are refused (exit 1) rather than reported as change. One matching the last event leaves a one-event target, which prints with a warning (🔸) rather than being refused.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>--drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>--drain-diff --cut-before 'e.status &gt;= 500' access.log -k msg
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>--drain-diff --cut-before 'e.version != "1.4.2"' rollout.log -k msg
+</code></pre></div>
+</dd>
+<dt id="cut-after"><code>--cut-after &lt;EXPR&gt;</code></dt>
+<dd>
+<p>Boolean Rhai expression whose first match splits one <a href="#drain-diff"><code>--drain-diff</code></a> input, with the cut placed immediately AFTER the match: the matching event is the last baseline event.</p>
+<p>Use this when the matching line closes out the old regime — <code>deploy finished</code>, <code>migration complete</code>, the last healthy heartbeat. Use <a href="#cut-before"><code>--cut-before</code></a> when the match opens the new one.</p>
+<p>Otherwise identical to <a href="#cut-before"><code>--cut-before</code></a>: same expression syntax as <a href="#filter"><code>--filter</code></a> (see <a href="#help-rhai"><code>--help-rhai</code></a>), <a href="#include"><code>-I</code></a>/<a href="#include"><code>--include</code></a> helpers available, boundary latches on the first match, nothing buffered. A predicate that never matches, or one matching the last event, leaves the target side empty and is refused (exit 1) rather than reported as change. One matching the first event leaves a one-event baseline, which is well-formed enough to report: it prints, with a warning (🔸) that the NEW section reflects that shortfall rather than a change.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>--drain-diff --cut-after 'e.msg.contains("deploy finished")' incident.log -k msg
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>--drain-diff --cut-after 'e.phase == "warmup"' rollout.log -k msg
+</code></pre></div>
+</dd>
+</dl>
+<h2 id="field-discovery">Field Discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="discover"><code>-d, --discover[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Profile fields: names, inferred types, cardinality estimates, and sample values. Nested maps and arrays are flattened to 3 levels (e.g. user.name, user.roles[]). Implies <a href="#quiet"><code>-q</code></a>/<a href="#quiet"><code>--quiet</code></a> (events suppressed). Sequential mode only.</p>
+<p>Formats: table (default), json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>-d, --discover      Table summary
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>-d=json, --discover=json     Machine-readable JSON
+</code></pre></div>
+<p>Values: <code>table</code> <code>json</code></p>
+</dd>
+<dt id="discover-final"><code>-D, --discover-final[=&lt;FORMAT&gt;]</code></dt>
+<dd>
+<p>Profile final emitted fields after scripts and filters. Implies <a href="#quiet"><code>-q</code></a>/<a href="#quiet"><code>--quiet</code></a> (events suppressed). Sequential mode only.</p>
+<p>Formats: table (default), json</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>-D, --discover-final          Table summary of final fields
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>-D=json, --discover-final=json     Machine-readable JSON of final fields
+</code></pre></div>
+<p>Values: <code>table</code> <code>json</code></p>
+</dd>
+<dt id="discover-depth"><code>--discover-depth &lt;N&gt;</code></dt>
+<dd>
+<p>Maximum depth for flattening nested maps/arrays into dotted keys (default: 3). Depth counts descents from the event root: a.b.c is depth 3. Use a higher value to inspect deeply nested JSON; use 1 to see only top-level fields; use 0 for unlimited depth.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>--discover --discover-depth=5    Descend up to 5 levels deep
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>--discover --discover-depth=1    Top-level fields only
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>--discover --discover-depth=0    Unlimited depth
+</code></pre></div>
+</dd>
+</dl>
+<h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="config-file"><code>--config-file &lt;FILE&gt;</code></dt>
+<dd>Specify custom configuration file path</dd>
+<dt id="ignore-config"><code>--ignore-config</code></dt>
+<dd>Ignore configuration file</dd>
+<dt id="alias"><code>-a, --alias &lt;NAME&gt;</code></dt>
+<dd>Use alias from configuration file</dd>
+<dt id="save-alias"><code>--save-alias &lt;NAME&gt;</code></dt>
+<dd>Save current command as alias to configuration file</dd>
+<dt id="show-config"><code>--show-config</code></dt>
+<dd>Show configuration file and exit</dd>
+<dt id="edit-config"><code>--edit-config</code></dt>
+<dd>Edit configuration file in default editor and exit</dd>
+</dl>
+<h2 id="help-options">Help Options<a class="headerlink" href="#help-options" title="Permanent link">&para;</a></h2>
+<dl>
+<dt id="help-rhai"><code>--help-rhai</code></dt>
+<dd>Show Rhai scripting guide and exit</dd>
+<dt id="help-functions"><code>--help-functions [&lt;KEYWORD&gt;]</code></dt>
+<dd>Show available Rhai functions and exit (optional KEYWORD filters by name/description; smartcase: lowercase matches any case, uppercase is exact)</dd>
+<dt id="help-examples"><code>--help-examples</code></dt>
+<dd>Show practical Rhai examples and exit</dd>
+<dt id="help-time"><code>--help-time</code></dt>
+<dd>Show time format help and exit</dd>
+<dt id="help-multiline"><code>--help-multiline</code></dt>
+<dd>Show multiline strategy help and exit</dd>
+<dt id="help-regex"><code>--help-regex</code></dt>
+<dd>Show regex format help and exit</dd>
+<dt id="help-formats"><code>--help-formats</code></dt>
+<dd>Show format reference and exit</dd>
+<dt id="completions"><code>--completions &lt;COMPLETIONS&gt;</code></dt>
+<dd>
+<p>Generate shell completion script and exit</p>
+<p>Values: <code>bash</code> <code>zsh</code> <code>fish</code> <code>powershell</code> <code>elvish</code></p>
+</dd>
+</dl>
+<h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>0    Success — the run did its job. By default Kelora is resilient: malformed
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>     lines in an otherwise-valid stream, and best-effort --exec transform
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>     errors, are reported on stderr and counted but do NOT change the exit code
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>     (use --strict to make the first such error fatal instead).
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>1    Error. Any of:
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>       - a named input file could not be opened
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>       - an --assert condition failed
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>       - a gate stage saw input but never once succeeded (parsing failed on every
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>         line, or a --filter errored on every event)
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>       - a forbidden operation (e.g. mutating `conf` outside --begin)
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>       - with --strict, ANY single parse/filter/exec error (also aborts early)
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>2    Invalid command-line usage (unknown flag, bad value, conflicting options, or a
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>       malformed config file).
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>130  Interrupted (SIGINT / Ctrl-C).
+<a id="__codelineno-30-15" name="__codelineno-30-15" href="#__codelineno-30-15"></a>134  Internal panic (SIGABRT) — a bug; please report it.
+<a id="__codelineno-30-16" name="__codelineno-30-16" href="#__codelineno-30-16"></a>141  Broken pipe (SIGPIPE).
+<a id="__codelineno-30-17" name="__codelineno-30-17" href="#__codelineno-30-17"></a>143  Terminated (SIGTERM).
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../how-it-works/" class="md-footer__link md-footer__link--prev" aria-label="Previous: How It Works">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                How It Works
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../formats/" class="md-footer__link md-footer__link--next" aria-label="Next: Formats">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Formats
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
