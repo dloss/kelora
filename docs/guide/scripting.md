@@ -36,19 +36,32 @@ reference](../reference/script-variables.md) lists everything.
 
 ## Types
 
-JSON and logfmt values keep their types: numbers are numbers, `true` is a
-boolean. Text formats — `line`, `cols:` and `csv` without type annotations,
-most `regex:` groups — give you strings. `-F inspect` shows the type of every
-field:
+Most parsers give you strings. Only JSON keeps its types and logfmt detects
+numbers and booleans; other formats type at most a few known fields (`status`,
+`bytes`, `pid`), and `csv`, `cols:` and `regex:` fields need
+[annotations](parse.md). `-d` shows what each field holds; in this CSV file,
+even `status` is a string:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/errors_json_types.jsonl -F inspect -n 2
+kelora examples/simple_csv.csv -d
 ```
 
-Comparing a string with a number never matches (`"500" > 400` is false), so
-convert first: `to_int()` / `to_float()` return `()` when conversion fails, and
-`to_int_or(0)` / `to_float_or(0.0)` return a default instead. Integer division
-truncates: `e.ms / 1000` is an integer, `e.ms / 1000.0` a float.
+Comparing a string with a number never matches (`"500" > 400` is false, with
+no error), so convert before you compare or do arithmetic:
+
+| Situation | Do |
+|---|---|
+| `csv`, `tsv`, `cols:`, `regex:` | annotate in the format spec: `-f 'csv status:int bytes:int'`, `cols:status:int`, `(?P<ms:float>...)` ([how](parse.md#4-columns-cols)) |
+| any other format, or a field you extracted yourself | convert once in an early `-e` and overwrite the field, so later stages see a number |
+| values that may be junk (`"-"`, `""`) | `to_int_or(0)` / `to_float_or(0.0)` give a default; `to_int()` / `to_float()` / `to_bool()` give `()` |
+| thousands separators (`"1,234"`) | `to_int(",")`; `to_float(",", ".")` also sets the decimal mark |
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/simple_csv.csv -e 'e.status = e.status.to_int()' --filter 'e.status >= 500' -k path,status
+```
+
+Integer division truncates: `e.ms / 1000` is an integer, `e.ms / 1000.0` a
+float.
 
 ## Missing fields
 
@@ -204,7 +217,9 @@ like inside free text. The [cookbook](../cookbook/security-privacy.md) has compl
 
 ## Debug a script
 
-- `-F inspect` shows each field's type.
+- `-D` profiles the fields as your script leaves them, with their types (`-d`
+  shows them as parsed, before any script runs); `-F inspect` shows each event's
+  fields and types.
 - `-n 5` while you iterate.
 - `print(...)` and `eprint(...)` write to stdout/stderr from inside a script.
 - `-v` prints every error with its line; `--strict` stops at the first one.
