@@ -158,20 +158,23 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // timestamp carries subseconds the adaptive parser doesn't know, so pin it
     // (the optional `%.f` also matches the 2.2 timestamp, which has none).
     //
-    // The timestamp is spelled out (Apache's `Www Mmm DD HH:MM:SS[.ffffff] YYYY`)
+    // The timestamp is spelled out (Apache's `Www Mmm DD HH:MM:SS[.ffffff] YYYY`;
+    // Apache 1.3 pads a one-digit day with a space: `Sun Aug  1 04:02:11 2004`)
     // rather than "anything in brackets": the looser form also claimed other
     // `[ts] [x] ...` layouts — spdlog's `[2024-01-02 ...] [logger] [info] msg`,
     // pacman's `[2024-...] [ALPM] ...` — and reported the logger name as `level`.
     LnavFormat {
         name: "apache-error",
         patterns: &[
-            r"\[(?P<ts>[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})? \d{4})\] \[(?:(?P<module>[^:\]]+):)?(?P<level>\w+)\](?: \[pid (?P<pid:int>\d+)(?::tid (?P<tid:int>\d+))?\])?(?: \[client (?P<client>[^\]]+)\])? (?P<msg>.*)",
+            r"\[(?P<ts>[A-Z][a-z]{2} [A-Z][a-z]{2} [ \d]\d \d{2}:\d{2}:\d{2}(?:\.\d{1,6})? \d{4})\] \[(?:(?P<module>[^:\]]+):)?(?P<level>\w+)\](?: \[pid (?P<pid:int>\d+)(?::tid (?P<tid:int>\d+))?\])?(?: \[client (?P<client>[^\]]+)\])? (?P<msg>.*)",
         ],
         ts_format: Some("%a %b %d %H:%M:%S%.f %Y"),
         samples: &[
             // Weekday must match the date: chrono validates %a, and Oct 11 2024 is a Friday.
             "[Fri Oct 11 14:32:52.123456 2024] [core:error] [pid 35708:tid 4328636416] [client 72.15.99.187:60223] AH00126: Invalid URI in request",
             "[Fri Oct 11 14:32:52 2024] [error] [client 72.15.99.187] File does not exist: /var/www/favicon.ico",
+            // Apache 1.3: space-padded day
+            "[Sun Aug  1 04:02:11 2004] [notice] suEXEC mechanism enabled (wrapper: /usr/sbin/suexec)",
         ],
     },
     // log4j / Java: `2024-01-02 15:04:05,123 INFO [main] com.example.Foo - msg`

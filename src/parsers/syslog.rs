@@ -196,20 +196,21 @@ impl SyslogParser {
             // `2024-01-02T15:04:05Z INFO app::server: listening` (Rust tracing
             // and similar) with the level read as the host, and AWS ELB's
             // `ts lb-name 10.0.0.1:2817 ...` with the client IP read as the
-            // program. No syslog host is named like a level and no program name
-            // lacks a letter, so such lines are left to other formats.
+            // program, and VMware ESXi's `ts In(14) Hostd[123]: ...` with its
+            // severity tag read as the host. No syslog host is named like a
+            // level or contains parentheses, and no program name lacks a
+            // letter or contains `=`, so such lines are left to other formats.
             let iso_ts = captures
                 .get(2)
                 .is_some_and(|ts| ts.as_str().starts_with(|c: char| c.is_ascii_digit()));
-            if iso_ts
-                && (captures
-                    .get(3)
-                    .is_some_and(|host| is_level_word(host.as_str()))
-                    || captures.get(4).is_some_and(|prog| {
-                        !prog.as_str().chars().any(|c| c.is_ascii_alphabetic())
-                    }))
-            {
-                return None;
+            if iso_ts {
+                let host = captures.get(3).map_or("", |m| m.as_str());
+                let prog = captures.get(4).map_or("", |m| m.as_str());
+                let bad_host = is_level_word(host) || host.contains(['(', ')']);
+                let bad_prog = !prog.chars().any(|c| c.is_ascii_alphabetic()) || prog.contains('=');
+                if bad_host || bad_prog {
+                    return None;
+                }
             }
 
             // Pre-allocate with expected field count
@@ -350,6 +351,10 @@ mod tests {
             "2024-01-02T15:04:05Z error worker: job failed",
             // AWS classic ELB access log: the client IP is not a program.
             "2015-05-13T23:39:43.945958Z my-loadbalancer 192.168.131.39:2817 10.0.0.1:80 0.000073 0.001048 0.000057 200 200 0 29 \"GET http://www.example.com:80/ HTTP/1.1\" \"curl/7.38.0\" - -",
+            // VMware ESXi: the severity tag is not a host.
+            "2022-06-02T05:34:56.746Z In(14) ConfigStore[1001430703]: Log for ConfigStore version=1.0",
+            // VMware vmkernel: `opID=...` is not a program.
+            "2022-06-02T02:16:57.414Z cpu31:1001392590 opID=827cfaf)<unk>: UWVMKSyscall: ForkExec",
             // No offset: not what rsyslog writes.
             "2024-01-02T15:04:05 host prog: msg",
         ] {
