@@ -238,6 +238,10 @@ inspect   - Debug format with type information
 levelmap  - Compact visual with timestamps and level indicators
 keymap    - Compact visual showing first character of specified field (-k/--keys required, exactly one field)
 tailmap   - Visualizes numeric field distribution with percentile thresholds (-k/--keys required, exactly one numeric field)
+csv       - Comma-separated with header row
+tsv       - Tab-separated with header row
+csvnh     - CSV without header
+tsvnh     - TSV without header
 
 Map legends (levelmap/keymap/tailmap)
   Map formats append a one-line, data-driven legend decoding their glyphs
@@ -246,10 +250,6 @@ Map legends (levelmap/keymap/tailmap)
   Each row is labeled with its first event's timestamp ('line N' when the event
   has none). Rows hold a fixed number of events, not a fixed span of time: a
   row can cover seconds or hours depending on event density.
-csv       - Comma-separated with header row
-tsv       - Tab-separated with header row
-csvnh     - CSV without header
-tsvnh     - TSV without header
 
 Use -q/--quiet to suppress output (implied by -s/--stats and -m/--metrics).
 
