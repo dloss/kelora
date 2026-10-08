@@ -1,9 +1,9 @@
 # Output and Integration
 
-Kelora follows the Unix rule of silence: **the result you asked for goes to
-stdout — events, or the summary when you ask for one with `-s`, `-m`,
-`--freq`, `--drain` — and everything else (errors, warnings, hints) goes to
-stderr.** A successful run prints nothing but its data, which makes Kelora
+Kelora follows the Unix rule of silence: the result you asked for goes to
+stdout, everything else (errors, warnings, hints) goes to stderr. The result
+is the events, or the summary when you ask for one with `-s`, `-m`, `--freq`
+or `--drain`. A successful run prints nothing but its data, which makes Kelora
 safe to pipe into other tools and to use in scripts and CI.
 
 ## Output formats

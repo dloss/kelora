@@ -69,6 +69,8 @@ run still exits 0, but your logic never ran ([details](files.md#what-parallel-ca
 
 `--window N` makes the current event and the N before it available as
 `window` (`window[0]` is the current event, `window[1]` the previous one).
+Near the start of the input the window is shorter — the first event has no
+`window[1]` — so check `window.len()` before indexing.
 Find long pauses between consecutive events:
 
 ```bash exec="on" source="above" result="ansi"
