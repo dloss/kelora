@@ -8,7 +8,7 @@ Kelora parses one timestamp per event. The parsed value drives `--since`/`--unti
 
 Without `--ts-field`, the first of these names present in the event is used, in this priority order (exact, case-sensitive match):
 
-`ts`, `_ts`, `timestamp`, `at`, `time`, `@timestamp`, `log_timestamp`, `event_time`, `datetime`, `date_time`, `created_at`, `logged_at`, `_t`, `@t`, `t`
+`ts`, `_ts`, `timestamp`, `at`, `time`, `@timestamp`, `log_timestamp`, `event_time`, `datetime`, `date_time`, `created_at`, `logged_at`, `_t`, `@t`, `t`, `__REALTIME_TIMESTAMP` (`journalctl -o json`)
 
 Only that field is tried: if `ts` exists but cannot be parsed, a later `time` field is not used. `Timestamp` or `TIME` are not detected. Name the field with `--ts-field`:
 

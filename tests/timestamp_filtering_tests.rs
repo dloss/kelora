@@ -2176,3 +2176,23 @@ fn test_cascade_line_events_dropped_by_window_warn() {
         "a cascade's line members vanishing under a window must be reported: {stderr}"
     );
 }
+
+/// `journalctl -o json` carries its time in `__REALTIME_TIMESTAMP`
+/// (microseconds since the epoch, as a string); time filters work on it
+/// without --ts-field.
+#[test]
+fn test_since_filters_journald_json_without_ts_field() {
+    let input = concat!(
+        r#"{"__REALTIME_TIMESTAMP":"1728382571123456","SYSLOG_IDENTIFIER":"sshd","MESSAGE":"early"}"#,
+        "\n",
+        r#"{"__REALTIME_TIMESTAMP":"1728386171123456","SYSLOG_IDENTIFIER":"cron","MESSAGE":"late"}"#,
+        "\n",
+    );
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-j", "--since", "2024-10-08T10:30:00Z", "-k", "MESSAGE"],
+        input,
+    );
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(stdout.contains("late"), "{stdout}");
+    assert!(!stdout.contains("early"), "{stdout}");
+}

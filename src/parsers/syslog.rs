@@ -49,9 +49,10 @@ impl SyslogParser {
         // The timestamp may also be RFC 3339 with an offset
         // (`2025-08-31T09:36:55.418891-07:00 host prog[pid]: msg`): rsyslog's
         // built-in RSYSLOG_FileFormat, which Debian (since 2022) and Ubuntu
-        // write to /var/log/syslog by default. Same layout otherwise.
+        // write to /var/log/syslog by default, and `journalctl -o short-iso`
+        // (`+0200` offset, no colon). Same layout otherwise.
         let rfc3164_regex = multiline_aware_regex(
-            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2}))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
+            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2}))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
         ).context("Failed to compile RFC3164 regex")?;
 
         Ok(Self {
@@ -340,6 +341,17 @@ mod tests {
         assert!(event.parsed_ts.is_some(), "RFC 3339 ts should resolve");
 
         assert!(EventParser::parse(&parser, "2026-10-08T10:19:52Z host sshd: ok").is_ok());
+
+        // journalctl -o short-iso: offset without a colon.
+        let event = EventParser::parse(
+            &parser,
+            "2024-10-08T12:16:11+0200 myhost sshd[1186]: Accepted",
+        )
+        .unwrap();
+        assert_eq!(
+            event.parsed_ts.unwrap().to_rfc3339(),
+            "2024-10-08T10:16:11+00:00"
+        );
     }
 
     #[test]

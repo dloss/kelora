@@ -284,6 +284,8 @@ pub const TIMESTAMP_FIELD_NAMES: &[&str] = &[
     "_t",
     "@t",
     "t",
+    // systemd journal (`journalctl -o json`): microseconds since the epoch
+    "__REALTIME_TIMESTAMP",
 ];
 
 pub const LEVEL_FIELD_NAMES: &[&str] = &[

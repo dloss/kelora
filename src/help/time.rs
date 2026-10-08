@@ -161,7 +161,8 @@ Splitting a log for template diffing with --cut-at (same formats as --since):
 
   Common timestamp field names are auto-detected:
     ts, _ts, timestamp, at, time, @timestamp, log_timestamp, event_time,
-    datetime, date_time, created_at, logged_at, _t, @t, t
+    datetime, date_time, created_at, logged_at, _t, @t, t,
+    __REALTIME_TIMESTAMP (journalctl -o json)
   Events without valid timestamps are filtered out in resilient mode (default)
   Use --strict to abort processing on missing/invalid timestamps
   Use --verbose to see detailed timestamp parsing errors
