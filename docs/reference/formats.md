@@ -223,7 +223,8 @@ Format notes:
 - `postgres` `ts` is naive. The logged zone abbreviation is kept in `log_tz` but not applied, because abbreviations like `CST` or `IST` are ambiguous. The timestamp is read in `--input-tz` (default UTC). For a server whose `log_timezone` is not UTC, pass e.g. `--input-tz Europe/Berlin`.
 - `monolog` keeps `context` and `extra` as the JSON text Monolog wrote; read them with `e.context.parse_json()`. Laravel writes an exception's stack trace into `context` across many lines: group them with `-M 'regex:match=^\[\d{4}-'`.
 - `mysql-error` covers MySQL 5.7/8 and MariaDB; `err_code` and `subsystem` exist only in MySQL 8 lines. `thread` is the connection id, 0 for the server itself.
-- `spring-boot` matches Spring Boot's default layout, with or without the `[app]` group of 3.x and later. Lines with an application group or a tracing id fall through to `iso8601-level`. Stack traces need `-M timestamp`, as do `tomcat`'s.
+- `spring-boot` matches Spring Boot's default layout, with or without the `[app]` group of 3.x and later. Lines with an application group or a tracing id fall through to `iso8601-level`. Stack traces need `-M timestamp`.
+- `tomcat` stack traces need `-M java` (`-M timestamp` does not recognize Tomcat's `08-Oct-2026` date).
 
 ### Column Format
 

@@ -174,7 +174,7 @@ tomcat
   Tomcat catalina/console log (java.util.logging OneLineFormatter)
   (08-Oct-2026 10:27:32.174 SEVERE [main] org.apache.Foo.method msg)
   Fields: ts, level (SEVERE/WARNING/INFO/...), msg, thread, source
-  Note: Stack traces need -M timestamp
+  Note: Stack traces need -M java
 
 Several of the log layouts above are adapted from lnav (BSD-3-Clause; see
 THIRD_PARTY_LICENSES.md).
