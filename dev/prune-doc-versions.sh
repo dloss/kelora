@@ -114,5 +114,5 @@ if [[ "$dry_run" == true ]]; then
     exit 0
 fi
 
-uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with markdown-exec[ansi] \
+uvx --with 'mkdocs<2' --with mkdocs-material --with mike --with 'markdown-exec[ansi]>=1.12,<2' --with mkdocs-redirects \
     mike delete --push "${delete_versions[@]}"
