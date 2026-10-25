@@ -1068,7 +1068,12 @@ impl ScriptStage for DrainStage {
                     // The CLI drain pipeline discards the per-line result, so use
                     // the lighter `drain_record` entry point (no template-id hash
                     // or sample clone per line) — templates are emitted at the end.
-                    if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
+                    if let Err(err) = crate::drain::drain_record(
+                        &text,
+                        None,
+                        event.line_num,
+                        event.filename.as_deref(),
+                    ) {
                         return ScriptResult::Error(err);
                     }
                     crate::drain::record_mined();
@@ -1232,7 +1237,12 @@ impl ScriptStage for DrainDiffStage {
                 } else {
                     // Joint mining (learning) plus per-side unique-value counting;
                     // the diff report is computed at end of input.
-                    if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
+                    if let Err(err) = crate::drain::drain_record(
+                        &text,
+                        None,
+                        event.line_num,
+                        event.filename.as_deref(),
+                    ) {
                         return ScriptResult::Error(err);
                     }
                     crate::drain_diff::record(&text, side, event.parsed_ts);

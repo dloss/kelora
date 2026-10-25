@@ -96,6 +96,10 @@ pub struct DrainTemplate {
     pub sample: String,
     pub first_line: Option<usize>,
     pub last_line: Option<usize>,
+    /// Files of `first_line`/`last_line`, set only when lines came from more
+    /// than one file (a bare line number would be ambiguous).
+    pub first_file: Option<String>,
+    pub last_file: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -109,12 +113,24 @@ pub struct DrainResult {
     pub last_line: Option<usize>,
 }
 
-/// Metadata tracked per cluster (sample, first/last line numbers)
+/// Where a cluster's first or last line came from.
+///
+/// `seq` is the arrival order of the line in this run. Line numbers restart in
+/// each input file, so only `seq` can tell which of two lines came first.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+struct LinePos {
+    seq: u64,
+    line: Option<usize>,
+    /// Index into [`DrainState::files`].
+    file: Option<u32>,
+}
+
+/// Metadata tracked per cluster (sample, first/last line positions)
 #[derive(Debug, Clone)]
 struct TemplateMetadata {
     sample: String,
-    first_line: Option<usize>,
-    last_line: Option<usize>,
+    first: LinePos,
+    last: LinePos,
 }
 
 #[derive(Debug)]
@@ -137,6 +153,11 @@ struct DrainState {
     /// entry would leak. The id is also cheaper: no per-line normalization or
     /// owned key `String`.
     metadata: HashMap<u64, TemplateMetadata>,
+    /// Lines recorded so far; the next line's `LinePos::seq`.
+    seq: u64,
+    /// Input files seen, in first-seen order; `LinePos::file` indexes this.
+    files: Vec<String>,
+    file_ids: HashMap<String, u32>,
 }
 
 impl DrainState {
@@ -151,7 +172,35 @@ impl DrainState {
             token_scratch: Vec::new(),
             route_scratch: Vec::new(),
             metadata: HashMap::new(),
+            seq: 0,
+            files: Vec::new(),
+            file_ids: HashMap::new(),
         }
+    }
+
+    /// Id of `file` in [`DrainState::files`]. Consecutive lines nearly always
+    /// share a file, so the most recent one is checked first.
+    fn file_id(&mut self, file: &str) -> u32 {
+        if let Some(last) = self.files.last() {
+            if last == file {
+                return (self.files.len() - 1) as u32;
+            }
+        }
+        if let Some(&id) = self.file_ids.get(file) {
+            return id;
+        }
+        let id = self.files.len() as u32;
+        self.files.push(file.to_string());
+        self.file_ids.insert(file.to_string(), id);
+        id
+    }
+
+    /// File name for a position, when lines came from several files.
+    fn file_name(&self, pos: &LinePos) -> Option<String> {
+        if self.files.len() < 2 {
+            return None;
+        }
+        pos.file.and_then(|id| self.files.get(id as usize)).cloned()
     }
 
     /// Per-line hot path: add `text` to the tree and update the cluster's
@@ -164,16 +213,34 @@ impl DrainState {
     /// computed here either — it is display-only, derived once per template in
     /// [`DrainState::templates`].
     fn record(&mut self, text: &str, line_num: Option<usize>) -> (usize, bool, u64) {
+        self.record_at(text, line_num, None)
+    }
+
+    /// [`DrainState::record`] for a line from a known input file.
+    fn record_at(
+        &mut self,
+        text: &str,
+        line_num: Option<usize>,
+        file: Option<&str>,
+    ) -> (usize, bool, u64) {
+        let pos = LinePos {
+            seq: self.seq,
+            line: line_num,
+            file: file.map(|f| self.file_id(f)),
+        };
+        self.seq += 1;
+
         // The tree sees the masked tokens; `text` stays the stored sample.
         self.masker.mask_into(text, &mut self.token_scratch);
         let matched = self.tree.add(&self.token_scratch, &mut self.route_scratch);
         let count = usize::try_from(matched.count).unwrap_or(usize::MAX);
 
         match self.metadata.get_mut(&matched.id) {
-            // Hit path (the common case): no allocation, just refresh last_line.
+            // Hit path (the common case): no allocation, just refresh `last`.
+            // A line without a number keeps the last numbered one on show.
             Some(meta) => {
-                if let Some(ln) = line_num {
-                    meta.last_line = Some(ln);
+                if line_num.is_some() || meta.last.line.is_none() {
+                    meta.last = pos;
                 }
             }
             None => {
@@ -181,8 +248,8 @@ impl DrainState {
                     matched.id,
                     TemplateMetadata {
                         sample: text.to_string(),
-                        first_line: line_num,
-                        last_line: line_num,
+                        first: pos,
+                        last: pos,
                     },
                 );
             }
@@ -202,7 +269,7 @@ impl DrainState {
 
         // `record` guarantees the entry exists; the fallback keeps this total.
         let (sample, first_line, last_line) = match self.metadata.get(&cluster_id) {
-            Some(meta) => (meta.sample.clone(), meta.first_line, meta.last_line),
+            Some(meta) => (meta.sample.clone(), meta.first.line, meta.last.line),
             None => (text.to_string(), line_num, line_num),
         };
 
@@ -233,8 +300,8 @@ impl DrainState {
                     tokens: cluster.tokens.clone(),
                     count: usize::try_from(cluster.count).unwrap_or(usize::MAX),
                     sample: meta.map(|m| m.sample.clone()).unwrap_or_default(),
-                    first_line: meta.and_then(|m| m.first_line),
-                    last_line: meta.and_then(|m| m.last_line),
+                    first: meta.map(|m| m.first).unwrap_or_default(),
+                    last: meta.map(|m| m.last).unwrap_or_default(),
                 }
             })
             .collect();
@@ -258,9 +325,11 @@ impl DrainState {
                     template_id: generate_template_id(&template),
                     template,
                     count: entry.count,
+                    first_file: self.file_name(&entry.first),
+                    last_file: self.file_name(&entry.last),
                     sample: entry.sample,
-                    first_line: entry.first_line,
-                    last_line: entry.last_line,
+                    first_line: entry.first.line,
+                    last_line: entry.last.line,
                 }
             })
             .collect()
@@ -275,8 +344,8 @@ struct Finalized {
     tokens: Vec<MaskedToken>,
     count: usize,
     sample: String,
-    first_line: Option<usize>,
-    last_line: Option<usize>,
+    first: LinePos,
+    last: LinePos,
 }
 
 impl Finalized {
@@ -916,6 +985,7 @@ pub fn drain_record(
     text: &str,
     config: Option<DrainConfig>,
     line_num: Option<usize>,
+    file: Option<&str>,
 ) -> Result<(), String> {
     DRAIN_STATE.with(|state| {
         let mut state = state.borrow_mut();
@@ -923,7 +993,7 @@ pub fn drain_record(
         let drain = state
             .as_mut()
             .ok_or_else(|| "Drain state not initialized".to_string())?;
-        drain.record(text, line_num);
+        drain.record_at(text, line_num, file);
         Ok(())
     })
 }
@@ -1180,8 +1250,7 @@ pub fn format_templates_output(
         // Full format: add metadata on indented lines below
         if matches!(format, crate::cli::DrainFormat::Full) {
             output.push_str(&format!("     id: {}\n", template.template_id));
-            if let Some(line_summary) = format_line_summary(template.first_line, template.last_line)
-            {
+            if let Some(line_summary) = format_line_summary(template) {
                 output.push_str(&format!("     {}\n", line_summary));
             }
 
@@ -1215,6 +1284,12 @@ pub fn format_templates_json(templates: &[DrainTemplate]) -> String {
             if let Some(last) = t.last_line {
                 obj["last_line"] = serde_json::json!(last);
             }
+            if let Some(file) = &t.first_file {
+                obj["first_file"] = serde_json::json!(file);
+            }
+            if let Some(file) = &t.last_file {
+                obj["last_file"] = serde_json::json!(file);
+            }
             obj
         })
         .collect();
@@ -1226,12 +1301,26 @@ fn escape_sample(s: &str) -> String {
     s.replace('\n', "\\n").replace('\r', "\\r")
 }
 
-fn format_line_summary(first: Option<usize>, last: Option<usize>) -> Option<String> {
-    match (first, last) {
-        (Some(start), Some(end)) if start == end => Some(format!("line: {}", start)),
-        (Some(start), Some(end)) => Some(format!("lines: {}-{}", start, end)),
-        (Some(start), None) => Some(format!("line: {}", start)),
-        (None, Some(end)) => Some(format!("last line: {}", end)),
+/// `line: 7`, `lines: 7-42`; with several input files, `line: app.log:7`,
+/// `lines: app.log:7-42` or `lines: a.log:7 - b.log:3`.
+fn format_line_summary(template: &DrainTemplate) -> Option<String> {
+    let at = |file: &Option<String>, line: usize| match file {
+        Some(file) => format!("{}:{}", file, line),
+        None => line.to_string(),
+    };
+    let (first, last) = (&template.first_file, &template.last_file);
+    match (template.first_line, template.last_line) {
+        (Some(start), Some(end)) if start == end && first == last => {
+            Some(format!("line: {}", at(first, start)))
+        }
+        (Some(start), Some(end)) if first == last => {
+            Some(format!("lines: {}-{}", at(first, start), end))
+        }
+        (Some(start), Some(end)) => {
+            Some(format!("lines: {} - {}", at(first, start), at(last, end)))
+        }
+        (Some(start), None) => Some(format!("line: {}", at(first, start))),
+        (None, Some(end)) => Some(format!("last line: {}", at(last, end))),
         (None, None) => None,
     }
 }
@@ -1674,6 +1763,8 @@ mod tests {
                 sample: "a 123 b".to_string(),
                 first_line: Some(1),
                 last_line: Some(100),
+                first_file: None,
+                last_file: None,
             },
             DrainTemplate {
                 template: "x y z".to_string(),
@@ -1682,6 +1773,8 @@ mod tests {
                 sample: "x y z".to_string(),
                 first_line: Some(50),
                 last_line: Some(50),
+                first_file: None,
+                last_file: None,
             },
         ];
         // Table format: clean output, no IDs, no line numbers, no samples
@@ -1705,6 +1798,8 @@ mod tests {
             sample: "a 123 b".to_string(),
             first_line: Some(1),
             last_line: Some(100),
+            first_file: None,
+            last_file: None,
         }];
         // Full format: adds line ranges and samples
         let output = format_templates_output(&templates, crate::cli::DrainFormat::Full);
@@ -1726,6 +1821,8 @@ mod tests {
                 sample: "a 123 b".to_string(),
                 first_line: Some(1),
                 last_line: Some(100),
+                first_file: None,
+                last_file: None,
             },
             DrainTemplate {
                 template: "x y z".to_string(),
@@ -1734,6 +1831,8 @@ mod tests {
                 sample: "x y z".to_string(),
                 first_line: Some(50),
                 last_line: Some(50),
+                first_file: None,
+                last_file: None,
             },
         ];
         let output = format_templates_output(&templates, crate::cli::DrainFormat::Id);
@@ -1754,6 +1853,8 @@ mod tests {
             sample: "error 192.168.1.1".to_string(),
             first_line: Some(10),
             last_line: Some(50),
+            first_file: None,
+            last_file: None,
         }];
         let json = format_templates_json(&templates);
         assert!(json.contains("\"template\": \"error <ipv4>\""));

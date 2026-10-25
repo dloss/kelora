@@ -16,11 +16,11 @@ use crate::stats::ProcessingStats;
 /// Context for processing plain lines (stdin or single file)
 pub(crate) struct PlainLineContext<'a> {
     pub batch_sender: &'a Sender<Batch>,
-    pub current_batch: &'a mut Vec<String>,
+    /// Pending lines, each with its line number within its file.
+    pub current_batch: &'a mut Vec<(String, usize)>,
     pub batch_size: usize,
     pub batch_timeout: Duration,
     pub batch_id: &'a mut u64,
-    pub batch_start_line: &'a mut usize,
     pub line_num: &'a mut usize,
     pub skipped_lines_count: &'a mut usize,
     pub filtered_lines: &'a mut usize,
@@ -43,12 +43,12 @@ pub(crate) struct PlainLineContext<'a> {
 /// Context for processing file-aware lines (with filename tracking)
 pub(crate) struct FileAwareLineContext<'a> {
     pub batch_sender: &'a Sender<Batch>,
-    pub current_batch: &'a mut Vec<String>,
+    /// Pending lines, each with its line number within its file.
+    pub current_batch: &'a mut Vec<(String, usize)>,
     pub current_filenames: &'a mut Vec<Option<String>>,
     pub batch_size: usize,
     pub batch_timeout: Duration,
     pub batch_id: &'a mut u64,
-    pub batch_start_line: &'a mut usize,
     pub line_num: &'a mut usize,
     pub skipped_lines_count: &'a mut usize,
     pub filtered_lines: &'a mut usize,
@@ -116,7 +116,8 @@ impl Default for ParallelConfig {
 pub struct Batch {
     pub id: u64,
     pub lines: Vec<String>,
-    pub start_line_num: usize,
+    /// Line number of each line within its file.
+    pub line_nums: Vec<usize>,
     pub filenames: Vec<Option<String>>,   // Filename for each line
     pub csv_headers: Option<Vec<String>>, // CSV headers for this batch (if applicable)
     pub csv_type_map: Option<TypeMap>,    // CSV type map for this batch (if applicable)
@@ -146,6 +147,8 @@ pub(crate) enum LineMessage {
     Line {
         line: String,
         filename: Option<String>,
+        /// 1-based line number within its file.
+        line_num: usize,
     },
     /// A batch of physical lines delivered in one channel send. `data` holds the
     /// decoded, trailing-whitespace-trimmed lines concatenated with no

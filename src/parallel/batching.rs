@@ -126,6 +126,8 @@ pub(crate) fn file_aware_io_reader_thread(
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
     let mut buffer = String::new();
+    // (file index, lines read from it): numbering restarts in each file.
+    let mut position = (usize::MAX, 0usize);
     loop {
         match ctrl_rx.try_recv() {
             Ok(Ctrl::Shutdown { immediate }) => {
@@ -150,12 +152,19 @@ pub(crate) fn file_aware_io_reader_thread(
                 break;
             }
             Ok(_) => {
+                let file_index = reader.current_file_index();
+                if position.0 != file_index {
+                    position = (file_index, 0);
+                }
+                position.1 += 1;
                 let line = buffer.trim_end().to_string();
                 let filename = reader.current_filename().map(|s| s.to_string());
-                if line_sender
-                    .send(LineMessage::Line { line, filename })
-                    .is_err()
-                {
+                let message = LineMessage::Line {
+                    line,
+                    filename,
+                    line_num: position.1,
+                };
+                if line_sender.send(message).is_err() {
                     break;
                 }
             }
@@ -178,7 +187,6 @@ pub(crate) fn batcher_thread(
     let mut batch_id = 0u64;
     let mut current_batch = Vec::with_capacity(config.batch_size);
     let mut line_num = config.preprocessing_line_count;
-    let mut batch_start_line = 1usize;
     let mut pending_deadline: Option<Instant> = None;
     let mut skipped_lines_count = 0usize;
     let mut filtered_lines = 0usize;
@@ -200,14 +208,8 @@ pub(crate) fn batcher_thread(
                 // lines: cutting here would split one logical record across two
                 // batches, which separate workers can't reassemble.
                 if !current_batch.is_empty() && !csv_quote_open {
-                    send_batch(
-                        &config.batch_sender,
-                        &mut current_batch,
-                        batch_id,
-                        batch_start_line,
-                    )?;
+                    send_batch(&config.batch_sender, &mut current_batch, batch_id)?;
                     batch_id += 1;
-                    batch_start_line = line_num + 1;
                 }
                 pending_deadline = None;
                 continue;
@@ -224,7 +226,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -238,7 +239,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -253,7 +253,6 @@ pub(crate) fn batcher_thread(
                                 &config,
                                 &mut current_batch,
                                 &mut batch_id,
-                                &mut batch_start_line,
                                 &mut line_num,
                                 &mut skipped_lines_count,
                                 &mut filtered_lines,
@@ -271,7 +270,6 @@ pub(crate) fn batcher_thread(
                                     &config,
                                     &mut current_batch,
                                     &mut batch_id,
-                                    &mut batch_start_line,
                                     &mut line_num,
                                     &mut skipped_lines_count,
                                     &mut filtered_lines,
@@ -296,7 +294,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -307,7 +304,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -322,10 +318,8 @@ pub(crate) fn batcher_thread(
                             &config.batch_sender,
                             &mut current_batch,
                             batch_id,
-                            batch_start_line,
                         )?;
                         batch_id += 1;
-                        batch_start_line = line_num + 1;
                     }
                     pending_deadline = None;
                 }
@@ -340,7 +334,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -354,7 +347,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -369,7 +361,6 @@ pub(crate) fn batcher_thread(
                                 &config,
                                 &mut current_batch,
                                 &mut batch_id,
-                                &mut batch_start_line,
                                 &mut line_num,
                                 &mut skipped_lines_count,
                                 &mut filtered_lines,
@@ -387,7 +378,6 @@ pub(crate) fn batcher_thread(
                                     &config,
                                     &mut current_batch,
                                     &mut batch_id,
-                                    &mut batch_start_line,
                                     &mut line_num,
                                     &mut skipped_lines_count,
                                     &mut filtered_lines,
@@ -412,7 +402,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -423,7 +412,6 @@ pub(crate) fn batcher_thread(
                                     &config.batch_sender,
                                     &mut current_batch,
                                     batch_id,
-                                    batch_start_line,
                                 )?;
                             }
                             break 'outer;
@@ -462,7 +450,6 @@ pub(crate) fn file_aware_batcher_thread(
     let mut current_batch = Vec::with_capacity(batch_size);
     let mut current_filenames = Vec::with_capacity(batch_size);
     let mut line_num = 0usize;
-    let mut batch_start_line = 1usize;
     let mut pending_deadline: Option<Instant> = None;
     let mut skipped_lines_count = 0usize;
     let mut filtered_lines = 0usize;
@@ -487,12 +474,10 @@ pub(crate) fn file_aware_batcher_thread(
                         &mut current_batch,
                         &mut current_filenames,
                         batch_id,
-                        batch_start_line,
                         current_headers.clone(),
                         current_type_map.clone(),
                     )?;
                     batch_id += 1;
-                    batch_start_line = line_num + 1;
                 }
                 pending_deadline = None;
                 continue;
@@ -510,7 +495,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -527,7 +511,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -538,7 +521,11 @@ pub(crate) fn file_aware_batcher_thread(
                 }
                 recv(line_receiver) -> msg => {
                     match msg {
-                        Ok(LineMessage::Line { line, filename }) => {
+                        Ok(LineMessage::Line {
+                            line,
+                            filename,
+                            line_num: file_line_num,
+                        }) => {
                             let ctx = FileAwareLineContext {
                                 batch_sender: &batch_sender,
                                 current_batch: &mut current_batch,
@@ -546,7 +533,6 @@ pub(crate) fn file_aware_batcher_thread(
                                 batch_size,
                                 batch_timeout,
                                 batch_id: &mut batch_id,
-                                batch_start_line: &mut batch_start_line,
                                 line_num: &mut line_num,
                                 skipped_lines_count: &mut skipped_lines_count,
                                 filtered_lines: &mut filtered_lines,
@@ -564,7 +550,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 csv_quote_open: &mut csv_quote_open,
                                 multiline_active,
                             };
-                            handle_file_aware_line(line, filename, ctx)?;
+                            handle_file_aware_line(line, filename, file_line_num, ctx)?;
 
                             // Check if we've reached the head limit after processing this line
                             if let Some(head_limit) = head_lines {
@@ -576,7 +562,6 @@ pub(crate) fn file_aware_batcher_thread(
                                             &mut current_batch,
                                             &mut current_filenames,
                                             batch_id,
-                                            batch_start_line,
                                             current_headers.clone(),
                                             current_type_map.clone(),
                                         )?;
@@ -605,7 +590,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -619,7 +603,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -637,12 +620,10 @@ pub(crate) fn file_aware_batcher_thread(
                             &mut current_batch,
                             &mut current_filenames,
                             batch_id,
-                            batch_start_line,
                             current_headers.clone(),
                             current_type_map.clone(),
                         )?;
                         batch_id += 1;
-                        batch_start_line = line_num + 1;
                     }
                     pending_deadline = None;
                 }
@@ -658,7 +639,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -675,7 +655,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -686,7 +665,11 @@ pub(crate) fn file_aware_batcher_thread(
                 }
                 recv(line_receiver) -> msg => {
                     match msg {
-                        Ok(LineMessage::Line { line, filename }) => {
+                        Ok(LineMessage::Line {
+                            line,
+                            filename,
+                            line_num: file_line_num,
+                        }) => {
                             let ctx = FileAwareLineContext {
                                 batch_sender: &batch_sender,
                                 current_batch: &mut current_batch,
@@ -694,7 +677,6 @@ pub(crate) fn file_aware_batcher_thread(
                                 batch_size,
                                 batch_timeout,
                                 batch_id: &mut batch_id,
-                                batch_start_line: &mut batch_start_line,
                                 line_num: &mut line_num,
                                 skipped_lines_count: &mut skipped_lines_count,
                                 filtered_lines: &mut filtered_lines,
@@ -712,7 +694,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 csv_quote_open: &mut csv_quote_open,
                                 multiline_active,
                             };
-                            handle_file_aware_line(line, filename, ctx)?;
+                            handle_file_aware_line(line, filename, file_line_num, ctx)?;
 
                             // Check if we've reached the head limit after processing this line
                             if let Some(head_limit) = head_lines {
@@ -724,7 +706,6 @@ pub(crate) fn file_aware_batcher_thread(
                                             &mut current_batch,
                                             &mut current_filenames,
                                             batch_id,
-                                            batch_start_line,
                                             current_headers.clone(),
                                             current_type_map.clone(),
                                         )?;
@@ -752,7 +733,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -766,7 +746,6 @@ pub(crate) fn file_aware_batcher_thread(
                                     &mut current_batch,
                                     &mut current_filenames,
                                     batch_id,
-                                    batch_start_line,
                                     current_headers.clone(),
                                     current_type_map.clone(),
                                 )?;
@@ -793,9 +772,8 @@ pub(crate) fn file_aware_batcher_thread(
 fn feed_plain_line(
     line: &str,
     config: &BatcherThreadConfig,
-    current_batch: &mut Vec<String>,
+    current_batch: &mut Vec<(String, usize)>,
     batch_id: &mut u64,
-    batch_start_line: &mut usize,
     line_num: &mut usize,
     skipped_lines_count: &mut usize,
     filtered_lines: &mut usize,
@@ -811,7 +789,6 @@ fn feed_plain_line(
             batch_size: config.batch_size,
             batch_timeout: config.batch_timeout,
             batch_id,
-            batch_start_line,
             line_num,
             skipped_lines_count,
             filtered_lines,
@@ -832,12 +809,7 @@ fn feed_plain_line(
         if *line_num >= head_limit {
             // Flush remaining batch and signal stop.
             if !current_batch.is_empty() {
-                send_batch(
-                    &config.batch_sender,
-                    current_batch,
-                    *batch_id,
-                    *batch_start_line,
-                )?;
+                send_batch(&config.batch_sender, current_batch, *batch_id)?;
             }
             return Ok(true);
         }
@@ -921,19 +893,13 @@ pub(crate) fn handle_plain_line(line: &str, ctx: PlainLineContext<'_>) -> Result
         *ctx.csv_quote_open = !*ctx.csv_quote_open;
     }
 
-    ctx.current_batch.push(line.to_string());
+    ctx.current_batch.push((line.to_string(), *ctx.line_num));
 
     let record_complete = !*ctx.csv_quote_open;
     if record_complete && (ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero())
     {
-        send_batch(
-            ctx.batch_sender,
-            ctx.current_batch,
-            *ctx.batch_id,
-            *ctx.batch_start_line,
-        )?;
+        send_batch(ctx.batch_sender, ctx.current_batch, *ctx.batch_id)?;
         *ctx.batch_id += 1;
-        *ctx.batch_start_line = *ctx.line_num + 1;
         *ctx.pending_deadline = None;
     } else {
         *ctx.pending_deadline = Some(Instant::now() + ctx.batch_timeout);
@@ -946,6 +912,7 @@ pub(crate) fn handle_plain_line(line: &str, ctx: PlainLineContext<'_>) -> Result
 pub(crate) fn handle_file_aware_line(
     line: String,
     filename: Option<String>,
+    file_line_num: usize,
     ctx: FileAwareLineContext<'_>,
 ) -> Result<()> {
     *ctx.line_num += 1;
@@ -1029,12 +996,10 @@ pub(crate) fn handle_file_aware_line(
                 ctx.current_batch,
                 ctx.current_filenames,
                 *ctx.batch_id,
-                *ctx.batch_start_line,
                 ctx.current_headers.clone(),
                 ctx.current_type_map.clone(),
             )?;
             *ctx.batch_id += 1;
-            *ctx.batch_start_line = *ctx.line_num + 1;
             *ctx.pending_deadline = None;
         }
 
@@ -1068,7 +1033,7 @@ pub(crate) fn handle_file_aware_line(
         *ctx.csv_quote_open = !*ctx.csv_quote_open;
     }
 
-    ctx.current_batch.push(line);
+    ctx.current_batch.push((line, file_line_num));
     ctx.current_filenames.push(filename);
 
     let record_complete = !*ctx.csv_quote_open;
@@ -1079,12 +1044,10 @@ pub(crate) fn handle_file_aware_line(
             ctx.current_batch,
             ctx.current_filenames,
             *ctx.batch_id,
-            *ctx.batch_start_line,
             ctx.current_headers.clone(),
             ctx.current_type_map.clone(),
         )?;
         *ctx.batch_id += 1;
-        *ctx.batch_start_line = *ctx.line_num + 1;
         *ctx.pending_deadline = None;
     } else {
         *ctx.pending_deadline = Some(Instant::now() + ctx.batch_timeout);
@@ -1131,19 +1094,19 @@ pub(crate) fn create_csv_parser_for_file(
 /// Send a batch of lines to the batch receiver
 pub(crate) fn send_batch(
     batch_sender: &Sender<Batch>,
-    current_batch: &mut Vec<String>,
+    current_batch: &mut Vec<(String, usize)>,
     batch_id: u64,
-    batch_start_line: usize,
 ) -> Result<()> {
     if current_batch.is_empty() {
         return Ok(());
     }
 
     let batch_len = current_batch.len();
+    let (lines, line_nums) = std::mem::take(current_batch).into_iter().unzip();
     let batch = Batch {
         id: batch_id,
-        lines: std::mem::take(current_batch),
-        start_line_num: batch_start_line,
+        lines,
+        line_nums,
         filenames: vec![None; batch_len], // No filename tracking for regular batches
         csv_headers: None,                // No CSV headers for regular batches
         csv_type_map: None,
@@ -1159,10 +1122,9 @@ pub(crate) fn send_batch(
 /// Send a batch with filename tracking and optional CSV headers
 pub(crate) fn send_batch_with_filenames_and_headers(
     batch_sender: &Sender<Batch>,
-    current_batch: &mut Vec<String>,
+    current_batch: &mut Vec<(String, usize)>,
     current_filenames: &mut Vec<Option<String>>,
     batch_id: u64,
-    batch_start_line: usize,
     csv_headers: Option<Vec<String>>,
     csv_type_map: Option<TypeMap>,
 ) -> Result<()> {
@@ -1170,10 +1132,11 @@ pub(crate) fn send_batch_with_filenames_and_headers(
         return Ok(());
     }
 
+    let (lines, line_nums) = std::mem::take(current_batch).into_iter().unzip();
     let batch = Batch {
         id: batch_id,
-        lines: std::mem::take(current_batch),
-        start_line_num: batch_start_line,
+        lines,
+        line_nums,
         filenames: std::mem::take(current_filenames),
         csv_headers,
         csv_type_map,

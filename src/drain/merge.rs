@@ -794,30 +794,30 @@ fn pair_merges(entries: Vec<Finalized>) -> Vec<Finalized> {
     rebuild(entries, merges, &claimed)
 }
 
-/// Fold one family member into the running merge: counts add, and the line range
-/// and sample come from the earliest member, so `--drain=full` still shows a real
-/// line and the first place the message appeared.
+/// Fold one family member into the running merge: counts add, the sample and
+/// first line come from the member seen first, and the last line from the one
+/// seen last, so `--drain=full` still shows real lines and the first place the
+/// message appeared. Order is arrival order: line numbers restart in each file.
 fn combine(acc: Option<Finalized>, entry: &Finalized) -> Finalized {
     let Some(acc) = acc else {
         return entry.clone();
     };
-    let earliest_is_acc = match (acc.first_line, entry.first_line) {
-        (Some(a), Some(b)) => a <= b,
-        (Some(_), None) => true,
-        (None, Some(_)) => false,
-        (None, None) => true,
-    };
-    let (sample, first_line) = if earliest_is_acc {
-        (acc.sample, acc.first_line)
+    let (sample, first) = if acc.first.seq <= entry.first.seq {
+        (acc.sample, acc.first)
     } else {
-        (entry.sample.clone(), entry.first_line)
+        (entry.sample.clone(), entry.first)
+    };
+    let last = if acc.last.seq >= entry.last.seq {
+        acc.last
+    } else {
+        entry.last
     };
     Finalized {
         tokens: acc.tokens,
         count: acc.count.saturating_add(entry.count),
         sample,
-        first_line,
-        last_line: acc.last_line.max(entry.last_line),
+        first,
+        last,
     }
 }
 
@@ -852,8 +852,16 @@ mod tests {
             tokens,
             count,
             sample: format!("sample of {template}"),
-            first_line: Some(first_line),
-            last_line: Some(first_line + 10),
+            first: super::super::LinePos {
+                seq: first_line as u64,
+                line: Some(first_line),
+                file: None,
+            },
+            last: super::super::LinePos {
+                seq: (first_line + 10) as u64,
+                line: Some(first_line + 10),
+                file: None,
+            },
         }
     }
 
@@ -1005,8 +1013,8 @@ mod tests {
         assert_eq!(merged.len(), 1);
         let only = &merged[0];
         assert_eq!(only.count, 3);
-        assert_eq!(only.first_line, Some(7));
-        assert_eq!(only.last_line, Some(100));
+        assert_eq!(only.first.line, Some(7));
+        assert_eq!(only.last.line, Some(100));
         assert_eq!(only.sample, "sample of user early in");
     }
 
@@ -1195,8 +1203,16 @@ mod gap_edge_tests {
             tokens,
             count,
             sample: String::new(),
-            first_line: Some(1),
-            last_line: Some(1),
+            first: super::super::LinePos {
+                seq: 1,
+                line: Some(1),
+                file: None,
+            },
+            last: super::super::LinePos {
+                seq: 1,
+                line: Some(1),
+                file: None,
+            },
         }
     }
 

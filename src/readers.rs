@@ -544,6 +544,8 @@ pub fn open_input_reader(
 /// A file-aware reader that can provide filename information
 pub trait FileAwareRead: BufRead + Send {
     fn current_filename(&self) -> Option<&str>;
+    /// Index of the file currently being read, among those given.
+    fn current_file_index(&self) -> usize;
 }
 
 /// A multi-file reader that provides filename information
@@ -582,6 +584,10 @@ impl io::BufRead for FileAwareMultiFileReader {
 impl FileAwareRead for FileAwareMultiFileReader {
     fn current_filename(&self) -> Option<&str> {
         self.inner.current_filename()
+    }
+
+    fn current_file_index(&self) -> usize {
+        self.inner.current_file_index()
     }
 }
 
@@ -623,6 +629,11 @@ impl MultiFileReader {
     fn advance_to_next_file(&mut self) {
         self.current_reader = None;
         self.current_file_idx += 1;
+    }
+
+    /// Index of the file currently being read, among those given.
+    pub fn current_file_index(&self) -> usize {
+        self.current_file_idx
     }
 
     /// Get the current filename being read (if any)

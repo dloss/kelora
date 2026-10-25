@@ -493,7 +493,7 @@ fn worker_process_batch(
     let mut batch_results = Vec::with_capacity(batch.lines.len());
 
     for (line_idx, line) in batch.lines.iter().enumerate() {
-        let current_line_num = batch.start_line_num + line_idx;
+        let current_line_num = batch.line_nums[line_idx];
         let line_filename = batch.filenames.get(line_idx).cloned().flatten();
         ctx.meta.line_num = Some(current_line_num);
         ctx.meta.filename = line_filename.clone();
@@ -913,7 +913,7 @@ pub(crate) fn chunker_thread(
 
         for (line_idx, line) in batch.lines.iter().enumerate() {
             let line_filename = batch.filenames.get(line_idx).cloned().flatten();
-            let line_num = batch.start_line_num + line_idx;
+            let line_num = batch.line_nums[line_idx];
 
             // An event never spans input files.
             if seen_line && last_filename != line_filename {

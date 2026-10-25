@@ -1164,7 +1164,7 @@ mod tests {
     }
 
     fn mine_and_record_at(text: &str, side: DiffSide, ts: Option<DateTime<Utc>>) {
-        crate::drain::drain_record(text, None, None).expect("drain_record");
+        crate::drain::drain_record(text, None, None, None).expect("drain_record");
         record(text, side, ts);
     }
 

@@ -103,7 +103,8 @@ event type. `--drain` finds those templates in the field you name with `-k`:
 kelora examples/syslog_errors.log --drain -k msg
 ```
 
-`--drain=full` adds the line range and a sample line for each template;
+`--drain=full` adds the line range and a sample line for each template (with
+several input files, `file:line`);
 `--drain=json` and `--drain=id` are for scripts. Filters run first, so
 `-l error --drain -k msg` summarizes only errors.
 

@@ -374,7 +374,7 @@ meta.parsed_ts                       Parsed timestamp of the event as a UTC date
                                      event has no usable timestamp. Already parsed — reach for this
                                      before to_datetime(e.ts). See DATETIME FUNCTIONS above.
 meta.line                            Original raw input line (always available)
-meta.line_num                        Line number, 1-based (available when reading files)
+meta.line_num                        Line number within its file, 1-based
 meta.filename                        Source filename (() for stdin)
 meta.span_id                         Current span identifier (with --span)
 meta.span_status                     "included", "late", "unassigned", or "filtered" (with --span)

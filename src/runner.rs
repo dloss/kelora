@@ -390,6 +390,8 @@ enum ReaderMessage {
     Line {
         line: String,
         filename: Option<String>,
+        /// 1-based line number within its file (or stdin).
+        line_num: usize,
     },
     Error {
         error: io::Error,
@@ -548,6 +550,7 @@ fn spawn_stdin_reader(
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
         let mut buffer = String::new();
+        let mut line_num = 0usize;
         loop {
             match ctrl_rx.try_recv() {
                 Ok(Ctrl::Shutdown { immediate }) => {
@@ -572,11 +575,13 @@ fn spawn_stdin_reader(
                     break;
                 }
                 Ok(_) => {
+                    line_num += 1;
                     let line = buffer.trim_end_matches(&['\n', '\r'][..]).to_string();
                     if sender
                         .send(ReaderMessage::Line {
                             line,
                             filename: None,
+                            line_num,
                         })
                         .is_err()
                     {
@@ -607,6 +612,8 @@ fn spawn_file_reader(
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
         let mut buffer = String::new();
+        // (file index, lines read from it): numbering restarts in each file.
+        let mut position = (usize::MAX, 0usize);
         loop {
             match ctrl_rx.try_recv() {
                 Ok(Ctrl::Shutdown { immediate }) => {
@@ -631,9 +638,19 @@ fn spawn_file_reader(
                     break;
                 }
                 Ok(_) => {
+                    let file_index = reader.current_file_index();
+                    if position.0 != file_index {
+                        position = (file_index, 0);
+                    }
+                    position.1 += 1;
                     let filename = reader.current_filename().map(|s| s.to_string());
                     let line = buffer.trim_end_matches(&['\n', '\r'][..]).to_string();
-                    if sender.send(ReaderMessage::Line { line, filename }).is_err() {
+                    let message = ReaderMessage::Line {
+                        line,
+                        filename,
+                        line_num: position.1,
+                    };
+                    if sender.send(message).is_err() {
                         break;
                     }
                 }
@@ -699,6 +716,7 @@ fn spawn_file_reader_auto_per_file(
             }
 
             let mut buffer = String::new();
+            let mut line_num = 0usize;
             loop {
                 match ctrl_rx.try_recv() {
                     Ok(Ctrl::Shutdown { immediate }) => {
@@ -715,11 +733,13 @@ fn spawn_file_reader_auto_per_file(
                 match readers::read_line_lossy(&mut peekable_reader, &mut buffer) {
                     Ok(0) => break,
                     Ok(_) => {
+                        line_num += 1;
                         let line = buffer.trim_end_matches(&['\n', '\r'][..]).to_string();
                         if sender
                             .send(ReaderMessage::Line {
                                 line,
                                 filename: Some(file_path.clone()),
+                                line_num,
                             })
                             .is_err()
                         {
@@ -997,7 +1017,7 @@ fn spawn_merged_file_reader(
             }
         }
 
-        while let Some(Reverse((_key, state))) = heap.pop() {
+        while let Some(Reverse((key, state))) = heap.pop() {
             match ctrl_rx.try_recv() {
                 Ok(Ctrl::Shutdown { immediate }) => {
                     let _ = sender.send(ReaderMessage::Eof);
@@ -1015,6 +1035,7 @@ fn spawn_merged_file_reader(
                 .send(ReaderMessage::Line {
                     line: state.line,
                     filename: Some(filename.clone()),
+                    line_num: key.line_number,
                 })
                 .is_err()
             {
@@ -1616,9 +1637,13 @@ fn handle_reader_message<W: Write>(
 
             Ok(false)
         }
-        ReaderMessage::Line { line, filename } => {
+        ReaderMessage::Line {
+            line,
+            filename,
+            line_num: file_line_num,
+        } => {
             match process_line_sequential(
-                Ok(line),
+                Ok((line, file_line_num)),
                 line_num,
                 skipped_lines,
                 section_selector,
@@ -1700,8 +1725,8 @@ fn replace_pipeline_parser(
 /// Process a single line in sequential mode with filename tracking and CSV schema detection
 #[allow(clippy::too_many_arguments)]
 fn process_line_sequential<W: Write>(
-    line_result: io::Result<String>,
-    line_num: &mut usize,
+    line_result: io::Result<(String, usize)>,
+    lines_read: &mut usize,
     skipped_lines: &mut usize,
     section_selector: &mut Option<pipeline::SectionSelector>,
     pipeline: &mut pipeline::Pipeline,
@@ -1718,8 +1743,10 @@ fn process_line_sequential<W: Write>(
     multiline_state: &mut MultilineSeqState,
     tap: &mut Option<pipeline::tap::TapUnwrapper>,
 ) -> Result<ProcessingResult> {
-    let line = line_result?;
-    *line_num += 1;
+    // `lines_read` counts the whole run (for --head); events report the line
+    // number within their own file.
+    let (line, file_line_num) = line_result?;
+    *lines_read += 1;
 
     // Count line read for stats
     if config.output.stats.is_some() {
@@ -1728,7 +1755,7 @@ fn process_line_sequential<W: Write>(
 
     // Check if we've hit the head limit (stops I/O early)
     if let Some(head_limit) = config.input.head_lines {
-        if *line_num > head_limit {
+        if *lines_read > head_limit {
             return Ok(ProcessingResult::Stop);
         }
     }
@@ -1812,7 +1839,7 @@ fn process_line_sequential<W: Write>(
         // --unwrap: the line filters above saw the raw line; from here on
         // only the embedded log lines and the wrapper's events go on.
         if let Some(tap) = tap.as_mut() {
-            let step = tap.push(line, *line_num, current_filename);
+            let step = tap.push(line, file_line_num, current_filename);
             if step.dropped {
                 stats_add_line_filtered();
             }
@@ -1925,7 +1952,7 @@ fn process_line_sequential<W: Write>(
     // set per assembled chunk from the chunk's provenance.
     let chunk_line = pipeline::ChunkLine {
         text: line,
-        line_num: *line_num,
+        line_num: file_line_num,
         filename: current_filename,
     };
     match pipeline.process_line(chunk_line, ctx) {

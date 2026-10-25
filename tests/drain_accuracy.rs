@@ -134,7 +134,7 @@ fn load(dir: &Path) -> Vec<Dataset> {
 fn assign(content: &[String]) -> Vec<String> {
     drain::reset();
     for (i, text) in content.iter().enumerate() {
-        drain::drain_record(text, None, Some(i + 1)).expect("drain_record");
+        drain::drain_record(text, None, Some(i + 1), None).expect("drain_record");
     }
     let frozen = drain::frozen_template_set();
     let assigned = content

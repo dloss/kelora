@@ -31,7 +31,7 @@ Per-event metadata, filled in by Kelora. Assignments are visible only within the
 | Key | Type | Value |
 |---|---|---|
 | `line` | string | same as `line` |
-| `line_num` | int | 1-based input line number |
+| `line_num` | int | 1-based line number within the event's file (or stdin) |
 | `filename` | string or `()` | input file; `()` for stdin |
 | `parsed_ts` | datetime or `()` | the event's timestamp as parsed by Kelora, in UTC; `()` if none was found. Unlike the original string field (e.g. `e.timestamp`), it supports date arithmetic directly: `meta.parsed_ts.round_to("1h")`, `(meta.parsed_ts - other).as_seconds()` |
 | `span_id` | string | with `--span`/`--span-idle`: id of the event's span (see `span.id`) |
