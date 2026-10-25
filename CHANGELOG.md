@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **nginx `main` format lost X-Forwarded-For** - nginx's default `main` log format, used by the official Docker image, ends in `"$http_x_forwarded_for"`. kelora read that position as `request_time` and dropped any value that wasn't a number, so the real client behind a proxy was missing. It is now kept as `forwarded_for` (an IP list) or `extra` (other text).
 - **`kubectl logs --timestamps` read as syslog** - A timestamp followed by a JSON body whose `msg` contained a space parsed as syslog, with `host='{"level":"error",…'` and part of the JSON as `prog`. Syslog host and program names can no longer contain `"`, `{` or `}`. The format reference wrongly listed this output as `cri`; it now shows how to read it with `--extract-prefix`.
 - **`--extract-prefix` with auto-detection** - Detection looked at the line before the prefix was removed, so `docker compose logs | kelora --extract-prefix service` read JSON or access-log lines as `line`. It now detects the format of the text after the prefix.
 - **Agent skill divided integers** - The skill's `e.duration_ms / 1000` example turned 45 ms into `0`; it now divides by `1000.0`.

@@ -35,9 +35,11 @@ cols:<spec>
           field:type  - apply type (int, float, bool, string)
 
 combined
-  Apache/Nginx access logs (CLF, Combined, Nginx + request_time quoted or bare)
+  Apache/Nginx access logs (CLF, Combined, Nginx + request_time quoted or bare,
+  or nginx's default "main" format ending in "$http_x_forwarded_for")
   Fields: ip, ts, request, method, path, protocol, status
-          [identity, user, bytes, referer, user_agent, request_time]
+          [identity, user, bytes, referer, user_agent, request_time,
+           forwarded_for (X-Forwarded-For IP list), extra (other quoted text)]
   Note: Fields in brackets are optional (omitted if value is "-")
 
 cri

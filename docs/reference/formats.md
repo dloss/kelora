@@ -110,13 +110,14 @@ RFC 5424 fields whose value is `-` are omitted. Structured data is not extracted
 
 ### Combined Log Format
 
-Handles Common Log Format, Combined, and Nginx Combined with a trailing request time (quoted or bare, as nginx's `$request_time`), detected per line:
+Handles Common Log Format, Combined, and Nginx Combined with one trailing field — a request time (quoted or bare, as nginx's `$request_time`) or the quoted `"$http_x_forwarded_for"` of nginx's default `main` format — detected per line:
 
 ```
 192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
 192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
 192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
 192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" 0.123
+10.0.0.5 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "203.0.113.9, 10.0.0.1"
 ```
 
 | Field | Type | Common | Combined | Nginx | Description |
@@ -134,10 +135,12 @@ Handles Common Log Format, Combined, and Nginx Combined with a trailing request 
 | `referer` | string | – | ✓ | ✓ | |
 | `user_agent` | string | – | ✓ | ✓ | |
 | `request_time` | float | – | – | ✓ | seconds |
+| `forwarded_for` | string | – | – | ✓ | a quoted list of IP addresses (X-Forwarded-For): the client behind a proxy |
+| `extra` | string | – | – | ✓ | any other quoted text in that position |
 
 Any field whose value is `-` is omitted.
 
-A line with anything after `user_agent` and the optional request time (an nginx `log_format` with extra fields such as `rt=` or `upstream=`) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. `unexpected trailing text after user_agent at column 122: 'trace=abc123'`; parse such logs with a `regex:` format that captures the extra fields.
+A line with anything after `user_agent` and that optional field (an nginx `log_format` with extra fields such as `rt=` or `upstream=`) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. `unexpected trailing text after user_agent at column 122: 'trace=abc123'`; parse such logs with a `regex:` format that captures the extra fields.
 
 ### CEF Format
 

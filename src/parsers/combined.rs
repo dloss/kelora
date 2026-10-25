@@ -69,6 +69,15 @@ impl CombinedParser {
         time_str.parse::<f64>().ok()
     }
 
+    /// An X-Forwarded-For value: comma-separated client addresses (`unknown`
+    /// is what proxies write for a hidden hop).
+    fn is_forwarded_for(value: &str) -> bool {
+        value.split(',').all(|hop| {
+            let hop = hop.trim();
+            hop.eq_ignore_ascii_case("unknown") || hop.parse::<std::net::IpAddr>().is_ok()
+        })
+    }
+
     /// Set field if value is not "-"
     fn set_field_if_not_dash(event: &mut Event, field_name: &str, value: &str) {
         if value != "-" {
@@ -145,12 +154,22 @@ impl CombinedParser {
                 Self::set_field_if_not_dash(&mut event, "user_agent", user_agent.as_str());
             }
 
-            // Request time (NGINX-specific, optional)
+            // Field after the user agent (NGINX-specific, optional): usually
+            // $request_time, but nginx's default `main` format ends in
+            // "$http_x_forwarded_for", the real client behind a proxy. Text that
+            // is not a number used to be dropped without a trace.
             if let Some(request_time) = captures.get(10).or_else(|| captures.get(11)) {
                 let time_str = request_time.as_str();
                 if time_str != "-" {
                     if let Some(time_float) = Self::parse_request_time(time_str) {
                         event.set_field("request_time".to_string(), Dynamic::from(time_float));
+                    } else if Self::is_forwarded_for(time_str) {
+                        event.set_field(
+                            "forwarded_for".to_string(),
+                            Dynamic::from(time_str.to_string()),
+                        );
+                    } else {
+                        event.set_field("extra".to_string(), Dynamic::from(time_str.to_string()));
                     }
                 }
             }
@@ -828,5 +847,44 @@ mod tests {
                 .unwrap(),
             0.02
         );
+    }
+
+    #[test]
+    fn test_nginx_main_format_keeps_forwarded_for() {
+        // nginx's default `main` log_format (also the official Docker image's)
+        // ends in "$http_x_forwarded_for".
+        let parser = CombinedParser::new().unwrap();
+        let line = r#"10.0.0.5 - - [24/Oct/2026:09:12:04 +0000] "POST /api/login HTTP/1.1" 500 0 "-" "python-requests/2.32.3" "203.0.113.9, 10.0.0.1""#;
+        let result = parser.parse(line).unwrap();
+        assert_eq!(
+            result.fields.get("forwarded_for").unwrap().to_string(),
+            "203.0.113.9, 10.0.0.1"
+        );
+        assert!(result.fields.get("request_time").is_none());
+
+        let ipv6 = r#"10.0.0.5 - - [24/Oct/2026:09:12:04 +0000] "GET / HTTP/1.1" 200 1 "-" "curl" "2001:db8::1""#;
+        let result = parser.parse(ipv6).unwrap();
+        assert_eq!(
+            result.fields.get("forwarded_for").unwrap().to_string(),
+            "2001:db8::1"
+        );
+
+        // No proxy: nginx writes "-", which is omitted like the other fields.
+        let direct = r#"172.17.0.1 - - [24/Oct/2026:09:12:01 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0" "-""#;
+        let result = parser.parse(direct).unwrap();
+        assert!(result.fields.get("forwarded_for").is_none());
+        assert!(result.fields.get("extra").is_none());
+    }
+
+    #[test]
+    fn test_other_trailing_quoted_text_is_kept_as_extra() {
+        let parser = CombinedParser::new().unwrap();
+        let line = r#"10.0.0.5 - - [24/Oct/2026:09:12:04 +0000] "GET / HTTP/1.1" 200 1 "-" "curl" "shop.example.com""#;
+        let result = parser.parse(line).unwrap();
+        assert_eq!(
+            result.fields.get("extra").unwrap().to_string(),
+            "shop.example.com"
+        );
+        assert!(result.fields.get("forwarded_for").is_none());
     }
 }
