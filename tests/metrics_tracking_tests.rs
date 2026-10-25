@@ -2409,11 +2409,11 @@ fn test_missing_field_skip_hint_survives_implied_metrics_suppression() {
         "stdout still reports the empty data channel: {stdout}"
     );
     assert!(
-        stderr.contains("skipped events with missing values") && stderr.contains("stauts"),
+        stderr.contains("No event has a field named stauts"),
         "the typo hint must surface on stderr in the implied -m mode: {stderr}"
     );
     assert!(
-        !stdout.contains("skipped events with missing values"),
+        !stdout.contains("No event has a field named"),
         "the hint must not pollute machine-readable stdout: {stdout}"
     );
 }
@@ -2430,7 +2430,7 @@ fn test_missing_field_skip_hint_honors_explicit_no_diagnostics() {
     );
     assert_eq!(code, 0);
     assert!(
-        !stderr.contains("skipped events with missing values"),
+        !stderr.contains("No event has a field named"),
         "explicit --no-diagnostics must still suppress the advisory hint: {stderr}"
     );
 }
@@ -2604,8 +2604,16 @@ fn test_plain_typo_in_freq_slot_still_gets_typo_hint() {
 
     assert_eq!(code, 0, "{stderr}");
     assert!(
-        stderr.contains("likely a field-name typo"),
+        stderr.contains("No event has a field named stauts"),
         "a misspelled field is still a typo: {stderr}"
+    );
+    assert!(
+        stderr.contains("Present fields: status."),
+        "the hint should list the fields that exist: {stderr}"
+    );
+    assert!(
+        !stderr.contains("metrics never recorded"),
+        "--freq users never asked for metrics: {stderr}"
     );
     assert!(
         !stderr.contains("not an expression"),

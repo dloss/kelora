@@ -318,8 +318,25 @@ impl ErrorEnhancer {
                 "It looks like a Rust raw string (r\"...\"). Rhai raw strings use #\"...\"# (or ##\"...\"## for embedded quotes)."
                     .to_string(),
             ),
+            EvalAltResult::ErrorParsing(_, pos) => {
+                let rest = Self::text_at(script, pos.line()?, pos.position()?)?;
+                if rest.starts_with("=~") {
+                    Some("Rhai has no =~ operator. For a regex test use matches(): e.msg.matches(\"time ?out\")".to_string())
+                } else if rest.starts_with('=') && !rest.starts_with("==") {
+                    Some("To compare, use == (a single = assigns): e.status == 500".to_string())
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
+    }
+
+    /// The script text from a 1-based line/column (in characters) onward.
+    fn text_at(script: &str, line: usize, column: usize) -> Option<&str> {
+        let text = script.lines().nth(line.checked_sub(1)?)?;
+        let start = text.char_indices().nth(column.checked_sub(1)?)?.0;
+        Some(&text[start..])
     }
 
     fn contains_rust_raw_string(script: &str) -> bool {
@@ -499,6 +516,19 @@ impl ErrorEnhancer {
             return Some(hint);
         }
 
+        // A name from another language has a known kelora spelling; edit
+        // distance would offer an unrelated neighbour (`includes` -> `values`).
+        if let Some(hint) = Self::foreign_function_hint(func_name) {
+            return Some(hint);
+        }
+
+        // The function exists, so the name is right and the arguments are not.
+        // Suggesting the same name back ("Did you mean: between?") reads as a
+        // glitch; say what is wrong instead.
+        if RhaiEngine::function_catalog().contains(&func_name) {
+            return Some(Self::wrong_arguments_hint(func_name, func_sig));
+        }
+
         let called = func_name.to_lowercase();
         let called_tokens = Self::sorted_tokens(&called);
 
@@ -533,31 +563,7 @@ impl ErrorEnhancer {
             ));
         }
 
-        match func_name {
-            "length" => Some("Use 'len()' instead of 'length()'".to_string()),
-            "size" => Some("Use 'len()' instead of 'size()'".to_string()),
-            "substr" | "substring" => Some(
-                "Use string slicing: s[start..end] or extract_regex() for pattern matching"
-                    .to_string(),
-            ),
-            "indexOf" | "index_of" => Some(
-                "Use 'contains()' to check existence or 'split()' to find positions".to_string(),
-            ),
-            "push_back" | "append" => Some("Use 'push()' to add elements to arrays".to_string()),
-            "to_int" | "parseInt" => {
-                Some("Use 'parse()' or to_number() for type conversion".to_string())
-            }
-            "to_str" | "toString" => Some("Use 'to_string()' for string conversion".to_string()),
-            "match" => Some(
-                "Use 'extract_regex()' for regex matching or 'contains()' for simple checks"
-                    .to_string(),
-            ),
-            name if name.ends_with("_re") => Some(
-                "Regex functions: extract_regex(), extract_regexes(), extract_regex_maps(), split_regex(), replace_regex()"
-                    .to_string(),
-            ),
-            _ => None,
-        }
+        None
     }
 
     fn find_similar_variables(&self, target: &str, scope: &Scope) -> Vec<String> {
@@ -648,6 +654,52 @@ impl ErrorEnhancer {
         } else {
             Some(format!("Did you mean: {}?", similar.join(", ")))
         }
+    }
+
+    /// Kelora spellings for method names users bring from JavaScript, Python
+    /// and Java.
+    fn foreign_function_hint(func_name: &str) -> Option<String> {
+        let hint = match func_name {
+            "includes" | "has_substring" => "Use contains(): e.msg.contains(\"timeout\")",
+            "startswith" | "startsWith" => "Use starts_with(): e.path.starts_with(\"/api\")",
+            "endswith" | "endsWith" => "Use ends_with(): e.path.ends_with(\".php\")",
+            "toLowerCase" => "Use to_lower() (or lower())",
+            "toUpperCase" => "Use to_upper() (or upper())",
+            "length" | "size" => "Use len()",
+            "substr" | "substring" => {
+                "Use string slicing: s[start..end] or extract_regex() for pattern matching"
+            }
+            "indexOf" => "Use index_of() (-1 if absent), or contains() to test for a substring",
+            "push_back" | "append" => "Use push() to add elements to arrays",
+            "parseInt" => "Use to_int() (or to_float()); both return () if the text is not a number",
+            "to_str" | "toString" => "Use to_string() for string conversion",
+            "match" | "test" | "search" => {
+                "Use matches() for a regex test (e.msg.matches(\"time ?out\")), extract_regex() to capture"
+            }
+            _ => return None,
+        };
+        Some(hint.to_string())
+    }
+
+    /// Hint for a known function called with arguments it has no form for.
+    /// `func_sig` is Rhai's `name (type, type)`; for a method call the first
+    /// type is the receiver.
+    fn wrong_arguments_hint(func_name: &str, func_sig: &str) -> String {
+        let args = func_sig
+            .find('(')
+            .map(|i| func_sig[i..].trim())
+            .unwrap_or("()");
+        let numeric_receiver = args
+            .trim_start_matches('(')
+            .split([',', ')'])
+            .next()
+            .is_some_and(|t| matches!(t.trim(), "i64" | "f64" | "i32" | "f32" | "int" | "float"));
+        if func_name == "between" && numeric_receiver {
+            return "between() finds text between two delimiters; for a numeric range compare instead: e.status >= 500 && e.status < 600".to_string();
+        }
+        format!(
+            "{func_name}() exists but has no form taking {args}. Check its arguments with `kelora --help-functions {func_name}`."
+        )
     }
 
     fn calculate_similarity(&self, s1: &str, s2: &str) -> f64 {
@@ -869,6 +921,56 @@ mod tests {
             other.expect("expected a hint").contains("datetime method"),
             "each signature must get its own answer"
         );
+    }
+
+    #[test]
+    fn foreign_method_names_get_the_kelora_spelling() {
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let hint = |sig: &str| enhancer.compute_function_alternatives(sig).unwrap();
+        assert!(hint(
+            "includes (&str | ImmutableString | String, &str | ImmutableString | String)"
+        )
+        .contains("contains()"));
+        assert!(hint(
+            "startswith (&str | ImmutableString | String, &str | ImmutableString | String)"
+        )
+        .contains("starts_with()"));
+        assert!(
+            hint("match (&str | ImmutableString | String, &str | ImmutableString | String)")
+                .contains("matches()")
+        );
+    }
+
+    #[test]
+    fn existing_function_with_wrong_arguments_is_not_suggested_back() {
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let range = enhancer
+            .compute_function_alternatives("between (i64, i64, i64)")
+            .unwrap();
+        assert!(!range.contains("Did you mean"), "got: {range}");
+        assert!(range.contains("e.status >= 500"), "got: {range}");
+
+        let types = enhancer
+            .compute_function_alternatives("contains (&str | ImmutableString | String, i64)")
+            .unwrap();
+        assert!(
+            types.contains(
+                "contains() exists but has no form taking (&str | ImmutableString | String, i64)"
+            ),
+            "got: {types}"
+        );
+    }
+
+    #[test]
+    fn assignment_and_regex_operators_in_expressions_get_hints() {
+        let engine = rhai::Engine::new();
+        let hint = |script: &str| {
+            let err = engine.compile_expression(script).unwrap_err();
+            ErrorEnhancer::raw_string_hint(&EvalAltResult::from(err), script)
+        };
+        assert!(hint("e.status = 500").unwrap().contains("use =="));
+        assert!(hint("e.ua =~ \"bot\"").unwrap().contains("matches()"));
+        assert_eq!(hint("e.status == 500 &&"), None);
     }
 
     #[test]

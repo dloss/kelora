@@ -9,7 +9,7 @@
 //
 // A command passes when it exits 0, writes to stdout (unless it is a --silent
 // run), and its stderr carries no error, warning, hint, "Function not found" or
-// "likely a field-name typo". The few intentional
+// "likely a field-name typo" / "No event has a field named". The few intentional
 // exceptions are listed explicitly below; each entry must still match an
 // example, so stale entries fail too.
 //
@@ -203,6 +203,7 @@ fn bad_stderr_lines(stderr: &str) -> Vec<&str> {
                 || lower.contains("warning")
                 || lower.contains("function not found")
                 || lower.contains("field-name typo")
+                || lower.contains("no event has a field named")
                 || line.contains('⚠')
                 || line.contains('🔸')
                 || line.contains('💡')

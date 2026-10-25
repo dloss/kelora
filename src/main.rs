@@ -1136,6 +1136,23 @@ fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
             .as_deref()
             .map(|format| format!(" (format: {format})"))
             .unwrap_or_default();
+        // Web access logs are parsed fine but carry no level; their severity is
+        // the HTTP status. Calling them "unstructured" sent users off to write a
+        // regex for input that was already split into fields.
+        if stats.discovered_keys.contains("status") {
+            return Some(format!(
+                "0 events matched. -l/--levels matches a level field, and this input has none{format_note}. Filter on the HTTP status instead, e.g. --filter 'e.status >= 500'."
+            ));
+        }
+        let unstructured = matches!(
+            stats.detected_format.as_deref(),
+            None | Some("line") | Some("raw")
+        );
+        if !unstructured {
+            return Some(format!(
+                "0 events matched. -l/--levels matches a level field, and this input has none{format_note}. Filter on one of its fields with --filter instead; -s lists them."
+            ));
+        }
         return Some(format!(
             "0 events matched. -l/--levels is set, but no level field was found in the input{format_note} — it looks unstructured. Parse levels first (e.g. -f cols/regex), or match text with --filter 'e.line.contains(\"ERROR\")'."
         ));
@@ -2535,7 +2552,27 @@ fn handle_pipeline_success(
                     .join(", ")
             };
 
+            // A field named on --freq/--describe/--card is not a "metric" to the
+            // user, who never wrote a track_* call; name the flag's field and the
+            // fields that do exist.
+            let (flag_typos, typos): (Vec<_>, Vec<_>) = typos
+                .into_iter()
+                .partition(|(name, _)| config.processing.metric_sugar_fields.contains(name));
+
             let mut messages = Vec::new();
+            if !flag_typos.is_empty() {
+                let names: Vec<&str> = flag_typos.iter().map(|(name, _)| name.as_str()).collect();
+                let fields = pipeline_result
+                    .stats
+                    .as_ref()
+                    .map(|stats| present_fields_hint(&stats.discovered_keys))
+                    .unwrap_or_else(|| "Run --discover to list fields.".to_string());
+                messages.push(format!(
+                    "No event has a field named {}, so nothing was counted. {}",
+                    names.join(", "),
+                    fields
+                ));
+            }
             if !typos.is_empty() {
                 messages.push(format!(
                     "Tracking skipped events with missing values: {}. These metrics never recorded a value — likely a field-name typo.",

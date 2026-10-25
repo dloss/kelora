@@ -1492,3 +1492,40 @@ fn test_genuinely_empty_stdin_still_hints() {
         "an actually-empty stdin should still be explained: {stderr:?}"
     );
 }
+
+#[test]
+fn test_levels_on_access_log_points_to_status() {
+    // An access log is parsed into fields but has no level; the hint used to call
+    // it "unstructured" and suggest -f cols/regex.
+    let input =
+        r#"203.0.113.9 - - [24/Oct/2026:10:00:02 +0200] "GET / HTTP/1.1" 500 0 "-" "curl/8.5.0""#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-l", "error"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("--filter 'e.status >= 500'"),
+        "should point to the status field: {stderr}"
+    );
+    assert!(!stderr.contains("unstructured"), "{stderr}");
+}
+
+#[test]
+fn test_levels_on_structured_input_without_level_is_not_called_unstructured() {
+    // cols, not logfmt/json: those arm the level pre-filter, which has its own hint.
+    let input = "alice login\nbob logout";
+
+    let (_stdout, stderr, _exit_code) =
+        run_kelora_with_input(&["-f", "cols:user action", "-l", "error"], input);
+
+    assert!(stderr.contains("this input has none"), "{stderr}");
+    assert!(!stderr.contains("unstructured"), "{stderr}");
+}
+
+#[test]
+fn test_levels_on_plain_lines_still_suggests_parsing() {
+    let (_stdout, stderr, _exit_code) =
+        run_kelora_with_input(&["-f", "line", "-l", "error"], "something failed\nall good");
+
+    assert!(stderr.contains("looks unstructured"), "{stderr}");
+}
