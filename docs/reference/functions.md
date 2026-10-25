@@ -1438,6 +1438,13 @@ Running total.
 track_sum("total_bytes", e.bytes);
 ```
 
+#### `track_sum_by(name, key, value)`
+A total of `value` for each distinct `key`, such as bytes per client. Printed like a frequency table, largest total first, so `-m | head` gives the top keys. Keys are converted to text as in `track_freq`; an event without the key or the value is skipped. Totals stay integers until a float is added, and merge across `--parallel` workers and `--span` windows.
+
+```rhai
+track_sum_by("bytes", e.client_ip, e.bytes);
+```
+
 #### `track_avg(name, value)`
 Mean of the recorded values (kept as sum and count, so it merges across `--parallel` workers).
 

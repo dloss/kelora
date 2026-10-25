@@ -200,10 +200,10 @@ pub fn format_metrics_output(
                 // track_freq tallies occurrences, so its numbers are counts. A
                 // raw user-built map carries no such guarantee, so we only label
                 // the column when we know the operation is a frequency table.
-                let measure = if metric_operation(ops, key).as_deref() == Some("bucket") {
-                    Some("count")
-                } else {
-                    None
+                let measure = match metric_operation(ops, key).as_deref() {
+                    Some("bucket") => Some("count"),
+                    Some("sum_by") => Some("sum"),
+                    _ => None,
                 };
                 push_count_map(&mut output, key, &map, metrics_level, measure);
                 continue;
@@ -406,6 +406,8 @@ fn push_count_map(
     // "value" and the number column "count". An arbitrary numeric map carries
     // no such meaning: it's a plain "key" -> "value" pairing.
     let (left_header, right_header) = match measure {
+        // track_sum_by totals a number per key (a client, an endpoint).
+        Some("sum") => ("key", "sum"),
         Some(m) => ("value", m),
         None => ("key", "value"),
     };

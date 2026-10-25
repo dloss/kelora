@@ -215,6 +215,13 @@ impl UserMetrics<'_> {
 
     /// Add one to `item` in the map-valued metric `key`, creating either.
     pub fn increment_map_entry(&mut self, key: &str, item: &str) {
+        self.add_to_map_entry(key, item, Dynamic::from(1_i64));
+    }
+
+    /// Add `amount` (an int or float) to the entry `item` of the map-valued
+    /// metric `key`, in place: an integer total stays an integer until a float
+    /// is added.
+    pub fn add_to_map_entry(&mut self, key: &str, item: &str, amount: Dynamic) {
         if !self.map.contains_key(key) {
             self.insert(key.to_string(), Dynamic::from(rhai::Map::new()));
         }
@@ -226,8 +233,10 @@ impl UserMetrics<'_> {
             return;
         };
         let old = map.get(item).cloned();
-        let count = old.as_ref().and_then(|v| v.as_int().ok()).unwrap_or(0);
-        map.insert(item.into(), Dynamic::from(count + 1));
+        map.insert(
+            item.into(),
+            super::merge::merge_numeric(old.clone(), amount),
+        );
         if let Some(log) = self.log.as_deref_mut() {
             log.push(Undo::MapEntry {
                 key: key.to_string(),

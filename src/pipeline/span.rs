@@ -1026,6 +1026,13 @@ fn compute_span_metrics(
                         }
                     }
                 }
+                "sum_by" => {
+                    if let Some(delta) = sum_by_delta(value, span.baseline_user.get(key)) {
+                        if !delta.is_empty() {
+                            result.insert(key.clone().into(), Dynamic::from(delta));
+                        }
+                    }
+                }
                 "min" | "max" => match span.extremes.get(key) {
                     Some(extreme) => {
                         result.insert(key.clone().into(), extreme.clone());
@@ -1176,6 +1183,39 @@ fn bucket_delta(current: &Dynamic, base: Option<&Dynamic>) -> Option<rhai::Map> 
     }
 
     Some(diff)
+}
+
+/// Per-key totals added during the window (`track_sum_by`). Unlike counts,
+/// sums can be negative or float, so every key whose total changed is kept.
+fn sum_by_delta(current: &Dynamic, base: Option<&Dynamic>) -> Option<rhai::Map> {
+    let current_map = current.clone().try_cast::<rhai::Map>()?;
+    let base_map = base
+        .and_then(|b| b.clone().try_cast::<rhai::Map>())
+        .unwrap_or_default();
+
+    let mut diff = rhai::Map::new();
+    for (key, value) in current_map {
+        let delta = match (value.as_int(), base_map.get(&key)) {
+            (Ok(total), None) => Dynamic::from(total),
+            (Ok(total), Some(base)) if base.is_int() => {
+                Dynamic::from(total - base.as_int().unwrap_or(0))
+            }
+            _ => Dynamic::from(
+                dynamic_as_f64(&value) - base_map.get(&key).map_or(0.0, dynamic_as_f64),
+            ),
+        };
+        if !is_zero_dynamic(&delta) {
+            diff.insert(key, delta);
+        }
+    }
+
+    Some(diff)
+}
+
+fn dynamic_as_f64(value: &Dynamic) -> f64 {
+    value
+        .as_float()
+        .unwrap_or_else(|_| value.as_int().unwrap_or(0) as f64)
 }
 
 fn is_zero_dynamic(value: &Dynamic) -> bool {

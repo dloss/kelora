@@ -334,6 +334,7 @@ track_min(name, value)                Track minimum numeric value
 track_percentiles(name, value [,[p]]) Track streaming percentiles using t-digest (default [0.50,0.95,0.99]; auto-suffixes)
 track_stats(name, value [,[p]])       Track comprehensive stats: min, max, avg, count, sum, percentiles (auto-suffixes)
 track_sum(name, value)                Accumulate numeric values; track_sum(name, 1) (or track_inc) is a plain counter
+track_sum_by(name, key, value)        Total per key, largest first: {name: {key: sum}}; e.g. track_sum_by("bytes", e.ip, e.bytes)
 track_top(name, item [,n])            Track top N most frequent items (default n=10)
 track_top_by(name, item, score [,n])  Track top N distinct items by their highest score (default n=10)
 track_unique(name, value)             Track exact set of distinct values (unbounded memory; warns past 100k values)

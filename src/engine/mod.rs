@@ -1476,6 +1476,7 @@ impl RhaiEngine {
             "track_percentiles",
             "track_stats",
             "track_sum",
+            "track_sum_by",
             "track_top",
             "track_top_by",
             "track_unique",

@@ -622,7 +622,7 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
         "uniq" | "uniq-c" | "group-by" | "groupby" => {
             "kelora has no --group-by/--uniq flag. To aggregate by a category, use track_freq in a script stage:\n    \
              kelora -m --exec 'track_freq(\"level\", e.level)' app.log\n  \
-             For a quick frequency table, use --freq FIELD. See --help-functions for details."
+             For a quick frequency table, use --freq FIELD; for a total per category, track_sum_by(\"bytes\", e.ip, e.bytes). See --help-functions for details."
         }
         _ => return None,
     };

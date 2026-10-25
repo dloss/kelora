@@ -3015,3 +3015,95 @@ fn describe_on_numeric_strings_suggests_conversion_not_typo() {
         "the field exists; stderr: {stderr}"
     );
 }
+
+const SUM_BY_INPUT: &str = r#"{"ip":"10.0.0.1","bytes":100}
+{"ip":"10.0.0.2","bytes":5000}
+{"ip":"10.0.0.1","bytes":250}
+{"ip":"10.0.0.3","bytes":1.5}
+{"ip":"10.0.0.2"}
+"#;
+
+#[test]
+fn track_sum_by_totals_per_key_sorted_by_total() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "track_sum_by(\"bytes\", e.ip, e.bytes)",
+            "--metrics=tsv",
+        ],
+        SUM_BY_INPUT,
+    );
+    assert_eq!(code, 0, "{stderr}");
+    // Largest total first, so `| head` gives the top keys; ints stay ints.
+    assert_eq!(
+        stdout, "bytes\t10.0.0.2\t5000\nbytes\t10.0.0.1\t350\nbytes\t10.0.0.3\t1.5\n",
+        "{stderr}"
+    );
+}
+
+#[test]
+fn track_sum_by_parallel_matches_sequential() {
+    let args = |parallel: bool| {
+        let mut args = vec![
+            "-f",
+            "json",
+            "-e",
+            "track_sum_by(\"bytes\", e.ip, e.bytes)",
+            "--metrics=tsv",
+        ];
+        if parallel {
+            args.extend(["-P", "--batch-size", "1"]);
+        }
+        args
+    };
+    let (sequential, _, c1) = run_kelora_with_input(&args(false), SUM_BY_INPUT);
+    let (parallel, stderr, c2) = run_kelora_with_input(&args(true), SUM_BY_INPUT);
+    assert_eq!((c1, c2), (0, 0), "{stderr}");
+    assert_eq!(sequential, parallel);
+}
+
+#[test]
+fn track_sum_by_rolls_back_with_a_failed_exec() {
+    let (stdout, _stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "track_sum_by(\"bytes\", e.ip, e.bytes); if e.bytes == 250 { throw \"x\" }",
+            "--metrics=tsv",
+        ],
+        SUM_BY_INPUT,
+    );
+    assert!(stdout.contains("bytes\t10.0.0.1\t100\n"), "{stdout}");
+}
+
+#[test]
+fn track_sum_by_per_span_window() {
+    let input = r#"{"ts":"2024-01-01T10:00:00Z","ip":"a","bytes":1}
+{"ts":"2024-01-01T10:00:30Z","ip":"a","bytes":2}
+{"ts":"2024-01-01T10:01:10Z","ip":"a","bytes":4}
+"#;
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--span",
+            "1m",
+            "-e",
+            "track_sum_by(\"bytes\", e.ip, e.bytes)",
+            "--span-summary=tsv",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        stdout.contains("2024-01-01T10:00:00Z\tbytes\ta\t3"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("2024-01-01T10:01:00Z\tbytes\ta\t4"),
+        "{stdout}"
+    );
+}

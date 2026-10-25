@@ -118,6 +118,19 @@ pub(super) fn track_freq_impl(key: &str, value: &str) -> Result<(), Box<rhai::Ev
     Ok(())
 }
 
+/// Add `amount` to `item`'s total under the metric `key` — a frequency table
+/// whose entries are sums instead of counts. Storage shape:
+/// `{key → {item → total}}`, mutated in place like `track_freq`.
+pub(super) fn track_sum_by_impl(
+    key: &str,
+    item: &str,
+    amount: Dynamic,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "sum_by")?;
+    with_user_tracking(|state| state.add_to_map_entry(key, item, amount));
+    Ok(())
+}
+
 /// Build a `{key, count}` entry map for a ranked-count metric.
 fn make_count_entry(item_key: &str, count: i64) -> Dynamic {
     let mut map = rhai::Map::new();

@@ -22,9 +22,9 @@ pub(crate) use format::dynamic_to_json;
 pub use format::{
     dynamic_to_tsv, format_metrics_json, format_metrics_output, format_metrics_tsv, tsv_sanitize,
 };
-pub(crate) use merge::{compress_tdigest, op_display_name};
+pub(crate) use merge::{compress_tdigest, merge_numeric, op_display_name};
 use merge::{
-    deserialize_hll, deserialize_tdigest, ensure_operation_metadata, is_hll_blob, merge_numeric,
+    deserialize_hll, deserialize_tdigest, ensure_operation_metadata, is_hll_blob,
     record_skipped_unit,
 };
 use metrics::{
@@ -34,8 +34,8 @@ use metrics::{
 pub use rank::set_tracking_warnings_enabled;
 pub(crate) use rank::unique_size_warning;
 use rank::{
-    track_bottom_count_impl, track_bottom_weighted_impl, track_freq_impl, track_top_count_impl,
-    track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
+    track_bottom_count_impl, track_bottom_weighted_impl, track_freq_impl, track_sum_by_impl,
+    track_top_count_impl, track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
     track_unique_string_impl,
 };
 pub use state::{
@@ -329,6 +329,36 @@ pub fn register_functions(engine: &mut Engine) {
             Err(
                 "track_freq needs a name and a value: track_freq(\"status\", e.status). \
                  For a running counter use track_sum(\"errors\", 1) or track_inc(\"errors\")."
+                    .into(),
+            )
+        },
+    );
+
+    // track_sum_by(name, key, value): add `value` to the total of each distinct
+    // key — a frequency table of sums ("bytes per client"). Result shape:
+    // {name → {key → total}}. Keys are stringified like track_freq's values; a
+    // missing key or value skips the event.
+    engine.register_fn(
+        "track_sum_by",
+        |name: &str, key: Dynamic, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            let key = categorical_to_string("track_sum_by", "key", &key)?;
+            let value = numeric_arg("track_sum_by", "value", &value)?;
+            match (key, value) {
+                (Some(key), Some(value)) => track_sum_by_impl(name, &key, value.into_dynamic()),
+                _ => {
+                    record_skipped_unit(name);
+                    Ok(())
+                }
+            }
+        },
+    );
+    // Two arguments read like track_sum(name, value) with the key forgotten.
+    engine.register_fn(
+        "track_sum_by",
+        |_name: Dynamic, _value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(
+                "track_sum_by needs a name, a key and a value: track_sum_by(\"bytes\", e.ip, e.bytes). \
+                 For one running total use track_sum(\"bytes\", e.bytes)."
                     .into(),
             )
         },

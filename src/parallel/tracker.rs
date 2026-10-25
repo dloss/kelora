@@ -589,6 +589,18 @@ impl GlobalTracker {
         Some(Dynamic::from(merged))
     }
 
+    /// Add per-key totals (`track_sum_by`); int + int stays int.
+    fn merge_sum_by(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let mut merged = existing.clone().try_cast::<rhai::Map>()?;
+        let new_map = value.clone().try_cast::<rhai::Map>()?;
+        for (item, total) in new_map {
+            let combined =
+                crate::rhai_functions::tracking::merge_numeric(merged.get(&item).cloned(), total);
+            merged.insert(item, combined);
+        }
+        Some(Dynamic::from(merged))
+    }
+
     /// Merge error_examples arrays (limit to 3 unique items)
     fn merge_error_examples(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
         let existing_arr = existing.clone().into_array().ok()?;
@@ -709,6 +721,12 @@ impl GlobalTracker {
                     }
                     "bucket" => {
                         if let Some(merged) = Self::merge_bucket(existing, value) {
+                            target.insert(key.clone(), merged);
+                            continue;
+                        }
+                    }
+                    "sum_by" => {
+                        if let Some(merged) = Self::merge_sum_by(existing, value) {
                             target.insert(key.clone(), merged);
                             continue;
                         }

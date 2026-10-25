@@ -26,6 +26,7 @@ pub(crate) fn op_display_name(op: &str) -> &str {
         "unique" => "track_unique",
         // Internal op id predates the 2.0 renames (track_bucket → track_freq).
         "bucket" => "track_freq",
+        "sum_by" => "track_sum_by",
         "cardinality" => "track_cardinality",
         "percentiles" => "track_percentiles",
         "top" => "track_top",
@@ -84,7 +85,7 @@ pub(super) fn record_skipped_unit(key: &str) {
     });
 }
 
-pub(super) fn merge_numeric(existing: Option<Dynamic>, new_value: Dynamic) -> Dynamic {
+pub(crate) fn merge_numeric(existing: Option<Dynamic>, new_value: Dynamic) -> Dynamic {
     let new_is_float = new_value.is_float();
 
     if let Some(current) = existing {
