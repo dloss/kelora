@@ -53,9 +53,12 @@ impl SyslogParser {
         // (`+0200` offset, no colon). macOS's /var/log/install.log writes the
         // same with a space and an hours-only offset (`2025-03-16 13:54:59+01`).
         // The offset stays required: without it, `2025-03-16 13:54:59 app
-        // worker: started` from any app log would read as syslog.
+        // worker: started` from any app log would read as syslog. Host and tag
+        // never hold `"`, `{` or `}`: `kubectl logs --timestamps` puts a JSON
+        // body after the time, and `{"level":"error","msg":"upstream
+        // failed","err":…` otherwise splits into host, tag and message.
         let rfc3164_regex = multiline_aware_regex(
-            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}(?::?\d{2})?))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
+            r#"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}(?::?\d{2})?))\s+([^\s"{}]+)\s+([^:\[\s"{}]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"#
         ).context("Failed to compile RFC3164 regex")?;
 
         Ok(Self {
@@ -395,6 +398,10 @@ mod tests {
             "2024-01-02 15:04:05.123 UTC [123] LOG:  checkpoint starting: time",
             // Space-separated with an offset is still an app log when a level follows.
             "2024-01-02 15:04:05+01 INFO main: started",
+            // kubectl logs --timestamps with a JSON body: not host and tag.
+            r#"2026-10-24T09:12:02.223456789Z {"level":"error","msg":"upstream failed","err":"connection refused"}"#,
+            r#"Oct 24 09:12:02 {"level":"error","msg":"upstream failed","err":"refused"}"#,
+            r#"2026-10-24T09:12:02Z host {"msg":"a b","c":"d"}"#,
         ] {
             assert!(
                 EventParser::parse(&parser, line).is_err(),
