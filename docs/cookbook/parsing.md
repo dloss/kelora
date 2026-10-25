@@ -27,6 +27,17 @@ kelora examples/quickstart.log -f 'cols:ts(3) level *msg' --input-year 2024 -l e
 `absorb_json` turns the JSON inside `msg` into fields.
 [Get Logs into Shape](../guide/parse.md#6-finish-the-job-in-a-script)
 
+## The systemd journal
+
+Let `journalctl` pick the entries (`-p err` is error and worse) and print them
+as syslog lines with year and offset; Kelora parses those as `syslog`:
+
+```bash
+journalctl -p err --since today -o short-iso | kelora --drain -k msg
+```
+
+[Kelora in a pipeline](../guide/output.md#kelora-in-a-pipeline)
+
 ## A file that is one JSON array
 
 Exports often hold `[{...}, {...}]` instead of one object per line. Read the
