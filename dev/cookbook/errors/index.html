@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1028,6 +1028,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-do-failing-tests-log-that-passing-ones-dont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What do failing tests log that passing ones don't?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-exceptions-do-the-stack-traces-contain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1779,6 +1790,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-do-failing-tests-log-that-passing-ones-dont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What do failing tests log that passing ones don't?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-exceptions-do-the-stack-traces-contain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1908,6 +1930,26 @@ changed. To split at the deploy message instead, use
 <code>--cut-before 'e.msg.contains("deploy")'</code>; for two files,
 <code>kelora --drain-diff before.log after.log -k msg</code>.
 <a href="../../guide/summarize/#what-changed-between-two-logs">Summarize</a></p>
+<h2 id="what-do-failing-tests-log-that-passing-ones-dont">What do failing tests log that passing ones don't?<a class="headerlink" href="#what-do-failing-tests-log-that-passing-ones-dont" title="Permanent link">&para;</a></h2>
+<p>Compare a passing and a failing run of a Perl test suite, captured with
+<code>prove -v --merge</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>--unwrap<span class="w"> </span>tap<span class="w"> </span>-f<span class="w"> </span>logfmt,line<span class="w"> </span>examples/tap_pass.t<span class="w"> </span>examples/tap_fail.t<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--drain-diff<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🔸 --drain-diff excluded 36 event(s) with no 'msg' value from the comparison; the diff covers only the 43 event(s) that had one.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>--- examples/tap_pass.t  21 events  2026-07-01T08:10:01Z .. 2026-07-01T08:10:21Z
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>+++ examples/tap_fail.t  22 events  2026-07-01T08:10:01Z .. 2026-07-01T08:10:22Z
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">+ 1  coupon lookup failed</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">+ 1  coupon service slow</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">+ 1  order not persisted</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>9 templates unchanged in frequency | field: msg
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>9 of them changed a little, but 21 and 22 events are too few to tell that from random variation
+</code></pre></div>
+<p>Within one run, compare the passing tests with the failing ones:
+<code>kelora -j --drain-diff -k msg &lt;(kelora --unwrap tap run.t --filter 'e.test_ok == true' -F json) &lt;(kelora --unwrap tap run.t --filter 'e.test_ok == false' -F json)</code>.
+<a href="../../guide/parse/#logs-inside-test-output-tap">Logs inside test output</a></p>
 <h2 id="which-exceptions-do-the-stack-traces-contain">Which exceptions do the stack traces contain?<a class="headerlink" href="#which-exceptions-do-the-stack-traces-contain" title="Permanent link">&para;</a></h2>
 <p>Join each trace into one event, then extract the exception class:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/stacktrace_java.log<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>-M<span class="w"> </span>java<span class="w"> </span><span class="se">\</span>
@@ -2052,10 +2094,10 @@ marked. <a href="../../guide/filter/#context-around-matches">Filter</a></p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="../../assets/_markdown_exec_pyodide.js"></script>
       

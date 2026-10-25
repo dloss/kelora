@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -2123,6 +2123,14 @@ matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
 <dd>Flush a buffered multiline event after this much input inactivity (e.g. <code>400ms</code>, <code>2s</code>; <code>0</code> = never). Default: off when reading regular files, 400ms when reading a stream (stdin, FIFO)</dd>
 <dt id="multiline-max-lines"><code>--multiline-max-lines &lt;N&gt;</code></dt>
 <dd>Split a multiline event after this many buffered lines (safety cap; <code>0</code> = unlimited). Default: 10000. Ignored by <a href="#multiline"><code>--multiline all</code></a></dd>
+<dt id="unwrap"><code>--unwrap &lt;WRAPPER&gt;</code></dt>
+<dd>
+<p>Extract log lines embedded in another format, then parse them as usual. <code>tap</code>: captured TAP output (<code>prove -v</code>); log lines in <code>#</code> comments get the fields of the test result that follows them (test_num, test_name, test_ok, ...), other lines become <code>line</code> events. Sequential mode only</p>
+<p>Values:</p>
+<ul>
+<li><code>tap</code>: Captured TAP output (<code>prove -v</code>): log lines in <code>#</code> comments</li>
+</ul>
+</dd>
 <dt id="extract-prefix"><code>--extract-prefix &lt;FIELD&gt;</code></dt>
 <dd>Extract text before separator to specified field (runs before parsing)</dd>
 <dt id="prefix-sep"><code>--prefix-sep &lt;SEP&gt;</code></dt>
@@ -2780,10 +2788,10 @@ matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="../../assets/_markdown_exec_pyodide.js"></script>
       

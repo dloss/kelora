@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -737,6 +737,17 @@
     <span class="md-ellipsis">
       
         Prefixes added by other tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logs-inside-test-output-tap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs inside test output (TAP)
       
     </span>
   </a>
@@ -1912,6 +1923,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#logs-inside-test-output-tap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs inside test output (TAP)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-lines-dont-parse" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2404,6 +2426,56 @@ message such as <code>log4j</code> or <code>glog</code>) handle that. Details: <
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">container</span>='db_1'
 </code></pre></div>
 <p>The separator defaults to <code>|</code>; change it with <code>--prefix-sep</code>.</p>
+<h2 id="logs-inside-test-output-tap">Logs inside test output (TAP)<a class="headerlink" href="#logs-inside-test-output-tap" title="Permanent link">&para;</a></h2>
+<p>Perl tests that log through <code>note()</code> or <code>diag()</code> leave the log lines in the
+<code>#</code> comments of their TAP output. Capture the output (<code>prove -v --merge t/ &gt;
+run.t</code>) and <code>--unwrap tap</code> parses the comment text as the log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/tap_fail.t<span class="w"> </span>--unwrap<span class="w"> </span>tap<span class="w"> </span>-f<span class="w"> </span>logfmt,line<span class="w"> </span>-l<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-k<span class="w"> </span>test_num,test_name,level,msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">test_num</span>=6 <span class=" -Color -Color-Green">test_name</span>='coupon reduces total for c-1002' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightYellow">warn</span>'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">msg</span>='coupon service slow'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">test_num</span>=6 <span class=" -Color -Color-Green">test_name</span>='coupon reduces total for c-1002' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">error</span>'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">msg</span>='coupon lookup failed'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">test_num</span>=10 <span class=" -Color -Color-Green">test_name</span>='order for c-1003 is persisted' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">error</span>'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">msg</span>='order not persisted'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">test_num</span>=11 <span class=" -Color -Color-Green">test_name</span>='refund restores stock' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightYellow">warn</span>'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  <span class=" -Color -Color-Green">msg</span>='refund endpoint missing'
+</code></pre></div>
+<p>Each log line gets the fields of the test result that follows it, since a test
+logs before it reports:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>From</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_num</code>, <code>test_name</code>, <code>test_ok</code></td>
+<td>the next <code>ok N</code> / <code>not ok N</code> line</td>
+</tr>
+<tr>
+<td><code>test_directive</code></td>
+<td><code>TODO</code> or <code>SKIP</code> on that line, if any</td>
+</tr>
+<tr>
+<td><code>test_file</code></td>
+<td>prove's <code>t/checkout.t ..</code> header</td>
+</tr>
+</tbody>
+</table>
+<p>Result lines and other lines outside comments (prove's summary, stray output)
+become events with the text in <code>line</code>. The plan (<code>1..N</code>), blank lines and
+Test::More's own failure messages (<code>#   Failed test …</code>, <code># Looks like you
+failed …</code>) are dropped. Lines after the last result keep <code>test_file</code> but get no
+test fields.</p>
+<p>Format detection, <code>--multiline</code> and the parser see the comment text;
+<code>--keep-lines</code>, <code>--ignore-lines</code>, <code>--skip-lines</code> and <code>--section-*</code> see the raw
+lines. A result line ends any multiline event. Subtests are not unwrapped: their
+indented lines count as part of the enclosing test. <code>--unwrap</code> runs
+sequentially only.</p>
 <h2 id="when-lines-dont-parse">When lines don't parse<a class="headerlink" href="#when-lines-dont-parse" title="Permanent link">&para;</a></h2>
 <p>Kelora is <strong>resilient</strong> by default: a line that doesn't match the format is
 counted, reported in a summary on stderr, and skipped; the rest of the file is
@@ -2520,10 +2592,10 @@ processed. The exit code stays 0 unless <em>no</em> line parsed at all.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="../../assets/_markdown_exec_pyodide.js"></script>
       
