@@ -151,7 +151,7 @@ pub fn run_interactive_mode() -> Result<()> {
 /// Parse a command line and execute it
 fn parse_and_execute_command(line: &str) -> Result<()> {
     // Parse the line using shell-words to handle quoting
-    let words = shell_words::split(line)?;
+    let words = strip_program_name(shell_words::split(line)?);
 
     if words.is_empty() {
         return Ok(());
@@ -169,6 +169,16 @@ fn parse_and_execute_command(line: &str) -> Result<()> {
     execute_kelora_command(args)?;
 
     Ok(())
+}
+
+/// Drop a leading `kelora` typed (or pasted from the docs) at the prompt, which
+/// would otherwise be read as a file name. A file by that name wins, as with
+/// bare `exit`.
+fn strip_program_name(mut words: Vec<String>) -> Vec<String> {
+    if words.first().is_some_and(|w| w == "kelora") && !std::path::Path::new("kelora").exists() {
+        words.remove(0);
+    }
+    words
 }
 
 /// Expand glob patterns in arguments
@@ -242,4 +252,28 @@ fn get_history_path() -> Option<PathBuf> {
         path.push("interactive_history.txt");
         Some(path)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn words(line: &str) -> Vec<String> {
+        strip_program_name(shell_words::split(line).unwrap())
+    }
+
+    #[test]
+    fn leading_program_name_is_dropped() {
+        assert_eq!(words("kelora app.log -n 1"), vec!["app.log", "-n", "1"]);
+        assert_eq!(words("app.log -n 1"), vec!["app.log", "-n", "1"]);
+        assert!(words("kelora").is_empty());
+    }
+
+    #[test]
+    fn program_name_later_in_the_line_is_kept() {
+        assert_eq!(
+            words("--filter 'e.app == \"kelora\"' kelora"),
+            vec!["--filter", "e.app == \"kelora\"", "kelora"]
+        );
+    }
 }

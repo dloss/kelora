@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **App-log formats are detected before CSV** - Auto-detection tried CSV, which takes any line with two commas, before the built-in application-log formats. Plain Monolog files (JSON context) and Java logs with `,123` milliseconds and a comma in the message were read as CSV columns. The application-log formats now come first. Tab-separated input is still tried as TSV before them, and other files that read as CSV before only change if their lines match one of those formats.
 - **`parse_json()` follows `-f json`** - It now returns arrays, strings, numbers and `()` for `null`, not just maps, so a file holding one JSON array can be read with `-f line -M all -e 'emit_each(e.line.parse_json())'`. Duplicate keys take the last value and integers beyond 64 bits stay exact, as with `-f json`. Text that isn't JSON, which the old version accepted (trailing commas, expressions like `1 + 2`), is now a runtime error.
 - **Hint for JSON array files** - Auto-detection read a file holding one JSON array as `line` and suggested `cols:` or `-f json,line`, neither of which reads it. The hint now names the command that does: `-f line -M all -e 'emit_each(e.line.parse_json())'`.
+- **`kelora` typed at the interactive prompt** - `kelora> kelora app.log` tried to open a file named `kelora`. A leading `kelora` is now ignored, unless such a file exists.
 
 ### Fixed
 
