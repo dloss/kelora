@@ -80,7 +80,7 @@ The `table` view reads like a diff: `+` templates only in the target, `-` templa
 ## 4. Transform and Convert
 
 ```bash
-kelora -e 'e.duration_s = e.duration_ms / 1000' -k msg,duration_s app.log
+kelora -e 'e.duration_s = e.duration_ms / 1000.0' -k msg,duration_s app.log   # 1000.0: integer / integer truncates
 kelora -e 'e.absorb_json("data")' events.log                     # Parse embedded JSON into fields
 kelora -f combined -F json access.log > access.jsonl             # Apache/nginx access log to JSON
 kelora -j -F logfmt events.jsonl                                 # JSON to logfmt
