@@ -1882,7 +1882,7 @@ filter, a time window, <code>--normalize-ts</code> — Kelora prints a hint:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/quickstart.log<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(3) level *msg'</span><span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span>--normalize-ts<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ts</span>='2024-01-15T10:00:00+00:00' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">msg</span>='Application started on :8080'
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>💡 Timestamps carry no zone offset; assuming UTC, and --normalize-ts writes that offset into the output. Pass --input-tz &lt;zone&gt; if your source is not UTC.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>💡 Input timestamps carry no zone offset; assuming UTC, and --normalize-ts writes that offset into the output. Pass --input-tz &lt;zone&gt; if your source is not UTC.
 </code></pre></div>
 <p>A trailing zone abbreviation (<code>CEST</code>, <code>PST</code>) stops auto-detection, because
 abbreviations are ambiguous. Add <code>%Z</code> to <code>--ts-format</code> to skip over it, and set

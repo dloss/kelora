@@ -1101,6 +1101,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-systemd-journal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The systemd journal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-file-that-is-one-json-array" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1746,6 +1757,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-systemd-journal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The systemd journal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-file-that-is-one-json-array" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1831,6 +1853,12 @@ instead of <code>msg</code>.</p>
 <p><code>kelora pod.log -e 'e.absorb_json("msg")'</code> — Kelora detects the CRI format, and
 <code>absorb_json</code> turns the JSON inside <code>msg</code> into fields.
 <a href="../../guide/parse/#6-finish-the-job-in-a-script">Get Logs into Shape</a></p>
+<h2 id="the-systemd-journal">The systemd journal<a class="headerlink" href="#the-systemd-journal" title="Permanent link">&para;</a></h2>
+<p>Let <code>journalctl</code> pick the entries (<code>-p err</code> is error and worse) and print them
+as syslog lines with year and offset; Kelora parses those as <code>syslog</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>journalctl<span class="w"> </span>-p<span class="w"> </span>err<span class="w"> </span>--since<span class="w"> </span>today<span class="w"> </span>-o<span class="w"> </span>short-iso<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<p><a href="../../guide/output/#kelora-in-a-pipeline">Kelora in a pipeline</a></p>
 <h2 id="a-file-that-is-one-json-array">A file that is one JSON array<a class="headerlink" href="#a-file-that-is-one-json-array" title="Permanent link">&para;</a></h2>
 <p>Exports often hold <code>[{...}, {...}]</code> instead of one object per line. Read the
 whole file as one event, parse it, and emit each element as its own event:</p>
