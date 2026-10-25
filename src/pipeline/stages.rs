@@ -11,7 +11,7 @@ use anyhow::Result;
 /// `track_error` writes counts and samples to the thread-local tracking state,
 /// but the filter/exec error paths skip the thread-local→ctx sync that the
 /// success path performs. Without copying the error keys back, the next event's
-/// `set_thread_tracking_state` reinstalls the stale `ctx.internal_tracker` and
+/// `TrackingTxn::begin` reinstalls the stale `ctx.internal_tracker` and
 /// discards the increment — so a filter that fails on every line would report
 /// only the last event's contribution (e.g. "1 total" instead of "1200 total").
 ///
@@ -199,7 +199,6 @@ impl FilterStage {
             ctx.rhai.execute_compiled_filter(
                 &self.compiled_filter,
                 event,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         } else {
@@ -207,7 +206,6 @@ impl FilterStage {
                 &self.compiled_filter,
                 event,
                 &ctx.window,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         };
@@ -368,7 +366,6 @@ impl ScriptStage for ExecStage {
             ctx.rhai.execute_compiled_exec(
                 &self.compiled_exec,
                 &mut event_copy,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         } else {
@@ -377,7 +374,6 @@ impl ScriptStage for ExecStage {
                 &self.compiled_exec,
                 &mut event_copy,
                 &ctx.window,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         };
@@ -564,7 +560,6 @@ impl AssertStage {
             ctx.rhai.execute_compiled_filter(
                 &self.compiled_assertion,
                 event,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         } else {
@@ -572,7 +567,6 @@ impl AssertStage {
                 &self.compiled_assertion,
                 event,
                 &ctx.window,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
             )
         };
@@ -744,11 +738,9 @@ impl BeginStage {
             // reject it in --begin. Reset before returning so the per-event
             // stages (same thread, sequential mode) can still emit.
             emit::set_emit_disallowed(Some("--begin"));
-            let exec_result = ctx.rhai.execute_compiled_begin(
-                compiled,
-                &mut ctx.tracker,
-                &mut ctx.internal_tracker,
-            );
+            let exec_result = ctx
+                .rhai
+                .execute_compiled_begin(compiled, &mut ctx.internal_tracker);
             emit::set_emit_disallowed(None);
             let _init_map = exec_result?;
             let ops = file_ops::take_pending_ops();
@@ -782,9 +774,9 @@ impl EndStage {
             // emit_each() cannot be materialized after the event loop; reject it
             // in --end. Reset afterward to leave no stale guard on the thread.
             emit::set_emit_disallowed(Some("--end"));
-            let exec_result =
-                ctx.rhai
-                    .execute_compiled_end(compiled, &ctx.tracker, &ctx.internal_tracker);
+            let exec_result = ctx
+                .rhai
+                .execute_compiled_end(compiled, &ctx.internal_tracker);
             emit::set_emit_disallowed(None);
             exec_result?;
             let ops = file_ops::take_pending_ops();
@@ -1197,7 +1189,6 @@ impl ScriptStage for DrainDiffStage {
                     match ctx.rhai.execute_compiled_filter(
                         predicate,
                         &event,
-                        &mut ctx.tracker,
                         &mut ctx.internal_tracker,
                     ) {
                         Ok(matched) => {
@@ -1451,7 +1442,6 @@ mod tests {
     fn ctx_with_engine(engine: crate::engine::RhaiEngine) -> PipelineContext {
         PipelineContext {
             config: default_pipeline_config(),
-            tracker: std::collections::HashMap::new(),
             internal_tracker: std::collections::HashMap::new(),
             internal_stats: crate::pipeline::InternalStats::default(),
             window: Vec::new(),
@@ -1651,7 +1641,6 @@ mod tests {
                 allow_fs_writes: false,
                 format_name: None,
             },
-            tracker: std::collections::HashMap::new(),
             internal_tracker: std::collections::HashMap::new(),
             internal_stats: crate::pipeline::InternalStats::default(),
             window: Vec::new(),
@@ -1716,7 +1705,6 @@ mod tests {
                 allow_fs_writes: false,
                 format_name: None,
             },
-            tracker: std::collections::HashMap::new(),
             internal_tracker: std::collections::HashMap::new(),
             internal_stats: crate::pipeline::InternalStats::default(),
             window: Vec::new(),
@@ -1780,7 +1768,6 @@ mod tests {
                 allow_fs_writes: false,
                 format_name: None,
             },
-            tracker: std::collections::HashMap::new(),
             internal_tracker: std::collections::HashMap::new(),
             internal_stats: crate::pipeline::InternalStats::default(),
             window: Vec::new(),

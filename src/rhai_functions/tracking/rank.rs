@@ -1,4 +1,5 @@
 use super::merge::ensure_operation_metadata;
+use super::state::UserMetrics;
 use super::with_user_tracking;
 use rhai::Dynamic;
 use std::collections::HashSet;
@@ -70,20 +71,14 @@ fn track_unique_insert(
 ) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "unique")?;
     let len = with_user_tracking(|state| {
-        if !state.contains_key(key) {
-            state.insert(key.to_string(), Dynamic::from(rhai::Array::new()));
-        }
-        let mut arr = match state
-            .get_mut(key)
-            .and_then(|v| v.write_lock::<rhai::Array>())
-        {
-            Some(arr) => arr,
-            None => return 0,
-        };
-        if !arr.iter().any(&already_present) {
-            arr.push(value);
-        }
-        arr.len()
+        state
+            .edit_array(key, |arr| {
+                if !arr.items().iter().any(&already_present) {
+                    arr.push(value);
+                }
+                arr.items().len()
+            })
+            .unwrap_or(0)
     });
     warn_unique_size(key, len);
     Ok(())
@@ -119,15 +114,7 @@ pub(super) fn track_unique_f64_impl(key: &str, value: f64) -> Result<(), Box<rha
 /// is never user-visible, so it is left stable to avoid churning merge logic.)
 pub(super) fn track_freq_impl(key: &str, value: &str) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "bucket")?;
-    with_user_tracking(|state| {
-        if !state.contains_key(key) {
-            state.insert(key.to_string(), Dynamic::from(rhai::Map::new()));
-        }
-        if let Some(mut map) = state.get_mut(key).and_then(|v| v.write_lock::<rhai::Map>()) {
-            let count = map.get(value).and_then(|v| v.as_int().ok()).unwrap_or(0);
-            map.insert(value.into(), Dynamic::from(count + 1));
-        }
-    });
+    with_user_tracking(|state| state.increment_map_entry(key, value));
     Ok(())
 }
 
@@ -164,7 +151,7 @@ fn find_item_index(arr: &rhai::Array, item_key: &str) -> Option<usize> {
 /// user state (not internal) so it survives parallel worker merges, which only
 /// propagate the full user map plus `__op_` metadata; it is filtered from all
 /// metric output by its `__kelora_` prefix.
-fn record_rank_n(state: &mut std::collections::HashMap<String, Dynamic>, key: &str, n: i64) {
+fn record_rank_n(state: &mut UserMetrics<'_>, key: &str, n: i64) {
     state.insert(format!("{}{}", super::TOPN_PREFIX, key), Dynamic::from(n));
 }
 
@@ -176,23 +163,17 @@ fn record_rank_n(state: &mut std::collections::HashMap<String, Dynamic>, key: &s
 fn rank_count_insert(key: &str, item_key: &str, n: i64) {
     with_user_tracking(|state| {
         record_rank_n(state, key, n);
-        let entry = state
-            .entry(key.to_string())
-            .or_insert_with(|| Dynamic::from(rhai::Array::new()));
-        let Some(mut arr) = entry.write_lock::<rhai::Array>() else {
-            return;
-        };
-        match find_item_index(&arr, item_key) {
+        state.edit_array(key, |arr| match find_item_index(arr.items(), item_key) {
             Some(idx) => {
-                let count = arr[idx]
+                let count = arr.items()[idx]
                     .read_lock::<rhai::Map>()
                     .and_then(|m| m.get("count").and_then(|v| v.as_int().ok()))
                     .unwrap_or(0)
                     + 1;
-                arr[idx] = make_count_entry(item_key, count);
+                arr.set(idx, make_count_entry(item_key, count));
             }
             None => arr.push(make_count_entry(item_key, 1)),
-        }
+        });
     });
 }
 
@@ -202,15 +183,9 @@ fn rank_count_insert(key: &str, item_key: &str, n: i64) {
 fn rank_weighted_insert(key: &str, item_key: &str, n: i64, value: f64, is_top: bool) {
     with_user_tracking(|state| {
         record_rank_n(state, key, n);
-        let entry = state
-            .entry(key.to_string())
-            .or_insert_with(|| Dynamic::from(rhai::Array::new()));
-        let Some(mut arr) = entry.write_lock::<rhai::Array>() else {
-            return;
-        };
-        match find_item_index(&arr, item_key) {
+        state.edit_array(key, |arr| match find_item_index(arr.items(), item_key) {
             Some(idx) => {
-                let current = arr[idx]
+                let current = arr.items()[idx]
                     .read_lock::<rhai::Map>()
                     .and_then(|m| m.get("value").and_then(|v| v.as_float().ok()))
                     .unwrap_or(if is_top {
@@ -223,10 +198,10 @@ fn rank_weighted_insert(key: &str, item_key: &str, n: i64, value: f64, is_top: b
                 } else {
                     value.min(current)
                 };
-                arr[idx] = make_value_entry(item_key, merged);
+                arr.set(idx, make_value_entry(item_key, merged));
             }
             None => arr.push(make_value_entry(item_key, value)),
-        }
+        });
     });
 }
 

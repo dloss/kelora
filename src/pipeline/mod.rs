@@ -173,7 +173,8 @@ impl ScriptResult {
 /// Shared context passed between pipeline stages
 pub struct PipelineContext {
     pub config: PipelineConfig,
-    pub tracker: HashMap<String, Dynamic>,
+    // User metrics are not here: they live in the thread-local tracking state
+    // for the whole run (see `TrackingTxn` in the engine).
     pub internal_tracker: HashMap<String, Dynamic>,
     pub internal_stats: InternalStats,
     pub window: Vec<Event>, // window[0] = current event, rest are previous

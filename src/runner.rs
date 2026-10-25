@@ -235,6 +235,9 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     let (_pipeline, begin_stage, end_stage, mut ctx) = pipeline_builder
         .clone()
         .build(config.processing.stages.clone())?;
+    // --begin, the merged worker results and --end share this thread's user
+    // metrics; start empty.
+    tracking::set_thread_tracking_state(&std::collections::HashMap::new());
 
     file_ops::set_mode(FileOpMode::Sequential);
 
@@ -269,15 +272,18 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     // Merge the parallel metrics state with our pipeline context
     let parallel_snapshot = processor.get_final_tracked_state();
 
-    // Filter out stats and errors from user-visible context and merge the rest
-    for (key, dynamic_value) in &parallel_snapshot.user {
-        if !key.starts_with("__internal_")
-            && !key.starts_with("__kelora_error_")
-            && !key.starts_with("__op___kelora_error_")
-        {
-            ctx.tracker.insert(key.clone(), dynamic_value.clone());
-        }
-    }
+    // Filter out stats and errors from user-visible metrics and merge the rest
+    tracking::insert_user_tracking(
+        parallel_snapshot
+            .user
+            .iter()
+            .filter(|(key, _)| {
+                !key.starts_with("__internal_")
+                    && !key.starts_with("__kelora_error_")
+                    && !key.starts_with("__op___kelora_error_")
+            })
+            .map(|(key, value)| (key.clone(), value.clone())),
+    );
 
     // Bring the workers' `__op_{key}` metadata into the end stage's view:
     // metric finalization (e.g. track_avg's {sum,count} → mean) is keyed on it,
@@ -1130,6 +1136,8 @@ fn run_pipeline_sequential_internal<W: Write>(
     input: SequentialInput,
 ) -> Result<()> {
     let (mut pipeline, begin_stage, end_stage, mut ctx) = create_pipeline_from_config(config)?;
+    // User metrics live in the thread-local state for the whole run; start empty.
+    tracking::set_thread_tracking_state(&std::collections::HashMap::new());
 
     file_ops::set_mode(FileOpMode::Sequential);
 

@@ -160,6 +160,8 @@ pub(crate) fn worker_thread(
     // Fresh per-run gate-success flags for this worker thread (defensive: workers
     // are spawned per run, but a reused thread must not carry a stale flag).
     crate::rhai_functions::tracking::reset_stage_success_flags();
+    // Likewise its user metrics, which live in the thread-local state.
+    tracking::set_thread_tracking_state(&HashMap::new());
 
     stats_start_timer();
 
@@ -406,10 +408,6 @@ fn worker_flush_pipeline(
 
             let mut flush_user_updates = HashMap::new();
 
-            for (key, value) in &ctx.tracker {
-                flush_user_updates.insert(key.clone(), value.clone());
-            }
-
             for (key, value) in ctx
                 .internal_tracker
                 .iter()
@@ -443,7 +441,6 @@ fn worker_flush_pipeline(
             // Same exactly-once rule as the batch paths: the user deltas in
             // this flush are now delivered, so clear them before the next
             // flush (mid-run multiline flushes precede the final one).
-            ctx.tracker.clear();
             tracking::set_thread_tracking_state(&HashMap::new());
             Ok(())
         }
@@ -617,7 +614,6 @@ fn worker_process_batch(
 
     // User metrics are additive deltas: clear both the context copy and the
     // thread-local state once sent, or the next flush re-merges them.
-    ctx.tracker.clear();
     tracking::set_thread_tracking_state(&HashMap::new());
 
     Ok(true)
@@ -781,7 +777,6 @@ fn worker_process_event_batch(
 
     // User metrics are additive deltas: clear both the context copy and the
     // thread-local state once sent, or the next flush re-merges them.
-    ctx.tracker.clear();
     tracking::set_thread_tracking_state(&HashMap::new());
 
     Ok(true)

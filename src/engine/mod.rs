@@ -1085,6 +1085,40 @@ impl Clone for RhaiEngine {
     }
 }
 
+/// The tracking state for one script stage on one event.
+///
+/// User metrics live in the thread-local tracking state for the whole run and
+/// `track_*` calls change them in place, logging how to undo each change. A
+/// stage that succeeds commits; one that fails — an early `?` return drops
+/// the guard — rolls its changes back, as `--help-rhai` documents. Internal
+/// state (operation tags, error counts) is still handed over by copy, as
+/// before: it is small, and the error paths depend on its copy semantics.
+struct TrackingTxn {
+    committed: bool,
+}
+
+impl TrackingTxn {
+    fn begin(internal: &HashMap<String, Dynamic>) -> Self {
+        rhai_functions::tracking::set_thread_internal_state(internal);
+        rhai_functions::tracking::begin_tracking_transaction();
+        Self { committed: false }
+    }
+
+    fn commit(mut self, internal: &mut HashMap<String, Dynamic>) {
+        rhai_functions::tracking::commit_tracking_transaction();
+        *internal = rhai_functions::tracking::get_thread_internal_state();
+        self.committed = true;
+    }
+}
+
+impl Drop for TrackingTxn {
+    fn drop(&mut self) {
+        if !self.committed {
+            rhai_functions::tracking::rollback_tracking_transaction();
+        }
+    }
+}
+
 impl RhaiEngine {
     /// Render a short diagnostic with stage/name, position, snippet, and the raw Rhai message.
     fn format_rhai_diagnostic(
@@ -1204,18 +1238,6 @@ impl RhaiEngine {
     }
 
     // Thread-local state management functions
-    pub fn set_thread_tracking_state(
-        metrics: &HashMap<String, Dynamic>,
-        internal: &HashMap<String, Dynamic>,
-    ) {
-        rhai_functions::tracking::set_thread_tracking_state(metrics);
-        rhai_functions::tracking::set_thread_internal_state(internal);
-    }
-
-    pub fn get_thread_tracking_state() -> HashMap<String, Dynamic> {
-        rhai_functions::tracking::get_thread_tracking_state()
-    }
-
     pub fn get_thread_internal_state() -> HashMap<String, Dynamic> {
         rhai_functions::tracking::get_thread_internal_state()
     }
@@ -1874,19 +1896,18 @@ impl RhaiEngine {
         &mut self,
         compiled: &CompiledExpression,
         event: &Event,
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
         if let Some(native) = &compiled.native_predicate {
-            Self::set_thread_tracking_state(metrics, internal);
+            let txn = TrackingTxn::begin(internal);
             if let Some(result) = native.evaluate(event) {
-                *metrics = Self::get_thread_tracking_state();
-                *internal = Self::get_thread_internal_state();
+                txn.commit(internal);
                 return Ok(result);
             }
+            txn.commit(internal);
         }
 
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -1955,8 +1976,7 @@ impl RhaiEngine {
             }
         }
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
         Ok(result)
     }
 
@@ -1964,10 +1984,9 @@ impl RhaiEngine {
         &mut self,
         compiled: &CompiledExpression,
         event: &mut Event,
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -2039,18 +2058,16 @@ impl RhaiEngine {
         }
         // No exec gate counter: exec is best-effort, so it never fails the run
         // on its own (only --strict does). See the gate notes in tracking::errors.
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
         Ok(())
     }
 
     pub fn execute_compiled_begin(
         &mut self,
         compiled: &CompiledExpression,
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<rhai::Map> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
 
         // Set begin phase flag to allow read_file/read_lines
         crate::rhai_functions::conf::set_begin_phase(true);
@@ -2078,8 +2095,7 @@ impl RhaiEngine {
         // Reset begin phase flag
         crate::rhai_functions::conf::set_begin_phase(false);
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
 
         // Extract the conf map from scope and store it
         let mut conf_map = scope.get_value::<rhai::Map>("conf").unwrap_or_default();
@@ -2096,7 +2112,6 @@ impl RhaiEngine {
     pub fn execute_compiled_end(
         &self,
         compiled: &CompiledExpression,
-        metrics: &HashMap<String, Dynamic>,
         internal: &HashMap<String, Dynamic>,
     ) -> Result<()> {
         let mut scope = self.scope_template.clone();
@@ -2104,8 +2119,9 @@ impl RhaiEngine {
         // Finalize sketch-backed metrics (percentiles from t-digest, averages
         // from {sum,count} maps, cardinality from HLL) so `--end` scripts see
         // plain numbers instead of internal state.
-        let tracked_map =
-            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
+        let tracked_map = crate::rhai_functions::tracking::with_user_tracking_ref(|metrics| {
+            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal)
+        });
         scope.set_value("metrics", tracked_map);
 
         // Set the frozen conf map (read-only)
@@ -2140,18 +2156,18 @@ impl RhaiEngine {
     pub fn execute_compiled_span_close(
         &mut self,
         compiled: &CompiledExpression,
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
         span: crate::rhai_functions::span::SpanBinding,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
 
         let mut scope = self.scope_template.clone();
 
         // Finalize sketch-backed metrics for script consumption; see the
         // equivalent call in `execute_compiled_end`.
-        let metrics_map =
-            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
+        let metrics_map = crate::rhai_functions::tracking::with_user_tracking_ref(|metrics| {
+            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal)
+        });
         scope.set_value("metrics", metrics_map);
         scope.push_constant("span", Dynamic::from(span));
 
@@ -2186,8 +2202,7 @@ impl RhaiEngine {
         let ops = crate::rhai_functions::file_ops::take_pending_ops();
         crate::rhai_functions::file_ops::execute_ops(&ops)?;
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
 
         Ok(())
     }
@@ -2198,10 +2213,9 @@ impl RhaiEngine {
         compiled: &CompiledExpression,
         event: &Event,
         window: &[Event],
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed filter execution
@@ -2276,8 +2290,7 @@ impl RhaiEngine {
             }
         }
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
         Ok(result)
     }
 
@@ -2286,10 +2299,9 @@ impl RhaiEngine {
         compiled: &CompiledExpression,
         event: &mut Event,
         window: &[Event],
-        metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let txn = TrackingTxn::begin(internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed exec execution
@@ -2366,8 +2378,7 @@ impl RhaiEngine {
             self.update_event_from_scope(event, &scope);
         }
         // No exec gate counter: exec is best-effort (see tracking::errors gate notes).
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        txn.commit(internal);
         Ok(())
     }
 
@@ -2612,10 +2623,9 @@ mod tests {
     fn run_exec(script: &str, mut event: Event) -> Event {
         let mut engine = RhaiEngine::new();
         let compiled = engine.compile_exec(script).expect("compile exec");
-        let mut metrics = std::collections::HashMap::new();
         let mut internal = std::collections::HashMap::new();
         engine
-            .execute_compiled_exec(&compiled, &mut event, &mut metrics, &mut internal)
+            .execute_compiled_exec(&compiled, &mut event, &mut internal)
             .expect("run exec");
         event
     }
@@ -3219,17 +3229,16 @@ mod tests {
         event.set_field("level".to_string(), Dynamic::from("ERROR"));
         event.set_field("status".to_string(), Dynamic::from(500_i64));
 
-        let mut metrics = HashMap::new();
         let mut internal = HashMap::new();
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(result);
 
         let mut event_nonmatch = event.clone();
         event_nonmatch.set_field("status".to_string(), Dynamic::from(200_i64));
         let result = engine
-            .execute_compiled_filter(&compiled, &event_nonmatch, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event_nonmatch, &mut internal)
             .expect("native filter should succeed");
         assert!(!result);
     }
@@ -3286,16 +3295,15 @@ mod tests {
 
         let mut event = build_event_with_line("test");
         event.set_field("level".to_string(), Dynamic::from("ERROR"));
-        let mut metrics = HashMap::new();
         let mut internal = HashMap::new();
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(result, "ERROR should start with ERR");
 
         event.set_field("level".to_string(), Dynamic::from("WARNING"));
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(!result, "WARNING should not start with ERR");
 
@@ -3306,13 +3314,13 @@ mod tests {
 
         event.set_field("message".to_string(), Dynamic::from("connection failed"));
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(result, "'connection failed' should contain 'fail'");
 
         event.set_field("message".to_string(), Dynamic::from("success"));
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(!result, "'success' should not contain 'fail'");
 
@@ -3323,13 +3331,13 @@ mod tests {
 
         event.set_field("path".to_string(), Dynamic::from("/var/log/app.log"));
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(result, "'/var/log/app.log' should end with '.log'");
 
         event.set_field("path".to_string(), Dynamic::from("/var/log/app.txt"));
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("native filter should succeed");
         assert!(!result, "'/var/log/app.txt' should not end with '.log'");
     }
@@ -3389,10 +3397,9 @@ mod tests {
         let mut event = build_event_with_line("line");
         event.set_field("level".to_string(), Dynamic::from("ERROR"));
 
-        let mut metrics = HashMap::new();
         let mut internal = HashMap::new();
         let result = engine
-            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .execute_compiled_filter(&compiled, &event, &mut internal)
             .expect("filter should execute");
         assert!(result);
     }

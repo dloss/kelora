@@ -147,7 +147,7 @@ impl SpanDetail {
 }
 
 impl ActiveSpan {
-    fn new_count(sequence: u64, index: usize, ctx: &PipelineContext, detail: SpanDetail) -> Self {
+    fn new_count(sequence: u64, index: usize, detail: SpanDetail) -> Self {
         let span_id = format!("#{}", index);
         Self {
             sequence,
@@ -160,18 +160,13 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: open_baseline(ctx, detail),
+            baseline_user: open_baseline(detail),
             extremes: HashMap::new(),
             detail,
         }
     }
 
-    fn new_time(
-        sequence: u64,
-        window: TimeWindow,
-        ctx: &PipelineContext,
-        detail: SpanDetail,
-    ) -> Self {
+    fn new_time(sequence: u64, window: TimeWindow, detail: SpanDetail) -> Self {
         let start = ms_to_datetime(window.start_ms);
         let end = ms_to_datetime(window.end_ms);
         let span_id = format!(
@@ -191,18 +186,13 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: open_baseline(ctx, detail),
+            baseline_user: open_baseline(detail),
             extremes: HashMap::new(),
             detail,
         }
     }
 
-    fn new_field(
-        sequence: u64,
-        field_value: String,
-        ctx: &PipelineContext,
-        detail: SpanDetail,
-    ) -> Self {
+    fn new_field(sequence: u64, field_value: String, detail: SpanDetail) -> Self {
         Self {
             sequence,
             span_id: field_value,
@@ -214,18 +204,13 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: open_baseline(ctx, detail),
+            baseline_user: open_baseline(detail),
             extremes: HashMap::new(),
             detail,
         }
     }
 
-    fn new_idle(
-        sequence: u64,
-        start_ts: DateTime<Utc>,
-        ctx: &PipelineContext,
-        detail: SpanDetail,
-    ) -> Self {
+    fn new_idle(sequence: u64, start_ts: DateTime<Utc>, detail: SpanDetail) -> Self {
         Self {
             sequence,
             // `Z`, not `+00:00`, matching time span ids and span.label (#421).
@@ -242,7 +227,7 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: open_baseline(ctx, detail),
+            baseline_user: open_baseline(detail),
             extremes: HashMap::new(),
             detail,
         }
@@ -415,7 +400,7 @@ impl SpanProcessor {
 
     fn prepare_count_event(&mut self, event: &mut Event, ctx: &mut PipelineContext) -> Result<()> {
         if self.active_span.is_none() {
-            self.open_count_span(ctx);
+            self.open_count_span();
         }
 
         let span = self
@@ -501,7 +486,7 @@ impl SpanProcessor {
         }
 
         if self.active_span.is_none() {
-            self.open_time_span(ctx, window);
+            self.open_time_span(window);
         }
 
         let span = self
@@ -535,7 +520,7 @@ impl SpanProcessor {
             }
 
             if self.active_span.is_none() {
-                self.open_field_span(ctx, value_str.clone());
+                self.open_field_span(value_str.clone());
             }
 
             let span = self
@@ -558,7 +543,7 @@ impl SpanProcessor {
         }
 
         if self.active_span.is_none() {
-            self.open_field_span(ctx, "(unset)".to_string());
+            self.open_field_span("(unset)".to_string());
         }
 
         let span = self
@@ -617,7 +602,7 @@ impl SpanProcessor {
         }
 
         if self.active_span.is_none() {
-            self.open_idle_span(ctx, timestamp);
+            self.open_idle_span(timestamp);
         }
 
         let span = self
@@ -661,35 +646,30 @@ impl SpanProcessor {
         });
     }
 
-    fn open_count_span(&mut self, ctx: &PipelineContext) {
+    fn open_count_span(&mut self) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
         let index = self.next_count_index;
         self.next_count_index += 1;
-        self.active_span = Some(ActiveSpan::new_count(sequence, index, ctx, self.detail));
+        self.active_span = Some(ActiveSpan::new_count(sequence, index, self.detail));
     }
 
-    fn open_field_span(&mut self, ctx: &PipelineContext, field_value: String) {
+    fn open_field_span(&mut self, field_value: String) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
-        self.active_span = Some(ActiveSpan::new_field(
-            sequence,
-            field_value,
-            ctx,
-            self.detail,
-        ));
+        self.active_span = Some(ActiveSpan::new_field(sequence, field_value, self.detail));
     }
 
-    fn open_time_span(&mut self, ctx: &PipelineContext, window: TimeWindow) {
+    fn open_time_span(&mut self, window: TimeWindow) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
-        self.active_span = Some(ActiveSpan::new_time(sequence, window, ctx, self.detail));
+        self.active_span = Some(ActiveSpan::new_time(sequence, window, self.detail));
     }
 
-    fn open_idle_span(&mut self, ctx: &PipelineContext, start_ts: DateTime<Utc>) {
+    fn open_idle_span(&mut self, start_ts: DateTime<Utc>) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
-        self.active_span = Some(ActiveSpan::new_idle(sequence, start_ts, ctx, self.detail));
+        self.active_span = Some(ActiveSpan::new_idle(sequence, start_ts, self.detail));
     }
 
     fn close_current_span(&mut self, ctx: &mut PipelineContext) -> Result<()> {
@@ -719,7 +699,9 @@ impl SpanProcessor {
             values: metrics_delta,
             non_additive,
             unavailable,
-        } = compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
+        } = crate::rhai_functions::tracking::with_user_tracking_ref(|tracker| {
+            compute_span_metrics(&span, tracker, &ctx.internal_tracker)
+        });
         self.warn_non_additive(&non_additive, ctx);
 
         if let Some(compiled) = self.compiled_close.clone() {
@@ -736,7 +718,6 @@ impl SpanProcessor {
 
             ctx.rhai.execute_compiled_span_close(
                 &compiled,
-                &mut ctx.tracker,
                 &mut ctx.internal_tracker,
                 span_binding,
             )?;
@@ -1085,12 +1066,12 @@ struct SpanMetrics {
 /// Snapshot the tracker for a newly opened span's per-window diff, and start
 /// recording its per-window extremes. Both only when something reports on
 /// the span; otherwise an empty baseline and no recording.
-fn open_baseline(ctx: &PipelineContext, detail: SpanDetail) -> HashMap<String, Dynamic> {
+fn open_baseline(detail: SpanDetail) -> HashMap<String, Dynamic> {
     if !detail.need_baseline {
         return HashMap::new();
     }
     crate::rhai_functions::tracking::begin_window_extremes();
-    ctx.tracker.clone()
+    crate::rhai_functions::tracking::get_thread_tracking_state()
 }
 
 /// Extract the cumulative `(sum, count)` stored by `track_avg`.

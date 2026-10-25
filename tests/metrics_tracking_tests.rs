@@ -2916,3 +2916,64 @@ fn test_take_with_freq_warns_that_it_limits_events() {
         "no warning without -n: {stderr}"
     );
 }
+
+// A failed --exec stage rolls back its track_* calls (--help-rhai). That held
+// for every event except the last of a run, or of a --parallel batch, whose
+// partial updates reached the final metrics: n=2 here instead of 1.
+#[test]
+fn test_failed_exec_on_last_event_is_rolled_back() {
+    let input = "{\"a\":1}\n{\"a\":2}\n";
+    let script = "track_inc(\"n\"); if e.a == 2 { throw \"x\" }";
+
+    let (stdout, stderr, _code) = run_kelora_with_input(
+        &["-f", "json", "-e", script, "-m", "--no-diagnostics"],
+        input,
+    );
+    assert_eq!(stdout.trim(), "n\t\t1", "{stderr}");
+}
+
+#[test]
+fn test_failed_exec_on_last_event_of_parallel_batch_is_rolled_back() {
+    let input = "{\"a\":1}\n{\"a\":2}\n{\"a\":1}\n{\"a\":2}\n";
+    let script = "track_inc(\"n\"); if e.a == 2 { throw \"x\" }";
+
+    let (stdout, stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            script,
+            "-m",
+            "--no-diagnostics",
+            "--parallel",
+            "--batch-size",
+            "2",
+        ],
+        input,
+    );
+    assert_eq!(stdout.trim(), "n\t\t2", "{stderr}");
+}
+
+// Rolling back per key and per entry must also keep everything the failed
+// stage did not touch, including earlier stages' work on the same event.
+#[test]
+fn test_failed_exec_keeps_earlier_stages_and_other_events() {
+    let input = "{\"lv\":\"INFO\"}\n{\"lv\":\"WARN\"}\n{\"lv\":\"INFO\"}\n";
+
+    let (stdout, stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "track_freq(\"seen\", e.lv)",
+            "-e",
+            "track_freq(\"ok\", e.lv); if e.lv == \"WARN\" { throw \"x\" }",
+            "-m",
+            "--no-diagnostics",
+        ],
+        input,
+    );
+    assert!(stdout.contains("seen\tWARN\t1"), "{stdout}\n{stderr}");
+    assert!(stdout.contains("ok\tINFO\t2"), "{stdout}\n{stderr}");
+    assert!(!stdout.contains("ok\tWARN"), "{stdout}\n{stderr}");
+}

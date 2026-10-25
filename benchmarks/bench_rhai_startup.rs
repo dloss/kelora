@@ -587,11 +587,10 @@ fn bench_native_predicate_simple_eq(c: &mut Criterion) {
     c.bench_function("native_predicate_simple_eq", |b| {
         b.iter(|| {
             // This uses native predicate path (bypasses Rhai)
-            let mut metrics = std::collections::HashMap::new();
             let mut internal = std::collections::HashMap::new();
             black_box(
                 rhai_engine
-                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .execute_compiled_filter(&filter, &event, &mut internal)
                     .unwrap(),
             );
         });
@@ -608,11 +607,10 @@ fn bench_native_predicate_string_contains(c: &mut Criterion) {
 
     c.bench_function("native_predicate_string_contains", |b| {
         b.iter(|| {
-            let mut metrics = std::collections::HashMap::new();
             let mut internal = std::collections::HashMap::new();
             black_box(
                 rhai_engine
-                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .execute_compiled_filter(&filter, &event, &mut internal)
                     .unwrap(),
             );
         });
@@ -629,11 +627,10 @@ fn bench_native_predicate_string_starts_with(c: &mut Criterion) {
 
     c.bench_function("native_predicate_string_starts_with", |b| {
         b.iter(|| {
-            let mut metrics = std::collections::HashMap::new();
             let mut internal = std::collections::HashMap::new();
             black_box(
                 rhai_engine
-                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .execute_compiled_filter(&filter, &event, &mut internal)
                     .unwrap(),
             );
         });
@@ -650,11 +647,10 @@ fn bench_native_predicate_combined(c: &mut Criterion) {
 
     c.bench_function("native_predicate_combined", |b| {
         b.iter(|| {
-            let mut metrics = std::collections::HashMap::new();
             let mut internal = std::collections::HashMap::new();
             black_box(
                 rhai_engine
-                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .execute_compiled_filter(&filter, &event, &mut internal)
                     .unwrap(),
             );
         });

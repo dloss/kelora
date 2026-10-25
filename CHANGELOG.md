@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **A failed `--exec` on the last event changed the metrics** - A stage that fails on an event discards that event's `track_*` calls, but not when the event was the last of the run, or with `--parallel` the last of a batch: `track_inc("n"); if e.a == 2 { throw "x" }` on two events reported `n=2` instead of 1, and with `--parallel` one extra count per batch. Such runs print an `Exec errors` warning; their metrics are now correct.
 - **nginx `main` format lost X-Forwarded-For** - nginx's default `main` log format, used by the official Docker image, ends in `"$http_x_forwarded_for"`. kelora read that position as `request_time` and dropped any value that wasn't a number, so the real client behind a proxy was missing. It is now kept as `forwarded_for` (an IP list) or `extra` (other text).
 - **`kubectl logs --timestamps` read as syslog** - A timestamp followed by a JSON body whose `msg` contained a space parsed as syslog, with `host='{"level":"error",…'` and part of the JSON as `prog`. Syslog host and program names can no longer contain `"`, `{` or `}`. The format reference wrongly listed this output as `cri`; it now shows how to read it with `--extract-prefix`.
 - **`--extract-prefix` with auto-detection** - Detection looked at the line before the prefix was removed, so `docker compose logs | kelora --extract-prefix service` read JSON or access-log lines as `line`. It now detects the format of the text after the prefix.
@@ -53,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Performance
 
+- **Metrics with many distinct values no longer slow down with every event** - Every filter and `--exec` stage copied all tracked metrics twice per event, so `--freq` or `track_freq()` on a field with many values (client IPs, user IDs) got slower the more values it had seen: 200k events with 50k distinct values took 8 minutes of CPU, now 2 seconds, the same as a field with one value.
 - **Faster `--exec`, `--freq` and `--describe`** - Each event of an `--exec` stage (`--freq`, `--describe` and `--card` run as one) checked the terminal and environment again; this took about a fifth of a simple stage's time. `--describe` and `track_percentiles()`/`track_stats()` also decoded and re-encoded their percentile digest on every event. On 500k JSON lines `--freq` uses 17% less CPU and `--describe` 29% less. Results are unchanged.
 
 ## [2.2.1] - 2026-10-08

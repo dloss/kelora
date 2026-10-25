@@ -999,7 +999,6 @@ impl PipelineBuilder {
         // Create pipeline context
         let ctx = PipelineContext {
             config: self.config,
-            tracker: HashMap::new(),
             internal_tracker: HashMap::new(),
             internal_stats: super::InternalStats::default(),
             window: Vec::new(),
@@ -1333,7 +1332,6 @@ impl PipelineBuilder {
         // Create pipeline context
         let ctx = PipelineContext {
             config: self.config,
-            tracker: HashMap::new(),
             internal_tracker: HashMap::new(),
             internal_stats: super::InternalStats::default(),
             window: Vec::new(),

@@ -39,9 +39,11 @@ use rank::{
     track_unique_string_impl,
 };
 pub use state::{
-    begin_window_extremes, get_thread_internal_state, get_thread_snapshot,
-    get_thread_tracking_state, set_thread_internal_state, set_thread_tracking_state,
-    take_window_extremes, with_internal_tracking, with_user_tracking, TrackingSnapshot,
+    begin_tracking_transaction, begin_window_extremes, commit_tracking_transaction,
+    get_thread_internal_state, get_thread_tracking_state, insert_user_tracking,
+    rollback_tracking_transaction, set_thread_internal_state, set_thread_tracking_state,
+    take_window_extremes, with_internal_tracking, with_user_tracking, with_user_tracking_ref,
+    TrackingSnapshot,
 };
 
 /// Default N for track_top / track_bottom / track_top_by / track_bottom_by.
@@ -656,13 +658,12 @@ pub fn register_functions(engine: &mut Engine) {
     );
 }
 
-/// Merge thread-local tracking state into context tracker for sequential mode
+/// Merge thread-local internal tracking state into the context for sequential
+/// mode. (User metrics have no context copy: they stay in the thread-local
+/// state, where the caller reads them.)
 pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineContext) {
-    let snapshot = get_thread_snapshot();
-    for (key, value) in snapshot.user {
-        ctx.tracker.insert(key, value);
-    }
-    for (key, value) in snapshot.internal {
+    let snapshot = get_thread_internal_state();
+    for (key, value) in snapshot {
         ctx.internal_tracker.insert(key, value);
     }
 }
@@ -896,6 +897,75 @@ mod tests {
         clear_tracking_state();
     }
 
+    /// Debug rendering of the user metrics in key order, for exact comparison.
+    fn user_state_rendering() -> std::collections::BTreeMap<String, String> {
+        get_thread_tracking_state()
+            .into_iter()
+            .map(|(k, v)| (k, format!("{v:?}")))
+            .collect()
+    }
+
+    /// A failed script stage must leave the user metrics exactly as they were:
+    /// every kind of change the track_* functions make is undone, including
+    /// repeated changes to one key within the stage.
+    #[test]
+    fn test_rollback_restores_every_kind_of_change() {
+        clear_tracking_state();
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+        engine
+            .eval::<()>(
+                r#"track_inc("n"); track_freq("lv", "INFO"); track_unique("u", "a");
+                   track_top("t", "x"); track_top_by("tb", "x", 1.0); track_percentiles("p", 1.0);
+                   track_avg("a", 2.0); track_min("mn", 3); track_cardinality("c", "a")"#,
+            )
+            .unwrap();
+        let before = user_state_rendering();
+
+        begin_tracking_transaction();
+        engine
+            .eval::<()>(
+                r#"track_inc("n"); track_inc("n"); track_inc("new");
+                   track_freq("lv", "INFO"); track_freq("lv", "INFO"); track_freq("lv", "ERROR");
+                   track_freq("lv_new", "x"); track_unique("u", "b"); track_unique("u_new", "b");
+                   track_top("t", "x"); track_top("t", "y"); track_top_by("tb", "x", 9.0);
+                   track_percentiles("p", 5.0); track_avg("a", 4.0); track_min("mn", 1);
+                   track_cardinality("c", "b"); track_stats("st", 1.0)"#,
+            )
+            .unwrap();
+        assert_ne!(
+            user_state_rendering(),
+            before,
+            "the stage changed the metrics"
+        );
+        rollback_tracking_transaction();
+
+        assert_eq!(user_state_rendering(), before);
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_committed_transaction_keeps_changes_and_stops_logging() {
+        clear_tracking_state();
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        begin_tracking_transaction();
+        engine
+            .eval::<()>(r#"track_freq("lv", "INFO"); track_inc("n")"#)
+            .unwrap();
+        commit_tracking_transaction();
+        let committed = user_state_rendering();
+
+        // Nothing is logged outside a transaction, so a stray rollback is a no-op.
+        engine.eval::<()>(r#"track_inc("n")"#).unwrap();
+        let after_more = user_state_rendering();
+        rollback_tracking_transaction();
+        assert_eq!(user_state_rendering(), after_more);
+        assert_ne!(after_more, committed);
+        clear_tracking_state();
+    }
+
     #[test]
     fn test_with_user_tracking() {
         clear_tracking_state();
@@ -982,6 +1052,7 @@ mod tests {
 
     #[test]
     fn test_get_thread_snapshot() {
+        use super::state::get_thread_snapshot;
         clear_tracking_state();
 
         with_user_tracking(|state| {

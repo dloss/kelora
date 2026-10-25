@@ -3,6 +3,7 @@ use super::merge::{
     new_hll_with_error, serialize_hll, serialize_tdigest,
 };
 use super::state::record_window_extreme;
+use super::state::UserMetrics;
 use super::with_user_tracking;
 use rhai::Dynamic;
 use std::collections::HashSet;
@@ -111,7 +112,7 @@ pub(super) fn track_max_impl(
 /// closure as the sketch update so the two stay in lockstep. Registering the
 /// count key's operation as `count` is what makes parallel workers' partial
 /// counts add up instead of overwriting each other.
-fn bump_cardinality_count(state: &mut std::collections::HashMap<String, Dynamic>, key: &str) {
+fn bump_cardinality_count(state: &mut UserMetrics<'_>, key: &str) {
     let count_key = super::card_count_key(key);
     let seen = state
         .get(&count_key)
