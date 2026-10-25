@@ -392,6 +392,27 @@ pub struct TapStep {
     pub overflowed: bool,
 }
 
+/// Whether sampled lines look like TAP output worth unwrapping: TAP structure
+/// (two results, a plan and a result, or a `TAP version` line) plus at least
+/// one `#` comment, without which `--unwrap tap` would find no log lines.
+/// For the hint that suggests `--unwrap tap`; nothing is unwrapped on its own.
+pub fn looks_like_tap<'a>(lines: impl IntoIterator<Item = &'a str>) -> bool {
+    let (mut results, mut plan, mut version, mut comments) = (0, false, false, 0);
+    for line in lines {
+        let line = split_time_prefix(line).map_or(line, |(_, rest)| rest);
+        if parse_result(line).is_some() {
+            results += 1;
+        } else if is_plan(line) {
+            plan = true;
+        } else if line.starts_with("TAP version ") {
+            version = true;
+        } else if line.trim_start().starts_with('#') {
+            comments += 1;
+        }
+    }
+    (results >= 2 || (plan && results >= 1) || version) && comments >= 1
+}
+
 /// Split off PostgreSQL's `[HH:MM:SS.mmm](0.123s) ` prefix, returning the
 /// time and the rest of the line.
 fn split_time_prefix(line: &str) -> Option<(&str, &str)> {
@@ -770,6 +791,22 @@ mod tests {
             c.classify("# tests passed"),
             TapLine::Comment("tests passed")
         );
+    }
+
+    #[test]
+    fn recognises_tap_samples() {
+        assert!(looks_like_tap(["1..2", "# log", "ok 1 - a"]));
+        assert!(looks_like_tap(["# log", "ok 1 - a", "not ok 2 - b"]));
+        assert!(looks_like_tap(["TAP version 13", "# {\"msg\":\"x\"}"]));
+        assert!(looks_like_tap([
+            "[04:47:24.885](0.188s) # initializing",
+            "[04:47:25.699](0.814s) ok 1 - slot created",
+            "[04:50:22.056](176.357s) not ok 2 - regression tests pass",
+        ]));
+        // No comments: nothing to unwrap.
+        assert!(!looks_like_tap(["1..2", "ok 1 - a", "ok 2 - b"]));
+        // One result-looking line is not enough.
+        assert!(!looks_like_tap(["# header", "ok 1 file copied", "done"]));
     }
 
     #[test]

@@ -102,6 +102,9 @@ pub struct DetectedFormat {
     /// The sample looks like one JSON array (`[` then `{`, or `[{…`) rather
     /// than JSON lines. Feeds the fallback hint only.
     pub json_array: bool,
+    /// The sample looks like TAP test output with `#` comments, whose log
+    /// lines `--unwrap tap` would parse. Feeds the fallback hint only.
+    pub tap: bool,
 }
 
 /// A multiline (stack-trace) shape that detection spotted in its sample, and
@@ -235,6 +238,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -258,6 +262,8 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 cascade_suggestion: None,
                 leading_ts_tokens,
                 json_array,
+                // One line can't show TAP's shape; stdin keeps first-line detection.
+                tap: false,
             })
         }
     }
@@ -295,6 +301,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
@@ -348,6 +355,7 @@ fn detect_format_from_tap_reader<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         });
     }
     detected_from_lines(&comments, &[])
@@ -372,6 +380,8 @@ fn detected_from_lines(head_lines: &[String], probe_lines: &[String]) -> Result<
     };
     let json_array = matches!(detected.format, config::InputFormat::Line)
         && looks_like_json_array(trimmed.iter().copied());
+    let tap = matches!(detected.format, config::InputFormat::Line)
+        && crate::pipeline::tap::looks_like_tap(trimmed.iter().copied());
     Ok(DetectedFormat {
         format: detected.format,
         had_input: true,
@@ -383,6 +393,7 @@ fn detected_from_lines(head_lines: &[String], probe_lines: &[String]) -> Result<
         cascade_suggestion: detected.suggested_cascade,
         leading_ts_tokens,
         json_array,
+        tap,
     })
 }
 
@@ -609,6 +620,7 @@ pub fn detect_format_for_parallel_mode(
                 cascade_suggestion: None,
                 leading_ts_tokens: None,
                 json_array: false,
+                tap: false,
             },
             None,
         ));
@@ -688,6 +700,9 @@ pub fn format_detected_format_notice(
         if detected.json_array {
             return Some(config.format_hint_message(JSON_ARRAY_HINT));
         }
+        if detected.tap {
+            return Some(config.format_hint_message(TAP_HINT));
+        }
         if let Some(message) = unparsed_formats_hint_text(detected) {
             return Some(config.format_hint_message(&message));
         }
@@ -710,6 +725,8 @@ fn fallback_hint_text(leading_ts_tokens: Option<usize>) -> String {
         None => "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(N) level *msg' (or a regex:), where N is how many whitespace-separated tokens the timestamp spans: ts(1) for 2024-01-15T10:00:00Z, ts(3) for syslog-style 'Jan 15 10:00:00'. Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(N) level *msg'. See --help-formats.".to_string(),
     }
 }
+
+const TAP_HINT: &str = "Input looks like TAP test output (ok/not ok results, # comments). To parse the log lines in its comments, with each line tagged by its test: --unwrap tap.";
 
 const JSON_ARRAY_HINT: &str = "Input looks like one JSON array; -f json reads one object per line. For one event per element: -f line -M all -e 'emit_each(e.line.parse_json())'. See --help-formats.";
 
@@ -1369,6 +1386,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         };
         assert!(detected.multiline_hint.is_some());
 
@@ -1398,6 +1416,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
             ..detected
         };
         assert!(multiline_hint_message(&cfg, &clean).is_none());
@@ -1453,6 +1472,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         };
 
         let mut verbose_cfg = base_config();
@@ -1481,6 +1501,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         };
         let cfg = base_config();
         let message = auto_cascade_hint_message(&cfg, &detected).expect("hint expected");
@@ -1518,6 +1539,7 @@ mod tests {
             cascade_suggestion: Some("json,logfmt,line".to_string()),
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         };
 
         // Normal run: hint tier, no warning.
@@ -1557,6 +1579,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
             ..detected
         };
         assert!(unparsed_formats_data_mode_warning(&data_mode, &clean).is_none());
@@ -1631,6 +1654,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            tap: false,
         };
 
         // A confident auto-detection is silent on a normal run...

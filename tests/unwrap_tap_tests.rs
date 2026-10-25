@@ -455,3 +455,22 @@ fn tap_field_separates_tap_lines_from_log_lines() {
     assert_eq!(code, 0);
     assert_eq!(stdout, "line='plain log text'\n");
 }
+
+#[test]
+fn hint_suggests_unwrap_for_tap_input() {
+    let (_stdout, stderr, code) = run_kelora_with_file(&["-n", "1"], TAP);
+    assert_eq!(code, 0);
+    assert!(stderr.contains("--unwrap tap"), "{stderr}");
+
+    // Not without comments: --unwrap tap would find no log lines.
+    let (_stdout, stderr, _code) =
+        run_kelora_with_file(&["-n", "1"], "1..2\nok 1 - one\nok 2 - two\n");
+    assert!(!stderr.contains("--unwrap tap"), "{stderr}");
+
+    // Not for an ordinary log with a stray comment.
+    let (_stdout, stderr, _code) = run_kelora_with_file(
+        &["-n", "1"],
+        "# exported by tool\nstarting worker\nok 1 file copied\nworker done\n",
+    );
+    assert!(!stderr.contains("--unwrap tap"), "{stderr}");
+}

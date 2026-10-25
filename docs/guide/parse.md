@@ -310,7 +310,8 @@ The separator defaults to `|`; change it with `--prefix-sep`.
 Perl tests that log through `note()` or `diag()` leave the log lines in the
 `#` comments of their TAP output; so does anything else that writes TAP, such
 as node's test runner. Capture the output (`prove -v --merge t/ > run.t`) and
-`--unwrap tap` parses the comment text as the log:
+`--unwrap tap` parses the comment text as the log (without it, Kelora reads
+whole lines and hints at `--unwrap tap`):
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/tap_fail.t --unwrap tap -f logfmt,line -l warn,error \
