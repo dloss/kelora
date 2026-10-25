@@ -195,6 +195,7 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
                 &config.input.files,
                 config.input.no_input,
                 config.processing.strict,
+                config.input.detection_prefix_sep(),
             )?;
 
             detection::emit_detected_format_notice(config, &detected_format);
@@ -475,8 +476,16 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
         // Stdin keeps first-line detection (a live pipe must not stall on a
         // sample), except under --unwrap: the first line is wrapper, not log.
         let detected_format = match config.input.unwrap {
-            None => detection::detect_format_from_peekable_reader(&mut peekable_reader)?,
-            unwrap => detection::detect_format_sampled(&mut peekable_reader, None, unwrap)?,
+            None => detection::detect_format_from_peekable_reader(
+                &mut peekable_reader,
+                config.input.detection_prefix_sep(),
+            )?,
+            unwrap => detection::detect_format_sampled(
+                &mut peekable_reader,
+                None,
+                unwrap,
+                config.input.detection_prefix_sep(),
+            )?,
         };
 
         detection::emit_detected_format_notice(config, &detected_format);
@@ -507,6 +516,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
             &sorted_files,
             config.processing.strict,
             config.input.unwrap,
+            config.input.detection_prefix_sep(),
         )?;
 
         detection::emit_detected_format_notice(config, &detected_format);
@@ -702,6 +712,7 @@ fn spawn_file_reader_auto_per_file(
                 &mut peekable_reader,
                 Some(&file_path),
                 config.input.unwrap,
+                config.input.detection_prefix_sep(),
             )?;
 
             detection::emit_detected_format_notice(&config, &detected);

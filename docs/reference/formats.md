@@ -161,7 +161,7 @@ Each extension pair becomes a top-level field. Extension values are typed: `1232
 
 ### CRI Format
 
-The Kubernetes CRI/containerd log layout `<RFC3339Nano> <stream> <tag> <message>`: files under `/var/log/pods/`, and `kubectl logs --timestamps` output.
+The Kubernetes CRI/containerd log layout `<RFC3339Nano> <stream> <tag> <message>`: files under `/var/log/pods/`. `kubectl logs --timestamps` writes only the timestamp before the message, without `stream` and `tag`; read it with `--extract-prefix` ([Prefixes added by other tools](../guide/parse.md#prefixes-added-by-other-tools)).
 
 ```
 2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}

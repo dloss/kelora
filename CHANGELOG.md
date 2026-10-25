@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **`--extract-prefix` with auto-detection** - Detection looked at the line before the prefix was removed, so `docker compose logs | kelora --extract-prefix service` read JSON or access-log lines as `line`. It now detects the format of the text after the prefix.
 - **Agent skill divided integers** - The skill's `e.duration_ms / 1000` example turned 45 ms into `0`; it now divides by `1000.0`.
 - **`--since`/`--until` hint blamed zoned input** - `--since '2025-10-04 11:00'` on a log with `+0200` timestamps said "Timestamps carry no zone offset" and suggested `--input-tz`, which changes nothing there: the zone-less value was the `--since` argument, read as UTC. The hint now names the argument and its UTC reading and suggests adding the log's offset (`'2025-10-04 11:00+02:00'`); it stays quiet for UTC logs. The input-side hint now says "Input timestamps".
 - **`--since 'YYYY-MM-DD HH:MMZ'` ignored the `Z`** - Minute-precision values ending in `Z` were read in the `--input-tz` zone instead of UTC, so the window started hours off. Values with seconds were not affected.

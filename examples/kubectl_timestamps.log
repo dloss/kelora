@@ -1,0 +1,5 @@
+2024-07-17T12:12:05.120394823Z {"level":"info","msg":"listening","port":8080}
+2024-07-17T12:12:09.448210001Z {"level":"info","msg":"request","path":"/cart","status":200,"ms":31}
+2024-07-17T12:12:10.002931552Z {"level":"warn","msg":"slow upstream","upstream":"inventory","ms":1840}
+2024-07-17T12:12:10.871554120Z {"level":"error","msg":"request failed","path":"/checkout","status":502,"err":"upstream timed out"}
+2024-07-17T12:12:11.209384112Z {"level":"info","msg":"request","path":"/cart","status":200,"ms":28}

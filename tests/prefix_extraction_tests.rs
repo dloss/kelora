@@ -218,3 +218,50 @@ api_1    | Starting server"#;
     assert_eq!(parsed[1]["src"], "api_1");
     assert_eq!(parsed[1]["service_type"], "backend");
 }
+
+// Auto-detection classifies the line the parser will see, after the prefix is
+// stripped; it used to look at `api-1  | {...}` and fall back to `line`.
+#[test]
+fn test_prefix_extraction_auto_detects_after_prefix_file() {
+    let content = r#"api-1  | {"level":"INFO","msg":"request handled","status":200}
+api-1  | {"level":"ERROR","msg":"db timeout","status":500}
+"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_file(
+        &["--extract-prefix", "service", "-k", "service,level,msg"],
+        content,
+    );
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        stdout.contains("service='api-1' level='ERROR' msg='db timeout'"),
+        "JSON after the prefix should be parsed: {stdout}\n{stderr}"
+    );
+    assert!(!stderr.contains("No input format detected"), "{stderr}");
+}
+
+#[test]
+fn test_prefix_extraction_auto_detects_after_prefix_stdin() {
+    // kubectl logs --timestamps: the prefix is the timestamp, separated by a space.
+    let input = r#"2026-10-24T09:12:02.223456789Z {"level":"error","msg":"upstream failed","err":"connection refused"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "--extract-prefix",
+            "kube_ts",
+            "--prefix-sep",
+            " ",
+            "-k",
+            "kube_ts,level,err",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        stdout.contains(
+            "kube_ts='2026-10-24T09:12:02.223456789Z' level='error' err='connection refused'"
+        ),
+        "{stdout}\n{stderr}"
+    );
+}

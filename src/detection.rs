@@ -4,6 +4,7 @@
 //! and displaying appropriate notices to users.
 
 use anyhow::Result;
+use std::borrow::Cow;
 use std::fs;
 use std::io::BufRead;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -225,6 +226,7 @@ impl DetectedFormat {
 /// Returns the detected format without consuming the first line
 pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
     reader: &mut readers::PeekableLineReader<R>,
+    prefix_sep: Option<&str>,
 ) -> Result<DetectedFormat> {
     match reader.peek_first_non_empty_line()? {
         None => Ok(DetectedFormat {
@@ -242,6 +244,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
         }),
         Some(line) => {
             // Remove newline for detection
+            let line = strip_detection_prefix(&line, prefix_sep);
             let trimmed_line = line.trim_end_matches(&['\r', '\n'][..]);
             let detected = parsers::detect_format(trimmed_line)?;
             let leading_ts_tokens = if matches!(detected, config::InputFormat::Line) {
@@ -287,6 +290,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
 pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
     reader: &mut readers::PeekableLineReader<R>,
     probe_path: Option<&str>,
+    prefix_sep: Option<&str>,
 ) -> Result<DetectedFormat> {
     let head_lines = reader.peek_nonempty_lines(SAMPLE_MAX_LINES, SAMPLE_MAX_BYTES)?;
     if head_lines.is_empty() {
@@ -305,7 +309,30 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
+    if prefix_sep.is_some() {
+        let strip = |lines: &[String]| -> Vec<String> {
+            lines
+                .iter()
+                .map(|line| strip_detection_prefix(line, prefix_sep).into_owned())
+                .collect()
+        };
+        return detected_from_lines(&strip(&head_lines), &strip(&probe_lines));
+    }
     detected_from_lines(&head_lines, &probe_lines)
+}
+
+/// The line `--extract-prefix` hands the parser: detection must classify that,
+/// not the `name | ` prefix in front of it (which made `docker compose logs`
+/// output detect as `line`).
+fn strip_detection_prefix<'a>(line: &'a str, prefix_sep: Option<&str>) -> Cow<'a, str> {
+    match prefix_sep {
+        Some(sep) => Cow::Owned(
+            crate::pipeline::PrefixExtractor::new(String::new(), sep.to_string())
+                .extract_prefix(line)
+                .0,
+        ),
+        None => Cow::Borrowed(line),
+    }
 }
 
 /// Raw lines read to find the comment lines `--unwrap tap` detects from.
@@ -317,9 +344,10 @@ pub fn detect_format_sampled<R: std::io::BufRead>(
     reader: &mut readers::PeekableLineReader<R>,
     probe_path: Option<&str>,
     unwrap: Option<config::UnwrapKind>,
+    prefix_sep: Option<&str>,
 ) -> Result<DetectedFormat> {
     match unwrap {
-        None => detect_format_from_peekable_reader_sampled(reader, probe_path),
+        None => detect_format_from_peekable_reader_sampled(reader, probe_path, prefix_sep),
         Some(config::UnwrapKind::Tap) => detect_format_from_tap_reader(reader),
     }
 }
@@ -506,6 +534,7 @@ pub fn detect_format_from_files(
     sorted_files: &[String],
     strict: bool,
     unwrap: Option<config::UnwrapKind>,
+    prefix_sep: Option<&str>,
 ) -> Result<DetectedFormat> {
     let mut failed_opens: Vec<(String, String)> = Vec::new();
     let mut failed_dirs: Vec<String> = Vec::new();
@@ -533,8 +562,12 @@ pub fn detect_format_from_files(
                 // a live stdin pipe) and the reader is discarded afterwards —
                 // regular readers reopen the path for actual processing. The
                 // path is passed along so plain files also get mid-file probes.
-                let candidate =
-                    detect_format_sampled(&mut peekable_reader, Some(file_path), unwrap)?;
+                let candidate = detect_format_sampled(
+                    &mut peekable_reader,
+                    Some(file_path),
+                    unwrap,
+                    prefix_sep,
+                )?;
                 // A pipe or FIFO can't be reopened for processing: hand this
                 // reader, with its peeked lines, to the next open of the path.
                 if !readers::is_reopenable(file_path) {
@@ -603,6 +636,7 @@ pub fn detect_format_for_parallel_mode(
     files: &[String],
     no_input: bool,
     strict: bool,
+    prefix_sep: Option<&str>,
 ) -> Result<(DetectedFormat, Option<Box<dyn BufRead + Send>>)> {
     use std::io;
 
@@ -633,14 +667,14 @@ pub fn detect_format_for_parallel_mode(
         let mut peekable_reader =
             readers::PeekableLineReader::new(io::BufReader::new(processed_stdin));
 
-        let detected = detect_format_from_peekable_reader(&mut peekable_reader)?;
+        let detected = detect_format_from_peekable_reader(&mut peekable_reader, prefix_sep)?;
 
         // Reuse the peekable reader so we don't consume stdin twice
         Ok((detected, Some(Box::new(peekable_reader))))
     } else {
         // For files, detect from the first file that actually has content.
         let sorted_files = pipeline::builders::sort_files(files, &config::FileOrder::Cli)?;
-        let detected = detect_format_from_files(&sorted_files, strict, None)?;
+        let detected = detect_format_from_files(&sorted_files, strict, None, prefix_sep)?;
 
         // For files we can reopen them later, so we don't need to keep this reader
         Ok((detected, None))
@@ -1124,7 +1158,7 @@ mod tests {
         let json = write_input(&dir, "data.json", "{\"a\":1}\n");
 
         let detected =
-            detect_format_from_files(&[empty, blank, json], false, None).expect("detection");
+            detect_format_from_files(&[empty, blank, json], false, None, None).expect("detection");
 
         assert!(
             matches!(detected.format, config::InputFormat::Json),
@@ -1146,7 +1180,7 @@ mod tests {
             "{\"level\":\"info\",\"msg\":\"up\"}\nServer starting on port 8080\n{\"level\":\"error\",\"msg\":\"down\"}\n",
         );
 
-        let detected = detect_format_from_files(&[mixed], false, None).expect("detection");
+        let detected = detect_format_from_files(&[mixed], false, None, None).expect("detection");
 
         match &detected.format {
             config::InputFormat::Cascade(members) => {
@@ -1188,7 +1222,7 @@ mod tests {
         assert!(contents.len() as u64 >= PROBE_MIN_FILE_BYTES * 2);
         let path = write_input(&dir, "rotated.log", &contents);
 
-        let detected = detect_format_from_files(&[path], false, None).expect("detection");
+        let detected = detect_format_from_files(&[path], false, None, None).expect("detection");
 
         match &detected.format {
             config::InputFormat::Cascade(members) => {
@@ -1207,7 +1241,7 @@ mod tests {
         let dir = tempfile::TempDir::new().expect("tempdir");
         let path = write_input(&dir, "big.json", &json_block(1200));
 
-        let detected = detect_format_from_files(&[path], false, None).expect("detection");
+        let detected = detect_format_from_files(&[path], false, None, None).expect("detection");
 
         assert!(
             matches!(detected.format, config::InputFormat::Json),
@@ -1226,7 +1260,7 @@ mod tests {
         assert!((contents.len() as u64) < PROBE_MIN_FILE_BYTES);
         let path = write_input(&dir, "small.log", &contents);
 
-        let detected = detect_format_from_files(&[path], false, None).expect("detection");
+        let detected = detect_format_from_files(&[path], false, None, None).expect("detection");
 
         assert_eq!(detected.probe_lines, 0);
         assert!(matches!(detected.format, config::InputFormat::Json));
@@ -1435,7 +1469,7 @@ mod tests {
              \tat com.example.Main.main(Main.java:10)\n",
         );
 
-        let detected = detect_format_from_files(&[path], false, None).expect("detection");
+        let detected = detect_format_from_files(&[path], false, None, None).expect("detection");
 
         let sig = detected.multiline_hint.expect("signature expected");
         assert_eq!(sig.strategy, "java");
@@ -1447,7 +1481,7 @@ mod tests {
         let dir = tempfile::TempDir::new().expect("tempdir");
         let json = write_input(&dir, "clean.json", "{\"a\":1}\n{\"b\":2}\n{\"c\":3}\n");
 
-        let detected = detect_format_from_files(&[json], false, None).expect("detection");
+        let detected = detect_format_from_files(&[json], false, None, None).expect("detection");
 
         assert!(
             matches!(detected.format, config::InputFormat::Json),
@@ -1603,7 +1637,7 @@ mod tests {
         let a = write_input(&dir, "a.log", "");
         let b = write_input(&dir, "b.log", "");
 
-        let detected = detect_format_from_files(&[a, b], false, None).expect("detection");
+        let detected = detect_format_from_files(&[a, b], false, None, None).expect("detection");
 
         assert!(matches!(detected.format, config::InputFormat::Line));
         assert!(!detected.saw_content);
@@ -1621,7 +1655,8 @@ mod tests {
         let empty = write_input(&dir, "empty.log", "");
         let blank = write_input(&dir, "blank.log", "\n\n");
 
-        let detected = detect_format_from_files(&[empty, blank], false, None).expect("detection");
+        let detected =
+            detect_format_from_files(&[empty, blank], false, None, None).expect("detection");
 
         assert!(matches!(detected.format, config::InputFormat::Line));
         assert!(detected.had_input);
@@ -1633,7 +1668,8 @@ mod tests {
         let dir = tempfile::TempDir::new().expect("tempdir");
         let missing = dir.path().join("nope.log").to_string_lossy().into_owned();
 
-        let err = detect_format_from_files(&[missing], false, None).expect_err("expected failure");
+        let err =
+            detect_format_from_files(&[missing], false, None, None).expect_err("expected failure");
 
         assert!(
             err.downcast_ref::<AllInputsUnopenable>().is_some(),

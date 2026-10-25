@@ -329,6 +329,7 @@ Tailmap uses percentile-based symbols: `_` (below p90), `1` (p90-p95), `2` (p95-
 - `cols_fixed.log`, `cols_mixed.log` - Fixed-width columns
 - `csv_typed.csv` - CSV with type inference
 - `prefix_docker.log` - Docker container logs with prefixes
+- `kubectl_timestamps.log` - `kubectl logs --timestamps` output: a timestamp, then JSON
 - `prefix_custom.log` - Custom prefix patterns
 - `custom_timestamps.log` - Non-standard timestamp formats
 - `timezones_mixed.log` - Mixed timezone handling

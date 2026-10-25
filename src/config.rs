@@ -53,6 +53,16 @@ pub struct InputConfig {
     pub max_line_bytes: usize,
 }
 
+impl InputConfig {
+    /// The `--extract-prefix` separator, when set: auto-detection strips the
+    /// prefix first, as the parser does.
+    pub fn detection_prefix_sep(&self) -> Option<&str> {
+        self.extract_prefix
+            .as_ref()
+            .map(|_| self.prefix_sep.as_str())
+    }
+}
+
 /// Default per-line byte cap (64 MiB). Derived from real log-line sizes
 /// (Docker/CRI split at 16 KB; fat JSON tops out in low single-digit MB) with
 /// generous headroom, while staying small enough that even many parallel reader

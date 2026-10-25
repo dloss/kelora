@@ -303,7 +303,14 @@ kelora examples/prefix_docker.log --extract-prefix container \
   -f 'regex:(?P<ts>\S+ \S+) \[(?P<level>\w+)\] (?P<msg>.*)' -n 3
 ```
 
-The separator defaults to `|`; change it with `--prefix-sep`.
+The separator defaults to `|`; change it with `--prefix-sep`. Kelora detects
+the format from what follows the prefix. `kubectl logs --timestamps` puts the
+time and a space before each line:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/kubectl_timestamps.log --extract-prefix kube_ts --prefix-sep ' ' \
+  -l error -k kube_ts,msg,err
+```
 
 ## Logs inside test output (TAP)
 
