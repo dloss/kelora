@@ -2479,7 +2479,7 @@ matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
 <dt id="card"><code>--card &lt;FIELD&gt;</code></dt>
 <dd>
 <p>Estimate the number of distinct values of FIELD (HyperLogLog).</p>
-<p>Shorthand for track_cardinality("FIELD", e.FIELD). Runs after all filters/transforms and implies <a href="#metrics"><code>-m</code></a>. Repeatable or comma-separated (<code>--card</code> user_id,trace_id). Missing values are skipped. The count is approximate (~1% error) but uses constant memory, so it scales to high-cardinality fields where track_freq/track_unique would not. Control output with <a href="#metrics"><code>--metrics=short</code></a>|full|tsv|json or <a href="#metrics-file"><code>--metrics-file</code></a>.</p>
+<p>Shorthand for track_cardinality("FIELD", e.FIELD). Runs after all filters/transforms and implies <a href="#metrics"><code>-m</code></a>. Repeatable or comma-separated (<code>--card</code> user_id,trace_id). Missing values are skipped. The count is approximate (~3% error) but uses constant memory, so it scales to high-cardinality fields where track_freq/track_unique would not. Control output with <a href="#metrics"><code>--metrics=short</code></a>|full|tsv|json or <a href="#metrics-file"><code>--metrics-file</code></a>.</p>
 <p>Takes a field name, not an expression. For a derived value, call track_cardinality directly in a script stage:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>-m --exec 'track_cardinality("prefix", e.client_ip.split(".")[0])'
 </code></pre></div>

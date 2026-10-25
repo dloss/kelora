@@ -2425,7 +2425,15 @@ message such as <code>log4j</code> or <code>glog</code>) handle that. Details: <
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">ts</span>='2024-01-15 10:00:10' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">msg</span>='PostgreSQL starting up'
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">container</span>='db_1'
 </code></pre></div>
-<p>The separator defaults to <code>|</code>; change it with <code>--prefix-sep</code>.</p>
+<p>The separator defaults to <code>|</code>; change it with <code>--prefix-sep</code>. Kelora detects
+the format from what follows the prefix. <code>kubectl logs --timestamps</code> puts the
+time and a space before each line:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/kubectl_timestamps.log<span class="w"> </span>--extract-prefix<span class="w"> </span>kube_ts<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">' '</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>kube_ts,msg,err
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">kube_ts</span>='2024-07-17T12:12:10.871554120Z' <span class=" -Color -Color-Green">msg</span>='request failed'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">err</span>='upstream timed out'
+</code></pre></div>
 <h2 id="logs-inside-test-output-tap">Logs inside test output (TAP)<a class="headerlink" href="#logs-inside-test-output-tap" title="Permanent link">&para;</a></h2>
 <p>Perl tests that log through <code>note()</code> or <code>diag()</code> leave the log lines in the
 <code>#</code> comments of their TAP output; so does anything else that writes TAP, such

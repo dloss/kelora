@@ -1901,7 +1901,7 @@ without printing the events. The examples use <code>api_latency_incident.jsonl</
 </tr>
 <tr>
 <td><code>--card FIELD</code></td>
-<td>an estimate of the number of distinct values (about 1 % error, constant memory)</td>
+<td>an estimate of the number of distinct values (about 3 % error, constant memory)</td>
 </tr>
 </tbody>
 </table>
@@ -1966,7 +1966,16 @@ add <code>-m</code> (<code>--metrics</code>) to print the results instead of eve
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  200      782
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  500       18
 </code></pre></div>
-<p>Each call names its metric, so one run can track many things.</p>
+<p>Each call names its metric, so one run can track many things. For a total per
+value, such as the time spent per endpoint, use <code>track_sum_by</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/api_latency_incident.jsonl<span class="w"> </span>-m<span class="w"> </span>-e<span class="w"> </span><span class="s1">'track_sum_by("ms", e.endpoint, e.response_time_ms)'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ms           (3 keys):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  key              sum
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  /api/users     38903
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  /api/posts   38266.3
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  /api/search  35006.8
+</code></pre></div>
 <table>
 <thead>
 <tr>
@@ -1988,6 +1997,10 @@ add <code>-m</code> (<code>--metrics</code>) to print the results instead of eve
 <td>running numbers</td>
 </tr>
 <tr>
+<td><code>track_sum_by(name, value, n)</code></td>
+<td>a total of n per distinct value — bytes per client, time per endpoint</td>
+</tr>
+<tr>
 <td><code>track_stats(name, n)</code></td>
 <td>min, max, avg, sum, count, p50/p95/p99 (what <code>--describe</code> uses)</td>
 </tr>
@@ -2001,7 +2014,7 @@ add <code>-m</code> (<code>--metrics</code>) to print the results instead of eve
 </tr>
 <tr>
 <td><code>track_top_by(name, value, score, k)</code> / <code>track_bottom_by</code></td>
-<td>the k values with the highest / lowest score — slowest endpoints, biggest responses</td>
+<td>the k values with the highest / lowest single score — slowest endpoints, biggest responses (a maximum, not a total)</td>
 </tr>
 <tr>
 <td><code>track_unique(name, value)</code></td>
@@ -2120,7 +2133,7 @@ events instead of replacing them.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 800 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 800 total, 17 output, 783 filtered (97.9%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 195106 lines/s in 4ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 261074 lines/s in 3ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: timestamp (auto-detected) - 800/800 parsed (100.0%) — access via meta.parsed_ts.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Input time span (before filtering): 2025-01-20T14:00:00+00:00 to 2025-01-20T14:39:57+00:00 (39m 57s)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Output time span (after filtering): 2025-01-20T14:20:18+00:00 to 2025-01-20T14:24:45+00:00 (4m 27s)

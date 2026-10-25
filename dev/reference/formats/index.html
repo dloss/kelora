@@ -2383,11 +2383,12 @@
 </table>
 <p>RFC 5424 fields whose value is <code>-</code> are omitted. Structured data is not extracted. RFC 3164 timestamps have no year; see <a href="../time-reference/#year-and-timezone">time-reference.md</a>.</p>
 <h3 id="combined-log-format">Combined Log Format<a class="headerlink" href="#combined-log-format" title="Permanent link">&para;</a></h3>
-<p>Handles Common Log Format, Combined, and Nginx Combined with a trailing request time (quoted or bare, as nginx's <code>$request_time</code>), detected per line:</p>
+<p>Handles Common Log Format, Combined, and Nginx Combined with one trailing field — a request time (quoted or bare, as nginx's <code>$request_time</code>) or the quoted <code>"$http_x_forwarded_for"</code> of nginx's default <code>main</code> format — detected per line:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" 0.123
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>10.0.0.5 - - [15/Jan/2024:10:30:00 +0000] "GET /api HTTP/1.1" 200 1234 "-" "curl/7.68.0" "203.0.113.9, 10.0.0.1"
 </code></pre></div>
 <table>
 <thead>
@@ -2505,10 +2506,26 @@
 <td>✓</td>
 <td>seconds</td>
 </tr>
+<tr>
+<td><code>forwarded_for</code></td>
+<td>string</td>
+<td>–</td>
+<td>–</td>
+<td>✓</td>
+<td>a quoted list of IP addresses (X-Forwarded-For): the client behind a proxy</td>
+</tr>
+<tr>
+<td><code>extra</code></td>
+<td>string</td>
+<td>–</td>
+<td>–</td>
+<td>✓</td>
+<td>any other quoted text in that position</td>
+</tr>
 </tbody>
 </table>
 <p>Any field whose value is <code>-</code> is omitted.</p>
-<p>A line with anything after <code>user_agent</code> and the optional request time (an nginx <code>log_format</code> with extra fields such as <code>rt=</code> or <code>upstream=</code>) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. <code>unexpected trailing text after user_agent at column 122: 'trace=abc123'</code>; parse such logs with a <code>regex:</code> format that captures the extra fields.</p>
+<p>A line with anything after <code>user_agent</code> and that optional field (an nginx <code>log_format</code> with extra fields such as <code>rt=</code> or <code>upstream=</code>) is a parse error, not silently truncated. The error names the column and the unexpected text, e.g. <code>unexpected trailing text after user_agent at column 122: 'trace=abc123'</code>; parse such logs with a <code>regex:</code> format that captures the extra fields.</p>
 <h3 id="cef-format">CEF Format<a class="headerlink" href="#cef-format" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
 </code></pre></div>
@@ -2570,7 +2587,7 @@
 </table>
 <p>Each extension pair becomes a top-level field. Extension values are typed: <code>1232</code> → int, <code>1.5</code> → float, <code>true</code> → bool. Everything else, including IP addresses, stays a string.</p>
 <h3 id="cri-format">CRI Format<a class="headerlink" href="#cri-format" title="Permanent link">&para;</a></h3>
-<p>The Kubernetes CRI/containerd log layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&gt; &lt;message&gt;</code>: files under <code>/var/log/pods/</code>, and <code>kubectl logs --timestamps</code> output.</p>
+<p>The Kubernetes CRI/containerd log layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&gt; &lt;message&gt;</code>: files under <code>/var/log/pods/</code>. <code>kubectl logs --timestamps</code> writes only the timestamp before the message, without <code>stream</code> and <code>tag</code>; read it with <code>--extract-prefix</code> (<a href="../../guide/parse/#prefixes-added-by-other-tools">Prefixes added by other tools</a>).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer
 </code></pre></div>
@@ -2781,6 +2798,7 @@
 <ul>
 <li><strong>stdin:</strong> from the first non-empty line. A live pipe never waits for more input.</li>
 <li><strong>Files:</strong> from up to the first 64 non-empty lines (max 256 KiB) of the first file that has content. Uncompressed files of 32 KiB or more are also sampled at 1/4, 1/2, 3/4 and the tail. Gzip/zstd files are sampled from the head only.</li>
+<li>Only lines that <code>--skip-lines</code>, <code>--head</code>, <code>--section-*</code>, <code>--keep-lines</code> and <code>--ignore-lines</code> let through are sampled, so <code>--skip-lines 1</code> on a CSV with a title line, or <code>--ignore-lines '^#'</code> on a file with comment lines, detects the format of the data.</li>
 </ul>
 <p>Each line is tested in this order, first match wins:</p>
 <ol>
@@ -2797,6 +2815,7 @@
 </ol>
 <p><strong>Mixed files:</strong> if the file sample contains more than one format, kelora parses with <code>&lt;dominant format&gt;,line</code>, exactly like an explicit <a href="#cascade-mode">cascade</a>, and each event gets <code>_format</code>; a hint says so, since the extra field changes the output's shape (<code>--exclude-keys _format</code> drops it, an explicit <code>-f json,line</code> silences the hint). A format needs at least two matching sampled lines to be chosen (in samples of four or more lines). Further structured formats in the sample are not added; their lines become <code>line</code> events and a hint prints the explicit <code>-f</code> (e.g. <code>-f json,syslog,line</code>) that would parse them. CSV/TSV never joins a cascade. On stdin, mixed input is parsed with the first line's format.</p>
 <p><strong>JSON arrays:</strong> a sample that starts like a JSON array of objects (<code>[</code> on its own line followed by <code>{</code>, or <code>[{</code>) is read as <code>line</code>, and a hint names the command that reads it. On stdin only <code>[{</code> on the first line is recognized.</p>
+<p><strong>Zeek logs:</strong> Zeek's default TSV output (first line <code>#separator \x09</code>) has no built-in format; a hint says so. <code>--ignore-lines '^#'</code> reads it as <code>tsvnh</code> (columns <code>c1</code>, <code>c2</code>, …, as text). Zeek's JSON output (<code>redef LogAscii::use_json = T;</code>) is read with Zeek's field names, such as <code>id.orig_h</code>, and its types; in scripts, read such keys as <code>e["id.orig_h"]</code>.</p>
 <p><code>-v</code> prints the decision, e.g. <code>Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)</code>.</p>
 <h3 id="auto-detection-per-file">Auto-Detection Per File<a class="headerlink" href="#auto-detection-per-file" title="Permanent link">&para;</a></h3>
 <p><code>-f auto-per-file</code> runs the file detection above separately for each file, so JSON and logfmt files can be read in one run:</p>

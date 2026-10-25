@@ -3625,6 +3625,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#track_sum_byname-key-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        track_sum_by(name, key, value)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#track_avgname-value" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6556,6 +6567,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#track_sum_byname-key-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        track_sum_by(name, key, value)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#track_avgname-value" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7937,23 +7959,27 @@ instead of <code>replace()</code>.</p>
 <p>Running total.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a>track_sum("total_bytes", e.bytes);
 </code></pre></div>
+<h4 id="track_sum_byname-key-value"><code>track_sum_by(name, key, value)</code><a class="headerlink" href="#track_sum_byname-key-value" title="Permanent link">&para;</a></h4>
+<p>A total of <code>value</code> for each distinct <code>key</code>, such as bytes per client. Printed like a frequency table, largest total first, so <code>-m | head</code> gives the top keys. Keys are converted to text as in <code>track_freq</code>; an event without the key or the value is skipped. Totals stay integers until a float is added, and merge across <code>--parallel</code> workers and <code>--span</code> windows.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>track_sum_by("bytes", e.client_ip, e.bytes);
+</code></pre></div>
 <h4 id="track_avgname-value"><code>track_avg(name, value)</code><a class="headerlink" href="#track_avgname-value" title="Permanent link">&para;</a></h4>
 <p>Mean of the recorded values (kept as sum and count, so it merges across <code>--parallel</code> workers).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>track_avg("avg_latency", e.response_time);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>track_avg("avg_latency", e.response_time);
 </code></pre></div>
 <h4 id="track_minname-value-track_maxname-value"><code>track_min(name, value)</code> / <code>track_max(name, value)</code><a class="headerlink" href="#track_minname-value-track_maxname-value" title="Permanent link">&para;</a></h4>
 <p>Smallest / largest value.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>track_min("fastest", e.response_time);
-<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>track_max("slowest", e.response_time);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>track_min("fastest", e.response_time);
+<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a>track_max("slowest", e.response_time);
 </code></pre></div>
 <h4 id="track_uniquename-value"><code>track_unique(name, value)</code><a class="headerlink" href="#track_uniquename-value" title="Permanent link">&para;</a></h4>
 <p>Exact set of distinct values. Memory grows with the set; kelora warns past 100,000 values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>track_unique("users", e.user_id);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>track_unique("users", e.user_id);
 </code></pre></div>
 <h4 id="track_cardinalityname-value-error_rate"><code>track_cardinality(name, value [, error_rate])</code><a class="headerlink" href="#track_cardinalityname-value-error_rate" title="Permanent link">&para;</a></h4>
-<p>Approximate distinct count with HyperLogLog: about 12 KB per metric, ~1% standard error by default. <code>error_rate</code> ranges 0.001–0.26 (lower costs more memory). Reported as a whole number, never above the number of values seen; the terminal output marks it with <code>≈</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>track_cardinality("unique_ips", e.client_ip);
-<a id="__codelineno-155-2" name="__codelineno-155-2" href="#__codelineno-155-2"></a>track_cardinality("unique_users", e.user_id, 0.005);
+<p>Approximate distinct count with HyperLogLog: about 1 KB per metric, ~3% standard error by default. <code>error_rate</code> ranges 0.001–0.23 (lower costs more memory). Reported as a whole number, never above the number of values seen; the terminal output marks it with <code>≈</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>track_cardinality("unique_ips", e.client_ip);
+<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>track_cardinality("unique_users", e.user_id, 0.005);
 </code></pre></div>
 <table>
 <thead>
@@ -7967,12 +7993,12 @@ instead of <code>replace()</code>.</p>
 <tr>
 <td>Memory</td>
 <td>grows with distinct values</td>
-<td>fixed ~12 KB</td>
+<td>fixed ~1 KB</td>
 </tr>
 <tr>
 <td>Accuracy</td>
 <td>exact</td>
-<td>~1% (configurable)</td>
+<td>~3% (configurable)</td>
 </tr>
 <tr>
 <td>Values listed</td>
@@ -7983,13 +8009,13 @@ instead of <code>replace()</code>.</p>
 </table>
 <h4 id="track_topname-item-n-track_bottomname-item-n"><code>track_top(name, item [, n])</code> / <code>track_bottom(name, item [, n])</code><a class="headerlink" href="#track_topname-item-n-track_bottomname-item-n" title="Permanent link">&para;</a></h4>
 <p>The <code>n</code> (default 10) most / least <strong>frequent</strong> items. Output: <code>[{key, count}, …]</code>, sorted by count, ties alphabetical.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>track_top("common_errors", e.error_type);
-<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>track_bottom("rare_errors", e.error_type, 5);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>track_top("common_errors", e.error_type);
+<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>track_bottom("rare_errors", e.error_type, 5);
 </code></pre></div>
 <h4 id="track_top_byname-item-score-n-track_bottom_byname-item-score-n"><code>track_top_by(name, item, score [, n])</code> / <code>track_bottom_by(name, item, score [, n])</code><a class="headerlink" href="#track_top_byname-item-score-n-track_bottom_byname-item-score-n" title="Permanent link">&para;</a></h4>
 <p>The <code>n</code> (default 10) items with the highest / lowest <strong>score</strong>; each item keeps its maximum (top) or minimum (bottom) score. Output: <code>[{key, value}, …]</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>track_top_by("slowest_endpoints", e.endpoint, e.latency_ms);
-<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>track_bottom_by("fastest_endpoints", e.endpoint, e.latency_ms, 5);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>track_top_by("slowest_endpoints", e.endpoint, e.latency_ms);
+<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>track_bottom_by("fastest_endpoints", e.endpoint, e.latency_ms, 5);
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Changed in kelora 2.0</p>
@@ -7998,14 +8024,14 @@ instead of <code>replace()</code>.</p>
 <p>Top/bottom lists use bounded memory per metric; under <code>--parallel</code> the worker lists are merged, re-sorted and trimmed, with deterministic results.</p>
 <h4 id="track_percentilesname-value-percentiles"><code>track_percentiles(name, value [, percentiles])</code><a class="headerlink" href="#track_percentilesname-value-percentiles" title="Permanent link">&para;</a></h4>
 <p>Streaming percentile estimates (t-digest). Creates one metric per percentile, named with a <code>_pNN</code> suffix; <code>percentiles</code> are quantiles in 0–1 (default <code>[0.50, 0.95, 0.99]</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>track_percentiles("api_latency", e.response_time);        // api_latency_p50, _p95, _p99
-<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>track_percentiles("latency", e.duration_ms, [0.999]);     // latency_p99.9
+<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>track_percentiles("api_latency", e.response_time);        // api_latency_p50, _p95, _p99
+<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>track_percentiles("latency", e.duration_ms, [0.999]);     // latency_p99.9
 </code></pre></div>
 <p>The t-digest keeps at most a few hundred centroids, so memory is flat and the results are estimates — typically within 0.5% of the exact value, most accurate in the tails. Sequential runs are reproducible; <code>--parallel</code> runs merge per-worker digests and can differ slightly.</p>
 <h4 id="track_statsname-value-percentiles"><code>track_stats(name, value [, percentiles])</code><a class="headerlink" href="#track_statsname-value-percentiles" title="Permanent link">&para;</a></h4>
 <p>Shorthand for <code>name_min</code>, <code>name_max</code>, <code>name_avg</code>, <code>name_count</code>, <code>name_sum</code> and the percentile metrics (default p50/p95/p99) in one call.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>track_stats("response_time", e.duration_ms);
-<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>track_stats("latency", e.duration_ms, [0.5, 0.9, 0.999]);  // …, latency_p50, latency_p90, latency_p99.9
+<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>track_stats("response_time", e.duration_ms);
+<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>track_stats("latency", e.duration_ms, [0.5, 0.9, 0.999]);  // …, latency_p50, latency_p90, latency_p99.9
 </code></pre></div>
 <p>If you do not need percentiles, <code>track_min/max/avg</code> are cheaper.</p>
 <hr />
@@ -8013,31 +8039,31 @@ instead of <code>replace()</code>.</p>
 <p>All of these need <code>--allow-fs-writes</code>; without it the call is an error.</p>
 <h4 id="append_filepath-text_or_array"><code>append_file(path, text_or_array)</code><a class="headerlink" href="#append_filepath-text_or_array" title="Permanent link">&para;</a></h4>
 <p>Append one line, or one line per array element.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>append_file("errors.log", e.message);
-<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>append_file("batch.log", [e.id, e.message]);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>append_file("errors.log", e.message);
+<a id="__codelineno-161-2" name="__codelineno-161-2" href="#__codelineno-161-2"></a>append_file("batch.log", [e.id, e.message]);
 </code></pre></div>
 <h4 id="truncate_filepath"><code>truncate_file(path)</code><a class="headerlink" href="#truncate_filepath" title="Permanent link">&para;</a></h4>
 <p>Create the file or empty it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>truncate_file("output.log");
+<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a>truncate_file("output.log");
 </code></pre></div>
 <h4 id="mkdirpath-recursive"><code>mkdir(path [, recursive])</code><a class="headerlink" href="#mkdirpath-recursive" title="Permanent link">&para;</a></h4>
 <p>Create a directory; <code>recursive = true</code> also creates parents (otherwise a missing parent is an error).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a>mkdir("out/2024/01", true);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a>mkdir("out/2024/01", true);
 </code></pre></div>
 <hr />
 <h2 id="event-manipulation">Event Manipulation<a class="headerlink" href="#event-manipulation" title="Permanent link">&para;</a></h2>
 <h4 id="emit_eacharray-base_map"><code>emit_each(array [, base_map])</code><a class="headerlink" href="#emit_eacharray-base_map" title="Permanent link">&para;</a></h4>
 <p>Emit each map in <code>array</code> as its own event and drop the original (even when nothing is emitted). Fields of <code>base_map</code> are added where the item lacks them. Non-map items are skipped with a warning. Returns the number emitted. Only in <code>--exec</code>/<code>--filter</code>, not <code>--begin</code>/<code>--end</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a>let n = emit_each(e.items, #{batch_id: e.batch_id});
-<a id="__codelineno-163-2" name="__codelineno-163-2" href="#__codelineno-163-2"></a>track_sum("items_emitted", n);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>let n = emit_each(e.items, #{batch_id: e.batch_id});
+<a id="__codelineno-164-2" name="__codelineno-164-2" href="#__codelineno-164-2"></a>track_sum("items_emitted", n);
 </code></pre></div>
 <h4 id="e"><code>e = ()</code><a class="headerlink" href="#e" title="Permanent link">&para;</a></h4>
 <p>Remove every field; the event is not output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>if e.should_drop { e = () }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a>if e.should_drop { e = () }
 </code></pre></div>
 <h4 id="efield"><code>e.field = ()</code><a class="headerlink" href="#efield" title="Permanent link">&para;</a></h4>
 <p>Remove one field.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a>e.password = ();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a>e.password = ();
 </code></pre></div>
 <h3 id="absorbing-fields">Absorbing fields<a class="headerlink" href="#absorbing-fields" title="Permanent link">&para;</a></h3>
 <p>The <code>absorb_*</code> functions parse one string field, merge the result into the event, and return a status map:</p>
@@ -8079,34 +8105,34 @@ instead of <code>replace()</code>.</p>
 <p>An <strong>unknown option key</strong> is a script error, not a status: in <code>--exec</code> the event rolls back and stderr reports <code>Exec errors: N total, affecting every event</code> (exit 0, transforms are best-effort); <code>--strict</code> aborts. So <code>status = "invalid_option"</code> never reaches a script without <code>try</code>/<code>catch</code>.</p>
 <h4 id="eabsorb_kvfield-options"><code>e.absorb_kv(field [, options])</code><a class="headerlink" href="#eabsorb_kvfield-options" title="Permanent link">&para;</a></h4>
 <p>Merge <code>key=value</code> tokens. Extra options: <code>sep</code> (default whitespace; <code>()</code> also means whitespace) and <code>kv_sep</code> (default <code>"="</code>). Tokens without <code>kv_sep</code> form the <code>remainder</code>; unless <code>keep_source</code> is set, the field is replaced by the remainder, or deleted when nothing remains (a parsed key with the source's name is then overwritten by the remainder). <strong>Not quote-aware</strong>; use <code>absorb_logfmt()</code> for <code>err="connection refused"</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a>// msg = "Payment timeout order=1234 user=bob"
-<a id="__codelineno-166-2" name="__codelineno-166-2" href="#__codelineno-166-2"></a>let res = e.absorb_kv("msg");
-<a id="__codelineno-166-3" name="__codelineno-166-3" href="#__codelineno-166-3"></a>// e.order == "1234", e.user == "bob", e.msg == "Payment timeout"
-<a id="__codelineno-166-4" name="__codelineno-166-4" href="#__codelineno-166-4"></a>let res2 = e.absorb_kv("params", #{sep: ",", kv_sep: ":", keep_source: true});
+<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>// msg = "Payment timeout order=1234 user=bob"
+<a id="__codelineno-167-2" name="__codelineno-167-2" href="#__codelineno-167-2"></a>let res = e.absorb_kv("msg");
+<a id="__codelineno-167-3" name="__codelineno-167-3" href="#__codelineno-167-3"></a>// e.order == "1234", e.user == "bob", e.msg == "Payment timeout"
+<a id="__codelineno-167-4" name="__codelineno-167-4" href="#__codelineno-167-4"></a>let res2 = e.absorb_kv("params", #{sep: ",", kv_sep: ":", keep_source: true});
 </code></pre></div>
 <h4 id="eabsorb_logfmtfield-options"><code>e.absorb_logfmt(field [, options])</code><a class="headerlink" href="#eabsorb_logfmtfield-options" title="Permanent link">&para;</a></h4>
 <p>Merge a logfmt string: quote-aware, with numbers and booleans typed. All-or-nothing: a bare token makes the whole field a <code>parse_error</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>// msg = 'pod="kube-system/foo" err="connection refused" replicas=3'
-<a id="__codelineno-167-2" name="__codelineno-167-2" href="#__codelineno-167-2"></a>let res = e.absorb_logfmt("msg");
-<a id="__codelineno-167-3" name="__codelineno-167-3" href="#__codelineno-167-3"></a>if res.status == "parse_error" { eprint(`not logfmt: ${res.error}`) }
-<a id="__codelineno-167-4" name="__codelineno-167-4" href="#__codelineno-167-4"></a>// e.pod == "kube-system/foo", e.replicas == 3 (int), msg deleted
+<div class="highlight"><pre><span></span><code><a id="__codelineno-168-1" name="__codelineno-168-1" href="#__codelineno-168-1"></a>// msg = 'pod="kube-system/foo" err="connection refused" replicas=3'
+<a id="__codelineno-168-2" name="__codelineno-168-2" href="#__codelineno-168-2"></a>let res = e.absorb_logfmt("msg");
+<a id="__codelineno-168-3" name="__codelineno-168-3" href="#__codelineno-168-3"></a>if res.status == "parse_error" { eprint(`not logfmt: ${res.error}`) }
+<a id="__codelineno-168-4" name="__codelineno-168-4" href="#__codelineno-168-4"></a>// e.pod == "kube-system/foo", e.replicas == 3 (int), msg deleted
 </code></pre></div>
 <h4 id="eabsorb_jsonfield-options"><code>e.absorb_json(field [, options])</code><a class="headerlink" href="#eabsorb_jsonfield-options" title="Permanent link">&para;</a></h4>
 <p>Merge a JSON <strong>object</strong> (arrays and invalid JSON are a <code>parse_error</code> and leave the event untouched).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-168-1" name="__codelineno-168-1" href="#__codelineno-168-1"></a>let res = e.absorb_json("payload");
-<a id="__codelineno-168-2" name="__codelineno-168-2" href="#__codelineno-168-2"></a>if res.status == "applied" { e.actor = e.actor ?? e.user }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>let res = e.absorb_json("payload");
+<a id="__codelineno-169-2" name="__codelineno-169-2" href="#__codelineno-169-2"></a>if res.status == "applied" { e.actor = e.actor ?? e.user }
 </code></pre></div>
 <h4 id="eabsorb_jwtfield-options"><code>e.absorb_jwt(field [, options])</code><a class="headerlink" href="#eabsorb_jwtfield-options" title="Permanent link">&para;</a></h4>
 <p>Merge a JWT's claims (header and signature ignored, <strong>no verification</strong>). Time claims stay integers; use <a href="#textparse_jwt"><code>parse_jwt()</code></a> for datetime <code>exp</code>/<code>iat</code>/<code>nbf</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>let res = e.absorb_jwt("token");
-<a id="__codelineno-169-2" name="__codelineno-169-2" href="#__codelineno-169-2"></a>// e.sub == "alice", e.role == "admin", e.exp == 1735689600
+<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>let res = e.absorb_jwt("token");
+<a id="__codelineno-170-2" name="__codelineno-170-2" href="#__codelineno-170-2"></a>// e.sub == "alice", e.role == "admin", e.exp == 1735689600
 </code></pre></div>
 <h4 id="eabsorb_regexfield-pattern-options"><code>e.absorb_regex(field, pattern [, options])</code><a class="headerlink" href="#eabsorb_regexfield-pattern-options" title="Permanent link">&para;</a></h4>
 <p>Merge the <strong>named</strong> capture groups (<code>(?P&lt;name&gt;...)</code>) of the first match. Numbered groups are ignored. A pattern that does not compile is a script error, like an unknown option. On no match the status is <code>"empty"</code> and the event is left unchanged.</p>
 <p>Values are always <strong>strings</strong>, even all-digit ones, so convert before comparing numbers (<code>"503" &gt;= 500</code> is quietly <code>false</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>e.absorb_regex("line", #"(?P&lt;status&gt;\d{3}) (?P&lt;bytes&gt;\d+)$"#, #{keep_source: true});
-<a id="__codelineno-170-2" name="__codelineno-170-2" href="#__codelineno-170-2"></a>e.status = e.status.to_int();
-<a id="__codelineno-170-3" name="__codelineno-170-3" href="#__codelineno-170-3"></a>e.bytes = e.bytes.to_int();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>e.absorb_regex("line", #"(?P&lt;status&gt;\d{3}) (?P&lt;bytes&gt;\d+)$"#, #{keep_source: true});
+<a id="__codelineno-171-2" name="__codelineno-171-2" href="#__codelineno-171-2"></a>e.status = e.status.to_int();
+<a id="__codelineno-171-3" name="__codelineno-171-3" href="#__codelineno-171-3"></a>e.bytes = e.bytes.to_int();
 </code></pre></div>
 <p>For whole-line parsing at input time, <code>-f 'regex:...'</code> is usually simpler (<a href="../formats/#regex-format">Regex Format</a>).</p>
 <hr />
@@ -8145,28 +8171,28 @@ instead of <code>replace()</code>.</p>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>print(span.label + ": " + span.size + " events");
+<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>print(span.label + ": " + span.size + " events");
 </code></pre></div>
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> are datetimes for time spans (half-open window) and idle spans (first and last event); <code>()</code> for count and field spans.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>if span.start != () { print(`${span.start} → ${span.end}`) }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>if span.start != () { print(`${span.start} → ${span.end}`) }
 </code></pre></div>
 <p><code>span.first_ts</code> and <code>span.last_ts</code> are the parsed timestamps of the first and last events in the span, in arrival order, for every span mode; <code>()</code> when no event in the span had a timestamp. They say when a count or field span actually ran, and when events actually arrived inside a time window.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>print(`${span.label}: ${span.first_ts} → ${span.last_ts}`)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>print(`${span.label}: ${span.first_ts} → ${span.last_ts}`)
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>
 <p><code>span.size</code> is the number of events that passed the filters and entered the span. <code>span.events</code> holds them in arrival order, each with <code>line</code>, <code>line_num</code>, <code>filename</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code> and <code>span_status</code> added.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>let rts = span.events.pluck_as_nums("rt");
-<a id="__codelineno-174-2" name="__codelineno-174-2" href="#__codelineno-174-2"></a>let max_rt = if rts.is_empty() { () } else { rts.max() };
+<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>let rts = span.events.pluck_as_nums("rt");
+<a id="__codelineno-175-2" name="__codelineno-175-2" href="#__codelineno-175-2"></a>let max_rt = if rts.is_empty() { () } else { rts.max() };
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> maps metric names to what <code>track_*()</code> recorded while this span was open. Additive trackers appear: <code>track_freq</code>, <code>track_sum</code>, <code>track_inc</code>, <code>track_avg</code> and <code>track_unique</code> (for <code>track_unique</code>, the values first seen in this span), plus <code>track_min</code>/<code>track_max</code> as this span's own extremes, and the count/sum/avg/min/max parts of <code>track_stats</code>. Zero values are omitted, as is a minimum or maximum the span never recorded.</p>
 <h4 id="spanmetricname"><code>span.metric(name)</code><a class="headerlink" href="#spanmetricname" title="Permanent link">&para;</a></h4>
 <p>Returns one per-span metric value, or <code>0</code> when the span recorded none; dotted names reach into <code>track_freq</code> tables (<code>span.metric("level.ERROR")</code>). Prefer it over indexing <code>span.metrics</code>, which yields <code>()</code> for an omitted zero and breaks arithmetic. For a non-additive metric (see below) it returns <code>()</code>, not <code>0</code>: such a metric has no per-span value, and <code>0</code> would read as data.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>// -e 'track_inc("events"); if e.status &gt;= 500 { track_inc("failures") }'
-<a id="__codelineno-175-2" name="__codelineno-175-2" href="#__codelineno-175-2"></a>let hits = span.metric("events");
-<a id="__codelineno-175-3" name="__codelineno-175-3" href="#__codelineno-175-3"></a>let ratio = if hits &gt; 0 { span.metric("failures") * 100 / hits } else { 0 };
-<a id="__codelineno-175-4" name="__codelineno-175-4" href="#__codelineno-175-4"></a>print(`${span.label}: ${ratio}% failures`);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>// -e 'track_inc("events"); if e.status &gt;= 500 { track_inc("failures") }'
+<a id="__codelineno-176-2" name="__codelineno-176-2" href="#__codelineno-176-2"></a>let hits = span.metric("events");
+<a id="__codelineno-176-3" name="__codelineno-176-3" href="#__codelineno-176-3"></a>let ratio = if hits &gt; 0 { span.metric("failures") * 100 / hits } else { 0 };
+<a id="__codelineno-176-4" name="__codelineno-176-4" href="#__codelineno-176-4"></a>print(`${span.label}: ${ratio}% failures`);
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Non-additive trackers are omitted</p>
@@ -8180,26 +8206,26 @@ them from <code>span.events</code>, as in the example above.</p>
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty();
 </code></pre></div></p>
 <p><strong>IP anonymization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>e.masked_ip = e.client_ip.mask_ip();
-<a id="__codelineno-177-2" name="__codelineno-177-2" href="#__codelineno-177-2"></a>e.ip_alias = pseudonym(e.client_ip, "ips");
+<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>e.masked_ip = e.client_ip.mask_ip();
+<a id="__codelineno-178-2" name="__codelineno-178-2" href="#__codelineno-178-2"></a>e.ip_alias = pseudonym(e.client_ip, "ips");
 </code></pre></div></p>
 <p><strong>Time filtering</strong> (or use <code>--since</code>/<code>--until</code>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>if meta.parsed_ts != () &amp;&amp; meta.parsed_ts.hour() &gt;= 22 { e.night = true }
-<a id="__codelineno-178-2" name="__codelineno-178-2" href="#__codelineno-178-2"></a>if to_datetime(e.created_at) &gt; to_datetime("2024-01-01") { e.recent = true }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>if meta.parsed_ts != () &amp;&amp; meta.parsed_ts.hour() &gt;= 22 { e.night = true }
+<a id="__codelineno-179-2" name="__codelineno-179-2" href="#__codelineno-179-2"></a>if to_datetime(e.created_at) &gt; to_datetime("2024-01-01") { e.recent = true }
 </code></pre></div></p>
 <p><strong>Metrics:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>track_freq("service", e.service);
-<a id="__codelineno-179-2" name="__codelineno-179-2" href="#__codelineno-179-2"></a>track_sum("bytes", e.response_size);
-<a id="__codelineno-179-3" name="__codelineno-179-3" href="#__codelineno-179-3"></a>track_unique("users", e.user_id);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>track_freq("service", e.service);
+<a id="__codelineno-180-2" name="__codelineno-180-2" href="#__codelineno-180-2"></a>track_sum("bytes", e.response_size);
+<a id="__codelineno-180-3" name="__codelineno-180-3" href="#__codelineno-180-3"></a>track_unique("users", e.user_id);
 </code></pre></div></p>
 <p><strong>Fan-out:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>emit_each(e.users, #{batch_id: e.batch_id});
+<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>emit_each(e.users, #{batch_id: e.batch_id});
 </code></pre></div></p>
 <p><strong>Safe field access:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>e.user_name = e.get_path("user.profile.name", "unknown");
+<div class="highlight"><pre><span></span><code><a id="__codelineno-182-1" name="__codelineno-182-1" href="#__codelineno-182-1"></a>e.user_name = e.get_path("user.profile.name", "unknown");
 </code></pre></div></p>
 <p>See also: <a href="../../guide/scripting/">Scripting guide</a>, <a href="../rhai-cheatsheet/">Rhai Cheatsheet</a>, <a href="../script-variables/">Script Variables</a>, <code>kelora --help-rhai</code>.</p>
 
