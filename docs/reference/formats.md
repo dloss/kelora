@@ -309,6 +309,8 @@ Each line is tested in this order, first match wins:
 
 **JSON arrays:** a sample that starts like a JSON array of objects (`[` on its own line followed by `{`, or `[{`) is read as `line`, and a hint names the command that reads it. On stdin only `[{` on the first line is recognized.
 
+**Zeek logs:** Zeek's default TSV output (first line `#separator \x09`) has no built-in format; a hint says so. `--ignore-lines '^#'` reads it as `tsvnh` (columns `c1`, `c2`, …, as text). Zeek's JSON output (`redef LogAscii::use_json = T;`) is read with Zeek's field names, such as `id.orig_h`, and its types; in scripts, read such keys as `e["id.orig_h"]`.
+
 `-v` prints the decision, e.g. `Auto-detected format: cascade(json,line) (mixed formats in first 6 lines)`.
 
 ### Auto-Detection Per File

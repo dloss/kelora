@@ -1285,3 +1285,16 @@ fn test_parallel_stdin_csv_header_after_skip_lines() {
         "{stdout}\n{stderr}"
     );
 }
+
+#[test]
+fn test_zeek_tsv_gets_hint_naming_working_routes() {
+    let input = "#separator \\x09\n#set_separator\t,\n#fields\tts\tuid\tid.orig_h\n#types\ttime\tstring\taddr\n1761400813.095819\tCd6GncfBAepfJBd0Kh\t10.0.1.15\n";
+    let (_stdout, stderr, code) = run_kelora_with_file(&[], input);
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stderr.contains("Zeek log"), "{stderr}");
+    assert!(stderr.contains("--ignore-lines '^#'"), "{stderr}");
+    assert!(
+        !stderr.contains("timestamp LEVEL message"),
+        "the generic fallback advice doesn't apply: {stderr}"
+    );
+}

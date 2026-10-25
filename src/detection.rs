@@ -103,6 +103,9 @@ pub struct DetectedFormat {
     /// The sample looks like one JSON array (`[` then `{`, or `[{…`) rather
     /// than JSON lines. Feeds the fallback hint only.
     pub json_array: bool,
+    /// The input starts like a Zeek TSV log (`#separator` directive), which no
+    /// built-in format reads. Feeds the fallback hint only.
+    pub zeek: bool,
     /// The sample looks like TAP test output with `#` comments, whose log
     /// lines `--unwrap tap` would parse. Feeds the fallback hint only.
     pub tap: bool,
@@ -361,6 +364,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         }),
@@ -376,6 +380,8 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             };
             let json_array = matches!(detected, config::InputFormat::Line)
                 && looks_like_json_array(std::iter::once(trimmed_line));
+            let zeek = matches!(detected, config::InputFormat::Line)
+                && looks_like_zeek(std::iter::once(trimmed_line));
             Ok(DetectedFormat {
                 format: detected,
                 had_input: true,
@@ -387,6 +393,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 cascade_suggestion: None,
                 leading_ts_tokens,
                 json_array,
+                zeek,
                 // One line can't show TAP's shape; stdin keeps first-line detection.
                 tap: false,
                 raw_lines_read: 0,
@@ -436,6 +443,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read,
         });
@@ -521,6 +529,7 @@ fn detect_format_from_tap_reader<R: std::io::BufRead>(
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         });
@@ -547,6 +556,8 @@ fn detected_from_lines(head_lines: &[String], probe_lines: &[String]) -> Result<
     };
     let json_array = matches!(detected.format, config::InputFormat::Line)
         && looks_like_json_array(trimmed.iter().copied());
+    let zeek = matches!(detected.format, config::InputFormat::Line)
+        && looks_like_zeek(trimmed.iter().copied());
     let tap = matches!(detected.format, config::InputFormat::Line)
         && crate::pipeline::tap::looks_like_tap(trimmed.iter().copied());
     Ok(DetectedFormat {
@@ -560,6 +571,7 @@ fn detected_from_lines(head_lines: &[String], probe_lines: &[String]) -> Result<
         cascade_suggestion: detected.suggested_cascade,
         leading_ts_tokens,
         json_array,
+        zeek,
         tap,
         raw_lines_read: 0,
     })
@@ -794,6 +806,7 @@ pub fn detect_format_for_parallel_mode(
                 cascade_suggestion: None,
                 leading_ts_tokens: None,
                 json_array: false,
+                zeek: false,
                 tap: false,
                 raw_lines_read: 0,
             },
@@ -875,6 +888,9 @@ pub fn format_detected_format_notice(
         if detected.json_array {
             return Some(config.format_hint_message(JSON_ARRAY_HINT));
         }
+        if detected.zeek {
+            return Some(config.format_hint_message(ZEEK_HINT));
+        }
         if detected.tap {
             return Some(config.format_hint_message(TAP_HINT));
         }
@@ -902,6 +918,17 @@ fn fallback_hint_text(leading_ts_tokens: Option<usize>) -> String {
 }
 
 const TAP_HINT: &str = "Input looks like TAP test output (ok/not ok results, # comments). To parse the log lines in its comments, with each line tagged by its test: --unwrap tap.";
+
+const ZEEK_HINT: &str = "Input looks like a Zeek log in TSV format, which kelora has no format for. --ignore-lines '^#' reads it as tab-separated columns c1, c2, … (names are on the #fields line, values are text). For named, typed fields, have Zeek write JSON (redef LogAscii::use_json = T;), which kelora reads as-is.";
+
+/// Whether the sample starts like a Zeek TSV log: Zeek's ASCII writer puts the
+/// `#separator` directive on the first line of every log file.
+fn looks_like_zeek<'a>(lines: impl IntoIterator<Item = &'a str>) -> bool {
+    lines
+        .into_iter()
+        .find(|line| !line.trim().is_empty())
+        .is_some_and(|line| line.starts_with("#separator "))
+}
 
 const JSON_ARRAY_HINT: &str = "Input looks like one JSON array; -f json reads one object per line. For one event per element: -f line -M all -e 'emit_each(e.line.parse_json())'. See --help-formats.";
 
@@ -1570,6 +1597,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         };
@@ -1601,6 +1629,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
             ..detected
@@ -1660,6 +1689,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         };
@@ -1690,6 +1720,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         };
@@ -1729,6 +1760,7 @@ mod tests {
             cascade_suggestion: Some("json,logfmt,line".to_string()),
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         };
@@ -1770,6 +1802,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
             ..detected
@@ -1850,6 +1883,7 @@ mod tests {
             cascade_suggestion: None,
             leading_ts_tokens: None,
             json_array: false,
+            zeek: false,
             tap: false,
             raw_lines_read: 0,
         };
@@ -2029,6 +2063,13 @@ mod tests {
             leading_ts_tokens(["Jan 15 10:00:00 INFO a", "x", "y", "z"]),
             None
         );
+    }
+
+    #[test]
+    fn zeek_tsv_is_recognized_by_its_first_directive() {
+        assert!(looks_like_zeek(["#separator \\x09", "#set_separator\t,"]));
+        assert!(!looks_like_zeek(["# separator comment"]));
+        assert!(!looks_like_zeek(["ts\tuid\t#separator"]));
     }
 
     #[test]
