@@ -200,3 +200,81 @@ fn drain_diff_does_not_warn_about_tap_lines() {
         "stderr: {stderr}"
     );
 }
+
+/// Shape of node's test runner: JSON logs in comments, YAML blocks, tally.
+#[test]
+fn node_test_runner_output() {
+    let input = r#"TAP version 13
+# {"ts":"2026-10-21T11:31:38.549Z","level":"info","msg":"source run started","runId":"71387a8c"}
+# Subtest: pipeline stores versions
+ok 1 - pipeline stores versions
+  ---
+  duration_ms: 39.9579
+  type: 'test'
+  ...
+# {"ts":"2026-10-21T11:31:39.121Z","level":"warn","msg":"fetch retry","attempt":2}
+# Subtest: retries a failed fetch
+ok 2 - retries a failed fetch
+  ---
+  duration_ms: 1730.7
+  type: 'test'
+  ...
+1..2
+# tests 2
+# pass 2
+# duration_ms 1803.2
+"#;
+    let (stdout, stderr, code) = run_kelora_with_input(&["--unwrap", "tap", "-F", "json"], input);
+    assert_eq!(code, 0, "stderr: {stderr}");
+    let events = events(&stdout);
+    let summary: Vec<String> = events
+        .iter()
+        .map(|e| {
+            format!(
+                "{} {} {}",
+                e.get("msg").or(e.get("line")).unwrap(),
+                e["test_num"],
+                e["test_duration_ms"]
+            )
+        })
+        .collect();
+    assert_eq!(
+        summary,
+        vec![
+            "\"source run started\" 1 39.9579",
+            "\"ok 1 - pipeline stores versions\" 1 39.9579",
+            "\"fetch retry\" 2 1730.7",
+            "\"ok 2 - retries a failed fetch\" 2 1730.7",
+        ]
+    );
+}
+
+/// `make test` / prove without -v: a file's stderr comes before its header.
+#[test]
+fn non_verbose_prove_output() {
+    let input = "t/00-load.t .......... ok
+# [warning] connection refused
+Can't call method \"run\" on an undefined value at t/db.t line 17.
+# Tests were run but no plan was declared and done_testing() was not seen.
+# Looks like your test exited with 255 just after 2.
+t/db.t ............... 
+Dubious, test returned 255 (wstat 65280, 0xff00)
+Failed 2/2 subtests 
+t/util.t ............. ok
+";
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &["--unwrap", "tap", "-f", "line", "-k", "test_file,line"],
+        input,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert_eq!(
+        stdout,
+        "test_file='t/00-load.t' line='t/00-load.t .......... ok'
+test_file='t/db.t' line='[warning] connection refused'
+test_file='t/db.t' line='Can\\'t call method \"run\" on an undefined value at t/db.t line 17.'
+test_file='t/db.t' line='Dubious, test returned 255 (wstat 65280, 0xff00)'
+test_file='t/db.t' line='Failed 2/2 subtests '
+test_file='t/util.t' line='t/util.t ............. ok'
+"
+    );
+}

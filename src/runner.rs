@@ -1366,10 +1366,10 @@ fn run_pipeline_sequential_internal<W: Write>(
         return Ok(());
     }
 
-    if let Some(release) = tap.as_mut().and_then(|tap| tap.finish()) {
+    if let Some(releases) = tap.as_mut().map(|tap| tap.finish()) {
         if !pipeline.is_take_limit_exhausted() {
             emit_tap_releases(
-                vec![release],
+                releases,
                 &mut pipeline,
                 &mut ctx,
                 config,
@@ -1608,9 +1608,9 @@ fn handle_reader_message<W: Write>(
     match message {
         ReaderMessage::FormatDetected { detected } => {
             // The previous file's held lines still belong to its parser.
-            if let Some(release) = tap.as_mut().and_then(|tap| tap.finish()) {
+            if let Some(releases) = tap.as_mut().map(|tap| tap.finish()) {
                 emit_tap_releases(
-                    vec![release],
+                    releases,
                     pipeline,
                     pipeline_ctx,
                     config,

@@ -308,8 +308,9 @@ The separator defaults to `|`; change it with `--prefix-sep`.
 ## Logs inside test output (TAP)
 
 Perl tests that log through `note()` or `diag()` leave the log lines in the
-`#` comments of their TAP output. Capture the output (`prove -v --merge t/ >
-run.t`) and `--unwrap tap` parses the comment text as the log:
+`#` comments of their TAP output; so does anything else that writes TAP, such
+as node's test runner. Capture the output (`prove -v --merge t/ > run.t`) and
+`--unwrap tap` parses the comment text as the log:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/tap_fail.t --unwrap tap -f logfmt,line -l warn,error \
@@ -323,13 +324,18 @@ logs before it reports:
 |---|---|
 | `test_num`, `test_name`, `test_ok` | the next `ok N` / `not ok N` line |
 | `test_directive` | `TODO` or `SKIP` on that line, if any |
+| `test_duration_ms` | `duration_ms` in the YAML block after that line (TAP 13, node) |
 | `test_file` | prove's `t/checkout.t ..` header |
 
 Result lines and other lines outside comments (prove's summary, stray output)
-become events with the text in `line`. The plan (`1..N`), blank lines and
-Test::More's own failure messages (`#   Failed test …`, `# Looks like you
-failed …`) are dropped. Lines after the last result keep `test_file` but get no
-test fields.
+become events with the text in `line`. The plan (`1..N`), blank lines, YAML
+blocks, node's closing tally (`# tests 12`) and Test::More's own failure
+messages (`#   Failed test …`, `# Looks like you failed …`) are dropped. Lines
+after the last result keep `test_file` but get no test fields.
+
+Without `-v`, prove prints no result lines and a file's `diag()` output comes
+before its header (`t/db.t ...... `), so lines get only `test_file`, taken from
+the header that follows them.
 
 Format detection, `--multiline` and the parser see the comment text;
 `--keep-lines`, `--ignore-lines`, `--skip-lines` and `--section-*` see the raw
