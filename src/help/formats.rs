@@ -166,7 +166,8 @@ spring-boot
 
 syslog
   RFC5424/RFC3164 system logs, including rsyslog's RFC 3339 timestamps
-  (2025-08-31T09:36:55.418891+02:00 host prog[pid]: msg; Debian/Ubuntu default)
+  (2025-08-31T09:36:55.418891+02:00 host prog[pid]: msg; Debian/Ubuntu default;
+   also 2025-03-16 13:54:59+01 as in macOS install.log)
   Fields: pri, facility, severity, level, ts, host, prog, pid, msg
           [msgid, version - RFC5424 only]
 

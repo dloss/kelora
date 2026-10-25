@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **Syslog with a space-separated ISO timestamp** - macOS's `/var/log/install.log` (`2025-03-16 13:54:59+01 host prog[pid]: msg`) was read as `line`. Syslog now accepts a space instead of `T` and an hours-only offset, and timestamps with an hours-only offset (`+01`, also PostgreSQL's `timestamptz`) now parse. An ISO timestamp still needs an offset to count as syslog.
 - **`-n` with `--freq` or `--describe` warns** - `--freq path -n 3` read as "top 3 rows" but counted only the first 3 events, giving plausible but wrong counts. kelora now warns that `-n` limits events, not rows; drop `-n` and pipe the table to `head`.
 - **Shorter repeated script errors** - A filter error that hits every event printed its multi-line diagnostic once per sample, headed "Filter error: filter error". The diagnostic now prints once; later samples read `same error`.
 - **Clearer unknown-flag and `--since` errors** - `--grep` now points to `--keep-lines REGEX` (raw-line search) as well as `--filter`; `--top` points to `--freq`/`track_top_by`. An unparsable `--since`/`--until` lists working forms (`'2024-01-15 10:00'`, `-1h`, `yesterday`) and `--help-time`.

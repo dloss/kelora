@@ -87,9 +87,10 @@ kelora -f 'csv status:int bytes:int response_time:float' access.csv
 <165>1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
 <34>Jan 15 10:30:00 myhost myapp[1234]: Connection failed
 2024-01-15T10:30:00.123456+00:00 myhost myapp[1234]: Connection failed
+2024-01-15 10:30:00+01 myhost myapp[1234]: Connection failed
 ```
 
-The third line is the RFC 3164 layout with an RFC 3339 timestamp, as rsyslog writes `/var/log/syslog` by default on Debian and Ubuntu; it is parsed as RFC 3164 and its timestamp carries the year and offset.
+The third line is the RFC 3164 layout with an RFC 3339 timestamp, as rsyslog writes `/var/log/syslog` by default on Debian and Ubuntu; it is parsed as RFC 3164 and its timestamp carries the year and offset. The fourth is the same with a space and an hours-only offset, as macOS writes `/var/log/install.log`. An ISO timestamp needs an offset to count as syslog; without one the line is left to the application-log formats.
 
 | Field | Type | RFC 5424 | RFC 3164 | Description |
 |-------|------|----------|----------|-------------|

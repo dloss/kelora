@@ -50,9 +50,12 @@ impl SyslogParser {
         // (`2025-08-31T09:36:55.418891-07:00 host prog[pid]: msg`): rsyslog's
         // built-in RSYSLOG_FileFormat, which Debian (since 2022) and Ubuntu
         // write to /var/log/syslog by default, and `journalctl -o short-iso`
-        // (`+0200` offset, no colon). Same layout otherwise.
+        // (`+0200` offset, no colon). macOS's /var/log/install.log writes the
+        // same with a space and an hours-only offset (`2025-03-16 13:54:59+01`).
+        // The offset stays required: without it, `2025-03-16 13:54:59 app
+        // worker: started` from any app log would read as syslog.
         let rfc3164_regex = multiline_aware_regex(
-            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2}))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
+            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}(?::?\d{2})?))\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
         ).context("Failed to compile RFC3164 regex")?;
 
         Ok(Self {
@@ -352,6 +355,23 @@ mod tests {
             event.parsed_ts.unwrap().to_rfc3339(),
             "2024-10-08T10:16:11+00:00"
         );
+
+        // macOS /var/log/install.log: space separator, hours-only offset.
+        let event = EventParser::parse(
+            &parser,
+            "2025-03-16 13:54:59+01 Mac-mini softwareupdated[262]: SoftwareUpdate: Fire periodic check",
+        )
+        .unwrap();
+        assert_eq!(field_of(&event, "ts"), "2025-03-16 13:54:59+01");
+        assert_eq!(field_of(&event, "prog"), "softwareupdated");
+        assert_eq!(
+            event.parsed_ts.unwrap().to_rfc3339(),
+            "2025-03-16T12:54:59+00:00"
+        );
+    }
+
+    fn field_of(event: &Event, name: &str) -> String {
+        event.fields.get(name).unwrap().to_string()
     }
 
     #[test]
@@ -369,6 +389,12 @@ mod tests {
             "2022-06-02T02:16:57.414Z cpu31:1001392590 opID=827cfaf)<unk>: UWVMKSyscall: ForkExec",
             // No offset: not what rsyslog writes.
             "2024-01-02T15:04:05 host prog: msg",
+            "2024-01-02 15:04:05 host prog: msg",
+            "2024-01-02 15:04:05.123 app worker: started",
+            // PostgreSQL: a zone name is not an offset.
+            "2024-01-02 15:04:05.123 UTC [123] LOG:  checkpoint starting: time",
+            // Space-separated with an offset is still an app log when a level follows.
+            "2024-01-02 15:04:05+01 INFO main: started",
         ] {
             assert!(
                 EventParser::parse(&parser, line).is_err(),

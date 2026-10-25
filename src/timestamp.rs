@@ -110,7 +110,15 @@ impl AdaptiveTsParser {
         }
 
         // Try format list with adaptive reordering
-        self.try_formats_with_reordering(ts_str, default_timezone, input_year)
+        if let Some(dt) = self.try_formats_with_reordering(ts_str, default_timezone, input_year) {
+            return Some(dt);
+        }
+
+        // Hours-only offsets (`2025-03-16 13:54:59+01`: macOS install.log,
+        // PostgreSQL timestamptz) are outside chrono's `%z`; retry as `+01:00`.
+        // Only reached when everything else failed, so the hot path is unchanged.
+        let expanded = expand_hours_only_offset(ts_str)?;
+        self.parse_ts_with_year(&expanded, None, default_timezone, input_year)
     }
 
     /// Try formats with timezone configuration and move successful ones to front
@@ -270,6 +278,37 @@ impl Default for AdaptiveTsParser {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// `…13:54:59+01` → `…13:54:59+01:00`. `None` unless the string ends in a
+/// clock time (`HH:MM:SS`, optional fraction) followed by a two-digit offset,
+/// so a date such as `2024-01-15` is never mistaken for one.
+fn expand_hours_only_offset(ts: &str) -> Option<String> {
+    let b = ts.as_bytes();
+    let n = b.len();
+    if n < 11
+        || !matches!(b[n - 3], b'+' | b'-')
+        || !b[n - 2].is_ascii_digit()
+        || !b[n - 1].is_ascii_digit()
+    {
+        return None;
+    }
+    let head = &ts[..n - 3];
+    let clock = match head.rfind(['.', ',']) {
+        Some(i) if i + 1 < head.len() && head[i + 1..].bytes().all(|c| c.is_ascii_digit()) => {
+            &head[..i]
+        }
+        _ => head,
+    };
+    let t = clock.as_bytes();
+    let m = t.len();
+    let is_clock = m >= 8
+        && t[m - 3] == b':'
+        && t[m - 6] == b':'
+        && [1, 2, 4, 5, 7, 8]
+            .iter()
+            .all(|&k| t[m - k].is_ascii_digit());
+    is_clock.then(|| format!("{ts}:00"))
 }
 
 /// Count a timestamp that states a non-zero UTC offset (see
@@ -1086,6 +1125,28 @@ mod tests {
     use super::*;
     use chrono::{Datelike, Timelike};
     use proptest::prelude::*;
+
+    #[test]
+    fn test_hours_only_offset() {
+        // macOS install.log and PostgreSQL timestamptz write `+01`, which
+        // chrono's `%z` rejects; the parser retries it as `+01:00`.
+        let mut parser = AdaptiveTsParser::new();
+        for (input, expected) in [
+            ("2025-03-16 13:54:59+01", "2025-03-16T12:54:59+00:00"),
+            ("2025-03-16T13:54:59-07", "2025-03-16T20:54:59+00:00"),
+            ("2024-01-15 10:00:00.5+01", "2024-01-15T09:00:00.500+00:00"),
+        ] {
+            assert_eq!(
+                parser.parse_ts(input).map(|dt| dt.to_rfc3339()).as_deref(),
+                Some(expected),
+                "{input}"
+            );
+        }
+        // Only a clock time followed by two digits counts as an offset.
+        assert_eq!(expand_hours_only_offset("2024-01-15"), None);
+        assert_eq!(expand_hours_only_offset("10:00-07"), None);
+        assert_eq!(expand_hours_only_offset("16.03.2025 13:54+01"), None);
+    }
 
     fn arb_utc_datetime() -> impl Strategy<Value = DateTime<Utc>> {
         (-2208988800i64..=253402300799i64, 0u32..1_000_000_000).prop_map(|(secs, nanos)| {
