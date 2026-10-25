@@ -294,8 +294,53 @@ impl<R: BufRead> PeekableLineReader<R> {
         Ok(lines)
     }
 
+    /// Peek at up to `max_lines` non-empty lines that `keep` accepts, without
+    /// consuming anything. `keep` sees every raw line in order, blank ones
+    /// included (with the line ending removed), so it can count lines for
+    /// `--skip-lines` and track `--section-*` state. Lines buffered by an
+    /// earlier peek are rescanned first; reading stops at EOF, after
+    /// `max_bytes` buffered bytes, or when `keep` returns `None`.
+    pub fn peek_lines_where(
+        &mut self,
+        max_lines: usize,
+        max_bytes: usize,
+        mut keep: impl FnMut(&str) -> Option<bool>,
+    ) -> io::Result<Vec<String>> {
+        debug_assert_eq!(self.prefix_pos, 0, "peek after consumption would re-buffer");
+
+        let mut lines = Vec::new();
+        let mut pos = 0;
+        while lines.len() < max_lines {
+            if pos == self.buffered_prefix.len() {
+                if self.buffered_prefix.len() >= max_bytes
+                    || self.inner.read_until(b'\n', &mut self.buffered_prefix)? == 0
+                {
+                    break;
+                }
+                self.saw_any_input = true;
+            }
+            let end = self.buffered_prefix[pos..]
+                .iter()
+                .position(|&b| b == b'\n')
+                .map_or(self.buffered_prefix.len(), |i| pos + i + 1);
+            let line = String::from_utf8_lossy(&self.buffered_prefix[pos..end]).into_owned();
+            pos = end;
+            match keep(line.trim_end_matches(['\r', '\n'])) {
+                None => break,
+                Some(true) if !line.trim().is_empty() => lines.push(line),
+                Some(_) => {}
+            }
+        }
+        Ok(lines)
+    }
+
     pub fn saw_any_input(&self) -> bool {
         self.saw_any_input
+    }
+
+    /// Bytes buffered by peeking so far.
+    pub fn buffered_len(&self) -> usize {
+        self.buffered_prefix.len()
     }
 }
 

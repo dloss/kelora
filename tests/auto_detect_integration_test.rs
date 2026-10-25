@@ -1195,7 +1195,75 @@ fn test_real_app_log_fixtures_detect_as_their_format() {
     }
 }
 
+// Detection samples the lines the parser will see: what --skip-lines,
+// --keep-lines, --ignore-lines and --section-* let through. A CSV export with
+// a preamble used to fall back to `line` even with the preamble skipped.
 const CSV_WITH_PREAMBLE: &str = "Report generated 2025-10-25 by exporter\n\nuser,action,bytes\nalice,login,10\nbob,upload,2000\n";
+
+#[test]
+fn test_auto_detect_after_skip_lines_file_and_stdin() {
+    let expected = "user='alice' action='login' bytes='10'";
+    for parallel in [false, true] {
+        let mut args = vec!["--skip-lines", "2"];
+        if parallel {
+            args.push("-P");
+        }
+        let (stdout, stderr, code) = run_kelora_with_file(&args, CSV_WITH_PREAMBLE);
+        assert_eq!(code, 0, "{stderr}");
+        assert!(
+            stdout.contains(expected),
+            "file, -P={parallel}: {stdout}\n{stderr}"
+        );
+
+        let (stdout, stderr, code) = run_kelora_with_input(&args, CSV_WITH_PREAMBLE);
+        assert_eq!(code, 0, "{stderr}");
+        assert!(
+            stdout.contains(expected),
+            "stdin, -P={parallel}: {stdout}\n{stderr}"
+        );
+    }
+}
+
+#[test]
+fn test_auto_detect_after_ignore_lines() {
+    let input = "# exported by tool\n{\"a\": 1}\n{\"a\": 2}\n";
+    let (stdout, stderr, code) = run_kelora_with_file(&["--ignore-lines", "^#"], input);
+    assert_eq!(code, 0, "{stderr}");
+    // Plain JSON, not a json,line cascade with a _format field.
+    assert_eq!(stdout, "a=1\na=2\n", "{stderr}");
+}
+
+#[test]
+fn test_auto_detect_after_section() {
+    let input = "build log, not data\n--- data\n{\"a\": 1}\n";
+    let (stdout, stderr, code) = run_kelora_with_file(&["--section-after", "^--- data"], input);
+    assert_eq!(code, 0, "{stderr}");
+    assert_eq!(stdout, "a=1\n", "{stderr}");
+}
+
+#[test]
+fn test_auto_detect_skip_lines_carries_over_to_next_file() {
+    // --skip-lines counts from the start of the run: a first file that is all
+    // preamble leaves the rest of the count for the next one.
+    let dir = TempDir::new().unwrap();
+    let first = dir.path().join("a.txt");
+    let second = dir.path().join("b.csv");
+    fs::write(&first, "preamble\n").unwrap();
+    fs::write(
+        &second,
+        "more preamble\nuser,action,bytes\nalice,login,10\n",
+    )
+    .unwrap();
+    let (stdout, stderr, code) = run_kelora_with_files(
+        &["--skip-lines", "2"],
+        &[first.to_str().unwrap(), second.to_str().unwrap()],
+    );
+    assert_eq!(code, 0, "{stderr}");
+    assert_eq!(
+        stdout, "user='alice' action='login' bytes='10'\n",
+        "{stderr}"
+    );
+}
 
 #[test]
 fn test_parallel_stdin_csv_header_after_skip_lines() {

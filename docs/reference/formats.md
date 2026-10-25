@@ -290,6 +290,7 @@ Used by `csv`/`tsv`, `cols:` and `regex:`. A value that cannot be converted (`ab
 
 - **stdin:** from the first non-empty line. A live pipe never waits for more input.
 - **Files:** from up to the first 64 non-empty lines (max 256 KiB) of the first file that has content. Uncompressed files of 32 KiB or more are also sampled at 1/4, 1/2, 3/4 and the tail. Gzip/zstd files are sampled from the head only.
+- Only lines that `--skip-lines`, `--head`, `--section-*`, `--keep-lines` and `--ignore-lines` let through are sampled, so `--skip-lines 1` on a CSV with a title line, or `--ignore-lines '^#'` on a file with comment lines, detects the format of the data.
 
 Each line is tested in this order, first match wins:
 

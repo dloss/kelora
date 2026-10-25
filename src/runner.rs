@@ -195,7 +195,7 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
                 &config.input.files,
                 config.input.no_input,
                 config.processing.strict,
-                config.input.detection_prefix_sep(),
+                &detection::DetectionInput::from_config(&config.input),
             )?;
 
             detection::emit_detected_format_notice(config, &detected_format);
@@ -484,13 +484,13 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
         let detected_format = match config.input.unwrap {
             None => detection::detect_format_from_peekable_reader(
                 &mut peekable_reader,
-                config.input.detection_prefix_sep(),
+                &detection::DetectionInput::from_config(&config.input),
             )?,
             unwrap => detection::detect_format_sampled(
                 &mut peekable_reader,
                 None,
                 unwrap,
-                config.input.detection_prefix_sep(),
+                &detection::DetectionInput::from_config(&config.input),
             )?,
         };
 
@@ -522,7 +522,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
             &sorted_files,
             config.processing.strict,
             config.input.unwrap,
-            config.input.detection_prefix_sep(),
+            &detection::DetectionInput::from_config(&config.input),
         )?;
 
         detection::emit_detected_format_notice(config, &detected_format);
@@ -693,7 +693,7 @@ fn spawn_file_reader_auto_per_file(
     ctrl_rx: Receiver<Ctrl>,
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
-        for file_path in files {
+        for (file_index, file_path) in files.into_iter().enumerate() {
             match ctrl_rx.try_recv() {
                 Ok(Ctrl::Shutdown { immediate }) => {
                     let _ = sender.send(ReaderMessage::Eof);
@@ -714,11 +714,17 @@ fn spawn_file_reader_auto_per_file(
             // the sampled bytes stay buffered in the peekable reader and are
             // replayed below, so nothing is read twice or skipped. Mid-file
             // probes use a separate read-only handle on the path.
+            // --skip-lines and --head count from the start of the run.
+            let detection_input = if file_index == 0 {
+                detection::DetectionInput::from_config(&config.input)
+            } else {
+                detection::DetectionInput::from_config(&config.input).later_file()
+            };
             let detected = detection::detect_format_sampled(
                 &mut peekable_reader,
                 Some(&file_path),
                 config.input.unwrap,
-                config.input.detection_prefix_sep(),
+                &detection_input,
             )?;
 
             detection::emit_detected_format_notice(&config, &detected);
