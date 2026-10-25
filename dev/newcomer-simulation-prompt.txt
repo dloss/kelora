@@ -1,33 +1,36 @@
-Simulate a new user trying Kelora for the first time, as someone who arrived
-from a Hacker News post. Think out loud as that user: first impressions,
-what you expected, where you hesitate, what makes you want to keep going or
-give up. Be realistic, not polite.
+Simulate a new user trying Kelora for the first time. Think out loud as
+that user: first impressions, what you expected, where you hesitate, what
+makes you want to keep going or give up. Be realistic, not polite.
+
+Vary the run. Earlier runs covered certain ground, so don't repeat it:
+- Skim CHANGELOG.md [Unreleased] and `git log --oneline -40` to see what
+  recent sessions found and fixed; steer away from those areas.
+- Choose a combination of the options below that recent runs haven't
+  covered, and state it in one line at the top of your report. Don't use the
+  examples in brackets as a checklist; they only show the range.
+  - Who: background, role and what brought them here [sysadmin on call,
+    developer debugging their own service, security analyst, data person,
+    someone moving off another tool].
+  - Entry point: where they first meet kelora [README, kelora.dev page,
+    a cookbook recipe, `-h`, a colleague's one-liner].
+  - Logs: a kind of log you haven't tried before. Real files on this machine
+    count, and so do realistic made-up samples of what that person has.
+    Put scratch files in the scratchpad, never in the repo.
+  - Task: one concrete goal that person would have, worked through to an
+    answer, not a tour of features.
+  - Surface: one or two less-travelled parts of the CLI or the Rhai/function
+    library that come up on the way to that goal.
+- Use the dev build (`cargo build`, ./target/debug/kelora) as "installed"
+  kelora. Use the release binary only if you check performance, and note how
+  old it is.
 
 How to play the user:
-- Start the way a newcomer does: skim README.md (as rendered on GitHub), then
-  install. Use the dev build (`cargo build`, ./target/debug/kelora) as
-  "installed" kelora.
-- Before touching examples/, try your own logs: whatever is on this machine
-  (/var/log/*, macOS install.log/system.log, compressed rotations). Also
-  make up realistic samples of what HN readers have: Debian/Ubuntu syslog,
-  journalctl, nginx/Apache, docker/kubectl output, app JSON logs. Put
-  scratch files in the scratchpad, never in the repo.
-- Ask real questions ("who's hammering me?", "errors since 11:00", "top 5
-  slow endpoints", "what changed after the deploy?"). Guess the syntax
-  first, the way a user would (--grep, --top, `level == "error"`,
-  `1 hour ago`, times copied from the log); only then read -h / --help-*.
-- Make the typical first-timer mistakes: forgetting `e.`, `=` vs `==`,
-  wrong case, missing fields, integer division, Python/JS string methods,
-  copying the examples from -h.
-- Try the less obvious surfaces too: interactive mode (no args), piping
-  from stdin, --parallel, time zones and --since/--until, -n combined with
-  aggregations.
-- Do a rough speed check the way HN commenters will: a ~500k-line file
-  against jq / rg / sort|uniq -c, using the release binary if it exists
-  (note how old it is).
-- Pick a different focus each time so repeat runs find new things. Before
-  starting, skim CHANGELOG.md [Unreleased] so you don't re-report what was
-  just fixed.
+- Guess the syntax first, the way that person would (from the tools they
+  already know); only then read -h / --help-* / the docs.
+- Make the mistakes that person would plausibly make, not a fixed list.
+- When the obvious route fails, try what a real user tries next (another
+  flag, a docs search, giving up and piping to another tool) and note which
+  of these kelora made easy.
 
 When something goes wrong, step out of the role and find the cause:
 - Reproduce it minimally and vary inputs until you know the exact trigger.
@@ -40,10 +43,22 @@ Report:
 1. A short narrative of how it felt: what sells it, and where I stumbled,
    in order.
 2. A table of fixes ranked smallest/safest first: problem → where (file:line)
-   → size (trivial/small/medium/needs decision). Prefer fixes that don't
-   break existing behaviour or add much complexity; flag anything that
-   changes behaviour or needs my decision.
+   → size (trivial/small/medium/needs decision) → kind (additive / bug fix /
+   behaviour change). Prefer fixes that don't add much complexity.
 3. Smaller notes (fixtures, stale docs, wording).
+
+Don't break existing behaviour. Users have scripts, configs and habits
+built on current output, flags and exit codes. Prefer additive fixes: a hint,
+a clearer error, a doc fix, a new option.
+- A bug fix may change behaviour, but only where the current behaviour
+  contradicts the docs/help or is obviously not what was meant (wrong data,
+  silently dropped events, a crash). Cite the doc line or explain why it's
+  obviously unintended.
+- If the behaviour is merely surprising, undocumented, or arguable, it isn't
+  a bug: propose it as "needs decision", don't fix it.
+- When unsure, treat it as a behaviour change and ask.
+- For every behaviour-changing fix, say who could notice (output format,
+  exit codes, which events match) and add a CHANGELOG entry that says so.
 
 Don't change code during the simulation. After I pick items:
 - Implement each with a test, following CLAUDE.md conventions (rule of
