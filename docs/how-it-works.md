@@ -15,7 +15,7 @@ read → select lines → join lines → parse → time range → your stages �
 |---|---|---|
 | **Read** | Which bytes? | files, globs, stdin, `.gz`/`.zst`, `--file-order`, `--merge-sorted` |
 | **Select lines** | Which raw lines count? | `--skip-lines`, `--head`, `--section-*`, `--keep-lines`, `--ignore-lines` |
-| **Join lines** | What is one event? | `--extract-prefix`, `-M`/`--multiline` |
+| **Join lines** | What is one event? | `--unwrap`, `--extract-prefix`, `-M`/`--multiline` |
 | **Parse** | Which fields does it have? | `-f`, `--ts-field`, `--ts-format`, `--input-tz`, `--input-year` |
 | **Time range** | Which period? | `--since`, `--until` |
 | **Your stages** | Which events, and what changes? | `--filter`, `-e`/`--exec`, `-E`, `-l`, `-L`, `--assert` |

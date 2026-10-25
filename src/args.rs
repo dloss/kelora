@@ -142,7 +142,41 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
     }
 
     validate_drain_diff_args(cli, implies_parallel)?;
+    validate_unwrap_args(cli, implies_parallel)?;
 
+    Ok(())
+}
+
+fn validate_unwrap_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
+    if cli.unwrap.is_none() {
+        return Ok(());
+    }
+    if implies_parallel {
+        return Err(anyhow::anyhow!(
+            "--unwrap is not supported with --parallel or thread overrides. Rerun without --parallel."
+        ));
+    }
+    if cli.merge_ts {
+        return Err(anyhow::anyhow!(
+            "--unwrap is not supported with --merge-sorted."
+        ));
+    }
+    if cli.extract_prefix.is_some() {
+        return Err(anyhow::anyhow!(
+            "--unwrap cannot be combined with --extract-prefix."
+        ));
+    }
+    let csv_like = cli.format.iter().any(|format| {
+        matches!(
+            format.split([' ', ':']).next(),
+            Some("csv" | "tsv" | "csvnh" | "tsvnh")
+        )
+    });
+    if csv_like {
+        return Err(anyhow::anyhow!(
+            "--unwrap does not support csv/tsv input formats. Use -f cols:<spec> or -f regex:<pattern> for delimited log lines."
+        ));
+    }
     Ok(())
 }
 

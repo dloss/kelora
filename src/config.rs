@@ -45,6 +45,8 @@ pub struct InputConfig {
     pub prefix_sep: String,
     /// Column separator for cols format (None = whitespace)
     pub cols_sep: Option<String>,
+    /// Extract log lines embedded in a wrapper format (`--unwrap`)
+    pub unwrap: Option<UnwrapKind>,
     /// Per-line byte cap (circuit breaker; 0 = unlimited). Guards against a
     /// newline-free stream growing the read buffer without bound. Default is
     /// `DEFAULT_MAX_LINE_BYTES`. See SECURITY.md ("Input-pipeline limits").
@@ -595,6 +597,13 @@ impl TracePreset {
             TracePreset::Go => "go",
         }
     }
+}
+
+/// Wrapper format whose embedded log lines `--unwrap` extracts before parsing
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq)]
+pub enum UnwrapKind {
+    /// Captured TAP output (`prove -v`): log lines in `#` comments
+    Tap,
 }
 
 /// How multiline events join buffered lines
@@ -1551,6 +1560,7 @@ impl KeloraConfig {
                 extract_prefix: cli.extract_prefix.clone(),
                 prefix_sep: cli.prefix_sep.clone(),
                 cols_sep: cli.cols_sep.clone(),
+                unwrap: cli.unwrap,
                 max_line_bytes: match &cli.max_line_bytes {
                     Some(s) => crate::byte_size::parse_byte_size(s)
                         .map_err(|e| anyhow::anyhow!("--max-line-bytes: {e}"))?,
@@ -1653,6 +1663,7 @@ impl KeloraConfig {
         if self.processing.span.is_some()
             || self.processing.window_size > 0
             || self.processing.context.is_active()
+            || self.input.unwrap.is_some()
         {
             return false;
         }
@@ -1699,6 +1710,7 @@ impl Default for KeloraConfig {
                 extract_prefix: None,
                 prefix_sep: "|".to_string(),
                 cols_sep: None,
+                unwrap: None,
                 max_line_bytes: DEFAULT_MAX_LINE_BYTES,
             },
             output: OutputConfig {

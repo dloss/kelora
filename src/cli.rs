@@ -1,7 +1,7 @@
 // CLI-specific types and structures
 // This module contains the command-line interface definitions and parsing logic
 
-use crate::config::{MultilineJoin, ScriptStageType};
+use crate::config::{MultilineJoin, ScriptStageType, UnwrapKind};
 use anyhow::Result;
 use clap::{ArgMatches, Parser};
 
@@ -360,6 +360,18 @@ pub struct Cli {
         help_heading = "Input Options"
     )]
     pub multiline_max_lines: Option<usize>,
+
+    /// Extract log lines embedded in another format, then parse them as usual.
+    /// `tap`: captured TAP output (`prove -v`); log lines in `#` comments get
+    /// the fields of the test result that follows them (test_num, test_name,
+    /// test_ok, ...), other lines become `line` events. Sequential mode only.
+    #[arg(
+        long = "unwrap",
+        value_enum,
+        value_name = "WRAPPER",
+        help_heading = "Input Options"
+    )]
+    pub unwrap: Option<UnwrapKind>,
 
     /// Extract text before separator to specified field (runs before parsing)
     #[arg(

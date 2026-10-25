@@ -1064,6 +1064,8 @@ impl PipelineBuilder {
             projection,
             chunk_buf: Vec::new(),
             chunker_is_passthrough,
+            injected_fields: None,
+            raw_line_mode: false,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1395,6 +1397,8 @@ impl PipelineBuilder {
             projection,
             chunk_buf: Vec::new(),
             chunker_is_passthrough,
+            injected_fields: None,
+            raw_line_mode: false,
         };
 
         Ok((pipeline, ctx))

@@ -20,6 +20,7 @@ pub mod section_selector;
 mod span;
 pub mod span_summary;
 pub mod stages;
+pub mod tap;
 pub(crate) mod trace_presets;
 
 // Re-export main types for convenience
@@ -482,6 +483,13 @@ pub struct Pipeline {
     /// Cached `chunker.is_passthrough()`: when true, `process_line` skips the
     /// chunk-buffer machinery entirely (measured ~3% on the line hot path).
     pub chunker_is_passthrough: bool,
+    /// Fields added to every event parsed while set (`--unwrap tap` sets the
+    /// test fields of the lines it releases). A field the record already has
+    /// keeps its own value.
+    pub injected_fields: Option<tap::TapFields>,
+    /// While true, chunks are parsed as plain `line` events instead of with
+    /// the input-format parser (`--unwrap tap` emits its non-comment lines so).
+    raw_line_mode: bool,
 }
 
 impl Pipeline {
@@ -513,6 +521,23 @@ impl Pipeline {
         chunks.clear();
         self.chunker.feed_line(line, &mut chunks);
         self.process_chunks(chunks, ctx)
+    }
+
+    /// Process one line as a plain `line` event, bypassing the chunker and the
+    /// input-format parser. Used for lines around the embedded log data
+    /// (`--unwrap tap`); flush the chunker first to keep event order.
+    pub fn process_raw_line(
+        &mut self,
+        line: ChunkLine,
+        ctx: &mut PipelineContext,
+    ) -> Result<Vec<FormattedOutput>> {
+        ctx.meta.line_num = Some(line.line_num);
+        ctx.meta.filename = line.filename;
+        ctx.meta.multiline_assembled = false;
+        self.raw_line_mode = true;
+        let result = self.process_chunk(line.text, ctx);
+        self.raw_line_mode = false;
+        result
     }
 
     /// Flush any remaining chunks from the chunker
@@ -864,7 +889,8 @@ impl Pipeline {
         // where the pre-filter discarded *everything* is indistinguishable from
         // empty input, and kelora answers a typo'd `-l` with silence — or, on
         // stdin, with a false "stdin is empty" (#369).
-        if !self.level_prefilter_needles.is_empty()
+        if !self.raw_line_mode
+            && !self.level_prefilter_needles.is_empty()
             && !stages::raw_line_matches_level_needles(
                 chunk.as_bytes(),
                 &self.level_prefilter_needles,
@@ -912,8 +938,21 @@ impl Pipeline {
         let mut results = Vec::new();
 
         // Parse stage
-        let mut event = match self.parser.parse_projected(&chunk, &self.projection) {
+        let parsed = if self.raw_line_mode {
+            crate::parsers::LineParser::new().parse(&chunk)
+        } else {
+            self.parser.parse_projected(&chunk, &self.projection)
+        };
+        let mut event = match parsed {
             Ok(mut e) => {
+                if let Some(fields) = &self.injected_fields {
+                    for (key, value) in fields.iter() {
+                        if !e.fields.contains_key(key) {
+                            e.fields.insert(key.clone(), value.clone());
+                        }
+                    }
+                }
+
                 // Event was successfully created from chunk
                 crate::stats::stats_add_event_created();
                 ctx.internal_stats.events_created += 1;

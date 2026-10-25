@@ -50,6 +50,20 @@ changed. To split at the deploy message instead, use
 `kelora --drain-diff before.log after.log -k msg`.
 [Summarize](../guide/summarize.md#what-changed-between-two-logs)
 
+## What do failing tests log that passing ones don't?
+
+Compare a passing and a failing run of a Perl test suite, captured with
+`prove -v --merge`:
+
+```bash exec="on" source="above" result="ansi"
+kelora --unwrap tap -f logfmt,line examples/tap_pass.t examples/tap_fail.t \
+  --drain-diff -k msg
+```
+
+Within one run, compare the passing tests with the failing ones:
+`kelora -j --drain-diff -k msg <(kelora --unwrap tap run.t --filter 'e.test_ok == true' -F json) <(kelora --unwrap tap run.t --filter 'e.test_ok == false' -F json)`.
+[Logs inside test output](../guide/parse.md#logs-inside-test-output-tap)
+
 ## Which exceptions do the stack traces contain?
 
 Join each trace into one event, then extract the exception class:

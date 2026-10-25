@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Four more built-in application-log formats** - `spring-boot` (Spring Boot 2.x–4.x default layout: `pid`, `app`, `thread`, `logger`), `tomcat` (Tomcat's catalina/console log: `thread`, `source`), `mysql-error` (MySQL 5.7/8 and MariaDB error logs: `thread`, `err_code`, `subsystem`) and `monolog` (PHP Monolog, as written by Laravel and Symfony: `channel`, plus `context` and `extra` as JSON text). They are auto-detected and selectable with `-f <name>`. Spring Boot logs were read as `iso8601-level` with pid, thread and logger stuck in `msg`; the others were read as `line` or CSV. Each was written against logs captured from the real software, now in `examples/`.
+- **`--unwrap tap` reads logs out of TAP test output** - Perl tests that log through `note()`/`diag()` leave their log lines in the `#` comments of `prove -v` output. `--unwrap tap` parses the comment text with the usual format detection, so `--discover`, `--drain` and `--drain-diff` work on the embedded log. Each log line gets the fields of the test result that follows it (`test_num`, `test_name`, `test_ok`, `test_directive`, `test_file`); result lines and prove's summary become `line` events, and Test::More's own failure messages are dropped. Opt-in for now, not auto-detected.
 
 ### Changed
 

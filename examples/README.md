@@ -349,6 +349,7 @@ Real captures from the software itself (unedited; `laravel.log` keeps whole reco
 - `mysql_error.log`, `mariadb_error.log` - MySQL 8.4 and MariaDB 11.4 error logs (`mysql-error`)
 - `monolog.log` - plain PHP Monolog with context and extra (`monolog`)
 - `laravel.log` - Laravel 13 log with multi-line exception traces (`monolog`, `-M timestamp`)
+- `tap_pass.t`, `tap_fail.t` - `prove -v --merge` output of a Perl test whose logfmt log lines are in TAP comments, passing and failing run (`--unwrap tap`)
 
 ### Stress Tests (`nightmare_*`)
 

@@ -470,7 +470,12 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
         let mut peekable_reader =
             readers::PeekableLineReader::new(io::BufReader::new(processed_stdin));
 
-        let detected_format = detection::detect_format_from_peekable_reader(&mut peekable_reader)?;
+        // Stdin keeps first-line detection (a live pipe must not stall on a
+        // sample), except under --unwrap: the first line is wrapper, not log.
+        let detected_format = match config.input.unwrap {
+            None => detection::detect_format_from_peekable_reader(&mut peekable_reader)?,
+            unwrap => detection::detect_format_sampled(&mut peekable_reader, None, unwrap)?,
+        };
 
         detection::emit_detected_format_notice(config, &detected_format);
 
@@ -496,8 +501,11 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
             return Ok((config::InputFormat::Line, false));
         }
 
-        let detected_format =
-            detection::detect_format_from_files(&sorted_files, config.processing.strict)?;
+        let detected_format = detection::detect_format_from_files(
+            &sorted_files,
+            config.processing.strict,
+            config.input.unwrap,
+        )?;
 
         detection::emit_detected_format_notice(config, &detected_format);
 
@@ -673,9 +681,10 @@ fn spawn_file_reader_auto_per_file(
             // the sampled bytes stay buffered in the peekable reader and are
             // replayed below, so nothing is read twice or skipped. Mid-file
             // probes use a separate read-only handle on the path.
-            let detected = detection::detect_format_from_peekable_reader_sampled(
+            let detected = detection::detect_format_sampled(
                 &mut peekable_reader,
                 Some(&file_path),
+                config.input.unwrap,
             )?;
 
             detection::emit_detected_format_notice(&config, &detected);
@@ -1119,6 +1128,10 @@ fn run_pipeline_sequential_internal<W: Write>(
 
     let multiline_timeout = config.input.multiline.as_ref().and_then(|m| m.idle_timeout);
     let mut multiline_state = MultilineSeqState::default();
+    let mut tap = config
+        .input
+        .unwrap
+        .map(|_| pipeline::tap::TapUnwrapper::new());
 
     let mut current_csv_headers: Option<Vec<String>> = None;
     let mut current_csv_type_map: Option<TypeMap> = None;
@@ -1223,6 +1236,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     gap_tracker: &mut gap_tracker,
                                     csv_quote_open: &mut csv_quote_open,
                                     multiline_state: &mut multiline_state,
+                                    tap: &mut tap,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1294,6 +1308,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     gap_tracker: &mut gap_tracker,
                                     csv_quote_open: &mut csv_quote_open,
                                     multiline_state: &mut multiline_state,
+                                    tap: &mut tap,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1326,6 +1341,20 @@ fn run_pipeline_sequential_internal<W: Write>(
 
     if immediate_shutdown {
         return Ok(());
+    }
+
+    if let Some(release) = tap.as_mut().and_then(|tap| tap.finish()) {
+        if !pipeline.is_take_limit_exhausted() {
+            emit_tap_releases(
+                vec![release],
+                &mut pipeline,
+                &mut ctx,
+                config,
+                output,
+                &mut gap_tracker,
+                &mut multiline_state,
+            )?;
+        }
     }
 
     let results = pipeline.flush(&mut ctx)?;
@@ -1377,6 +1406,8 @@ struct ReaderContext<'a, W: Write> {
     /// continuation lines of a multi-line record bypass per-line filtering.
     csv_quote_open: &'a mut bool,
     multiline_state: &'a mut MultilineSeqState,
+    /// `--unwrap tap` state: lines held until their test's result line.
+    tap: &'a mut Option<pipeline::tap::TapUnwrapper>,
 }
 
 /// Per-run multiline bookkeeping for the sequential driver: file-boundary
@@ -1391,6 +1422,7 @@ struct MultilineSeqState {
     cap_warned: bool,
     idle_hinted: bool,
     preset_ts_hinted: bool,
+    tap_overflow_warned: bool,
 }
 
 impl MultilineSeqState {
@@ -1403,6 +1435,20 @@ impl MultilineSeqState {
         }
         self.seen_line = true;
         crossed
+    }
+
+    /// Warns once per run when `--unwrap tap` held too many lines without
+    /// seeing a test result and released them without test fields.
+    fn note_tap_overflow(&mut self, config: &KeloraConfig) {
+        if self.tap_overflow_warned || !config.warnings_allowed() {
+            return;
+        }
+        self.tap_overflow_warned = true;
+        let _ = SafeStderr::new().writeln(&config.format_warning_message(&format!(
+            "--unwrap tap: no test result line within {} lines; releasing the held lines \
+             without test fields (is this captured TAP output?)",
+            pipeline::tap::MAX_PENDING_LINES
+        )));
     }
 
     /// Called right before an idle-timeout flush. Hints once per run when the
@@ -1534,9 +1580,22 @@ fn handle_reader_message<W: Write>(
         gap_tracker,
         csv_quote_open,
         multiline_state,
+        tap,
     } = ctx;
     match message {
         ReaderMessage::FormatDetected { detected } => {
+            // The previous file's held lines still belong to its parser.
+            if let Some(release) = tap.as_mut().and_then(|tap| tap.finish()) {
+                emit_tap_releases(
+                    vec![release],
+                    pipeline,
+                    pipeline_ctx,
+                    config,
+                    output,
+                    gap_tracker,
+                    multiline_state,
+                )?;
+            }
             let results = pipeline.flush(pipeline_ctx)?;
             for formatted in results {
                 write_formatted_output(formatted, output, gap_tracker)?;
@@ -1573,6 +1632,7 @@ fn handle_reader_message<W: Write>(
                 gap_tracker,
                 csv_quote_open,
                 multiline_state,
+                tap,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1596,6 +1656,7 @@ fn handle_reader_message<W: Write>(
                 gap_tracker,
                 csv_quote_open,
                 multiline_state,
+                tap,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1653,6 +1714,7 @@ fn process_line_sequential<W: Write>(
     gap_tracker: &mut Option<crate::formatters::GapTracker>,
     csv_quote_open: &mut bool,
     multiline_state: &mut MultilineSeqState,
+    tap: &mut Option<pipeline::tap::TapUnwrapper>,
 ) -> Result<ProcessingResult> {
     let line = line_result?;
     *line_num += 1;
@@ -1743,6 +1805,27 @@ fn process_line_sequential<W: Write>(
                 stats_add_line_filtered();
                 return Ok(ProcessingResult::Continue);
             }
+        }
+
+        // --unwrap: the line filters above saw the raw line; from here on
+        // only the embedded log lines and the wrapper's events go on.
+        if let Some(tap) = tap.as_mut() {
+            let step = tap.push(line, *line_num, current_filename);
+            if step.dropped {
+                stats_add_line_filtered();
+            }
+            if step.overflowed {
+                multiline_state.note_tap_overflow(config);
+            }
+            return emit_tap_releases(
+                step.releases,
+                pipeline,
+                ctx,
+                config,
+                output,
+                gap_tracker,
+                multiline_state,
+            );
         }
 
         if line.trim().is_empty() {
@@ -1880,6 +1963,123 @@ fn process_line_sequential<W: Write>(
         }
     }
 
+    Ok(ProcessingResult::Continue)
+}
+
+/// Run lines released by `--unwrap tap` through the pipeline, each release
+/// with the fields of the test it belongs to: comment text through the
+/// chunker and the input-format parser, other lines as `line` events. A test
+/// boundary ends any multiline event.
+fn emit_tap_releases<W: Write>(
+    releases: Vec<pipeline::tap::TapRelease>,
+    pipeline: &mut pipeline::Pipeline,
+    ctx: &mut pipeline::PipelineContext,
+    config: &KeloraConfig,
+    output: &mut W,
+    gap_tracker: &mut Option<crate::formatters::GapTracker>,
+    multiline_state: &mut MultilineSeqState,
+) -> Result<ProcessingResult> {
+    for release in releases {
+        pipeline.injected_fields = release.fields;
+        let outcome = emit_tap_release(
+            release.items,
+            release.result,
+            pipeline,
+            ctx,
+            config,
+            output,
+            gap_tracker,
+            multiline_state,
+        );
+        pipeline.injected_fields = None;
+        match outcome? {
+            ProcessingResult::Continue => {}
+            stop => return Ok(stop),
+        }
+    }
+    Ok(ProcessingResult::Continue)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_tap_release<W: Write>(
+    items: Vec<pipeline::tap::TapItem>,
+    result_line: Option<pipeline::ChunkLine>,
+    pipeline: &mut pipeline::Pipeline,
+    ctx: &mut pipeline::PipelineContext,
+    config: &KeloraConfig,
+    output: &mut W,
+    gap_tracker: &mut Option<crate::formatters::GapTracker>,
+    multiline_state: &mut MultilineSeqState,
+) -> Result<ProcessingResult> {
+    use pipeline::tap::TapItem;
+
+    let keep_blank = matches!(ctx.config.format_name.as_deref(), Some("line"))
+        || config.input.multiline.is_some();
+    for item in items {
+        let outcome = match item {
+            TapItem::Inner(line) => {
+                if !keep_blank && line.text.trim().is_empty() {
+                    continue;
+                }
+                let outcome = pipeline.process_line(line, ctx);
+                multiline_state.note_cap_hit(pipeline, config);
+                multiline_state.note_preset_ts_hint(pipeline, config);
+                outcome
+            }
+            TapItem::Raw(line) => {
+                for formatted in pipeline.flush(ctx)? {
+                    write_formatted_output(formatted, output, gap_tracker)?;
+                }
+                pipeline.process_raw_line(line, ctx)
+            }
+        };
+        if let ProcessingResult::TakeLimitExhausted =
+            write_tap_outcome(outcome, pipeline, config, output, gap_tracker)?
+        {
+            return Ok(ProcessingResult::TakeLimitExhausted);
+        }
+    }
+
+    for formatted in pipeline.flush(ctx)? {
+        write_formatted_output(formatted, output, gap_tracker)?;
+    }
+    if let Some(line) = result_line {
+        let outcome = pipeline.process_raw_line(line, ctx);
+        return write_tap_outcome(outcome, pipeline, config, output, gap_tracker);
+    }
+    Ok(ProcessingResult::Continue)
+}
+
+/// Output and error handling for one line fed by `--unwrap`, as in
+/// `process_line_sequential`.
+fn write_tap_outcome<W: Write>(
+    outcome: Result<Vec<pipeline::FormattedOutput>>,
+    pipeline: &pipeline::Pipeline,
+    config: &KeloraConfig,
+    output: &mut W,
+    gap_tracker: &mut Option<crate::formatters::GapTracker>,
+) -> Result<ProcessingResult> {
+    match outcome {
+        Ok(results) => {
+            if config.output.stats.is_some() && !results.is_empty() {
+                stats_add_line_output();
+            }
+            for formatted in results {
+                write_formatted_output(formatted, output, gap_tracker)?;
+            }
+            if pipeline.is_take_limit_exhausted() {
+                return Ok(ProcessingResult::TakeLimitExhausted);
+            }
+        }
+        Err(e) => {
+            if config.output.stats.is_some() {
+                stats_add_error();
+            }
+            if config.processing.strict {
+                return Err(e);
+            }
+        }
+    }
     Ok(ProcessingResult::Continue)
 }
 
