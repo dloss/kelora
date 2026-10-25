@@ -45,6 +45,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Debian and Ubuntu syslog files are read as syslog** - rsyslog on Debian (since 2022) and Ubuntu writes `/var/log/syslog` and `/var/log/auth.log` with RFC 3339 timestamps (`2025-08-31T09:36:55.418891+02:00 host sshd[1186]: …`). kelora read those files as `line`, and `-f syslog` rejected every line. They now parse like other RFC 3164 lines, with `ts`, `host`, `prog`, `pid` and `msg`.
 - **`apache-error` no longer claims other bracketed logs** - Auto-detection read any line shaped `[timestamp] [word] message` as an Apache error log, so spdlog lines (`[2024-01-02 15:04:05.678] [mylogger] [info] …`) and pacman lines (`[…] [ALPM] …`) came out with the logger name in `level`. The format now requires Apache's own timestamp (`Fri Oct 11 14:32:52 2024`, with or without microseconds); such lines are read as `line` until they get a format of their own.
 
+### Performance
+
+- **Faster `--exec`, `--freq` and `--describe`** - Each event of an `--exec` stage (`--freq`, `--describe` and `--card` run as one) checked the terminal and environment again; this took about a fifth of a simple stage's time. `--describe` and `track_percentiles()`/`track_stats()` also decoded and re-encoded their percentile digest on every event. On 500k JSON lines `--freq` uses 17% less CPU and `--describe` 29% less. Results are unchanged.
+
 ## [2.2.1] - 2026-10-08
 
 The 2.2.0 release notes left out 26 changes that are in 2.2.0. They are now listed in the [2.2.0 section](https://github.com/dloss/kelora/blob/main/CHANGELOG.md#220---2026-10-07) — read its **Breaking** section if you skipped it.

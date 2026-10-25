@@ -315,6 +315,10 @@ impl ScriptStage for FilterStage {
 pub struct ExecStage {
     compiled_exec: crate::engine::CompiledExpression,
     stage_number: usize,
+    /// Whether `emit()` diagnostics use emoji. Resolved on the first event and
+    /// kept: the check reads the environment and calls isatty(), which cost
+    /// about a fifth of a trivial exec stage when repeated per event.
+    emit_use_emoji: Option<bool>,
 }
 
 impl ExecStage {
@@ -323,6 +327,7 @@ impl ExecStage {
         Ok(Self {
             compiled_exec,
             stage_number: 0,
+            emit_use_emoji: None,
         })
     }
 
@@ -351,10 +356,10 @@ impl ScriptStage for ExecStage {
 
         columns::set_parse_cols_strict(ctx.config.strict);
         emit::set_emit_strict(ctx.config.strict);
-        emit::set_emit_use_emoji(crate::tty::should_use_emoji_with_mode(
-            &ctx.config.emoji_mode,
-            &ctx.config.color_mode,
-        ));
+        let use_emoji = *self.emit_use_emoji.get_or_insert_with(|| {
+            crate::tty::should_use_emoji_with_mode(&ctx.config.emoji_mode, &ctx.config.color_mode)
+        });
+        emit::set_emit_use_emoji(use_emoji);
 
         file_ops::clear_pending_ops();
 

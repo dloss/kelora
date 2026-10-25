@@ -1,6 +1,6 @@
 use super::merge::{
-    compress_tdigest, deserialize_hll, deserialize_tdigest, ensure_operation_metadata,
-    merge_numeric, new_hll, new_hll_with_error, serialize_hll, serialize_tdigest,
+    append_tdigest_value, deserialize_hll, ensure_operation_metadata, merge_numeric, new_hll,
+    new_hll_with_error, serialize_hll, serialize_tdigest,
 };
 use super::state::record_window_extreme;
 use super::with_user_tracking;
@@ -235,27 +235,17 @@ pub(super) fn track_percentiles_impl(
         ensure_operation_metadata(&metric_key, "percentiles")?;
 
         with_user_tracking(|state| {
-            let new_digest = TDigest::from_values(vec![value]);
-            let mut digest = if let Some(existing) = state.get(&metric_key) {
-                if let Ok(bytes) = existing.clone().into_blob() {
-                    if let Some(existing_digest) = deserialize_tdigest(&bytes) {
-                        existing_digest.merge(&new_digest)
-                    } else {
-                        new_digest
-                    }
-                } else {
-                    new_digest
-                }
-            } else {
-                new_digest
-            };
-
-            // Without this the centroid list grows by one per event and every
-            // later event re-sorts and re-serializes all of it (#377).
-            compress_tdigest(&mut digest);
-
-            let bytes = serialize_tdigest(&digest);
-            state.insert(metric_key.clone(), Dynamic::from_blob(bytes));
+            let appended = state
+                .get_mut(&metric_key)
+                .and_then(|existing| existing.write_lock::<rhai::Blob>())
+                .is_some_and(|mut bytes| append_tdigest_value(&mut bytes, value));
+            if !appended {
+                let digest = TDigest::from_values(vec![value]);
+                state.insert(
+                    metric_key.clone(),
+                    Dynamic::from_blob(serialize_tdigest(&digest)),
+                );
+            }
         });
     }
 

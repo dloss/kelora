@@ -157,6 +157,43 @@ pub(super) fn serialize_tdigest(digest: &TDigest) -> Vec<u8> {
     bytes
 }
 
+/// Add one value to a serialized digest in place.
+///
+/// The value goes on the end as a weight-1 centroid, which is exactly what
+/// `merge` with a one-value digest would add: readers deserialize through
+/// `TDigest::from_centroids`, which sorts, so the order of the stored centroids
+/// does not matter. Only when the blob holds more than twice
+/// [`TDIGEST_MAX_CENTROIDS`] is it decoded, compressed and rewritten — at the
+/// same centroid counts as before, so estimates are unchanged. Decoding,
+/// sorting and re-encoding the digest for every event made `--describe` cost
+/// more than parsing the event.
+///
+/// Returns false, leaving `bytes` untouched, if they are not a digest.
+pub(super) fn append_tdigest_value(bytes: &mut Vec<u8>, value: f64) -> bool {
+    let Some(count) = bytes
+        .get(0..8)
+        .and_then(|b| b.try_into().ok())
+        .map(usize::from_le_bytes)
+    else {
+        return false;
+    };
+    if count.checked_mul(16).and_then(|n| n.checked_add(8)) != Some(bytes.len()) {
+        return false;
+    }
+
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes.extend_from_slice(&1.0f64.to_le_bytes());
+    bytes[0..8].copy_from_slice(&(count + 1).to_le_bytes());
+
+    if count + 1 > TDIGEST_MAX_CENTROIDS * 2 {
+        if let Some(mut digest) = deserialize_tdigest(bytes) {
+            compress_tdigest(&mut digest);
+            *bytes = serialize_tdigest(&digest);
+        }
+    }
+    true
+}
+
 /// Helper function to deserialize a TDigest from bytes stored in Dynamic
 pub(super) fn deserialize_tdigest(bytes: &[u8]) -> Option<TDigest> {
     if bytes.len() < 8 {
@@ -165,7 +202,11 @@ pub(super) fn deserialize_tdigest(bytes: &[u8]) -> Option<TDigest> {
 
     let count = usize::from_le_bytes(bytes[0..8].try_into().ok()?);
 
-    if bytes.len() < 8 + count * 16 {
+    if count
+        .checked_mul(16)
+        .and_then(|n| n.checked_add(8))
+        .is_none_or(|needed| bytes.len() < needed)
+    {
         return None;
     }
 
@@ -288,6 +329,36 @@ mod tests {
         // Serialized size follows the centroid count, so the blob rewritten on
         // every event stays small too.
         assert!(serialize_tdigest(&digest).len() <= 8 + 16 * (TDIGEST_MAX_CENTROIDS * 2 + 1));
+    }
+
+    /// Appending to the stored blob must give the digest the old per-event
+    /// decode/merge/compress/encode produced, centroid for centroid, and stay
+    /// as bounded.
+    #[test]
+    fn test_append_tdigest_value_matches_merge() {
+        let mut merged = TDigest::from_values(vec![0.0]);
+        let mut bytes = serialize_tdigest(&merged);
+        for i in 1..5_000 {
+            let value = ((i * 7919) % 1013) as f64 * 0.5;
+            merged = merged.merge(&TDigest::from_values(vec![value]));
+            compress_tdigest(&mut merged);
+            assert!(append_tdigest_value(&mut bytes, value));
+            assert!(bytes.len() <= 8 + 16 * (TDIGEST_MAX_CENTROIDS * 2 + 1));
+        }
+        let appended = deserialize_tdigest(&bytes).unwrap();
+        let pairs = |d: &TDigest| -> Vec<(f64, f64)> {
+            d.centroids().iter().map(|c| (c.mean, c.weight)).collect()
+        };
+        assert_eq!(pairs(&appended), pairs(&merged));
+    }
+
+    #[test]
+    fn test_append_tdigest_value_rejects_other_blobs() {
+        let mut hll = serialize_hll(&new_hll());
+        let before = hll.clone();
+        assert!(!append_tdigest_value(&mut hll, 1.0));
+        assert_eq!(hll, before);
+        assert!(!append_tdigest_value(&mut Vec::new(), 1.0));
     }
 
     /// Compressing is only worth it if the estimates survive it. Uniform
