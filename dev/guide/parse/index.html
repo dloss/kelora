@@ -2469,6 +2469,14 @@ logs before it reports:</p>
 <td><code>test_file</code></td>
 <td>prove's <code>t/checkout.t ..</code> header</td>
 </tr>
+<tr>
+<td><code>test_subtest</code></td>
+<td>the subtests a line is nested in below the top-level test (<code>Timeout / retry</code>)</td>
+</tr>
+<tr>
+<td><code>test_time</code></td>
+<td>the line's own <code>[HH:MM:SS.mmm](…s)</code> prefix, as in PostgreSQL's <code>regress_log_*</code> files</td>
+</tr>
 </tbody>
 </table>
 <p>Result lines and other lines outside comments (prove's summary, stray output)
@@ -2481,9 +2489,13 @@ before its header (<code>t/db.t ......</code>), so lines get only <code>test_fil
 the header that follows them.</p>
 <p>Format detection, <code>--multiline</code> and the parser see the comment text;
 <code>--keep-lines</code>, <code>--ignore-lines</code>, <code>--skip-lines</code> and <code>--section-*</code> see the raw
-lines. A result line ends any multiline event. Subtests are not unwrapped: their
-indented lines count as part of the enclosing test. <code>--unwrap</code> runs
-sequentially only.</p>
+lines. A result line ends any multiline event.</p>
+<p>In a subtest, the test fields still describe the top-level test, so
+<code>--filter 'e.test_ok == false'</code> finds every line of a failing test however deep
+it sits. A subtest's passing results and plan are dropped; a failing result is
+kept as a <code>line</code> event, since it names what failed. Test2's buffered subtests
+(<code>ok 1 - name {</code> … <code>}</code>) work the same way, their lines belonging to the result
+before them. <code>--unwrap</code> runs sequentially only.</p>
 <h2 id="when-lines-dont-parse">When lines don't parse<a class="headerlink" href="#when-lines-dont-parse" title="Permanent link">&para;</a></h2>
 <p>Kelora is <strong>resilient</strong> by default: a line that doesn't match the format is
 counted, reported in a summary on stderr, and skipped; the rest of the file is
