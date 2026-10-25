@@ -2428,8 +2428,9 @@ message such as <code>log4j</code> or <code>glog</code>) handle that. Details: <
 <p>The separator defaults to <code>|</code>; change it with <code>--prefix-sep</code>.</p>
 <h2 id="logs-inside-test-output-tap">Logs inside test output (TAP)<a class="headerlink" href="#logs-inside-test-output-tap" title="Permanent link">&para;</a></h2>
 <p>Perl tests that log through <code>note()</code> or <code>diag()</code> leave the log lines in the
-<code>#</code> comments of their TAP output. Capture the output (<code>prove -v --merge t/ &gt;
-run.t</code>) and <code>--unwrap tap</code> parses the comment text as the log:</p>
+<code>#</code> comments of their TAP output; so does anything else that writes TAP, such
+as node's test runner. Capture the output (<code>prove -v --merge t/ &gt; run.t</code>) and
+<code>--unwrap tap</code> parses the comment text as the log:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/tap_fail.t<span class="w"> </span>--unwrap<span class="w"> </span>tap<span class="w"> </span>-f<span class="w"> </span>logfmt,line<span class="w"> </span>-l<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-k<span class="w"> </span>test_num,test_name,level,msg
 </code></pre></div>
@@ -2461,16 +2462,23 @@ logs before it reports:</p>
 <td><code>TODO</code> or <code>SKIP</code> on that line, if any</td>
 </tr>
 <tr>
+<td><code>test_duration_ms</code></td>
+<td><code>duration_ms</code> in the YAML block after that line (TAP 13, node)</td>
+</tr>
+<tr>
 <td><code>test_file</code></td>
 <td>prove's <code>t/checkout.t ..</code> header</td>
 </tr>
 </tbody>
 </table>
 <p>Result lines and other lines outside comments (prove's summary, stray output)
-become events with the text in <code>line</code>. The plan (<code>1..N</code>), blank lines and
-Test::More's own failure messages (<code>#   Failed test …</code>, <code># Looks like you
-failed …</code>) are dropped. Lines after the last result keep <code>test_file</code> but get no
-test fields.</p>
+become events with the text in <code>line</code>. The plan (<code>1..N</code>), blank lines, YAML
+blocks, node's closing tally (<code># tests 12</code>) and Test::More's own failure
+messages (<code>#   Failed test …</code>, <code># Looks like you failed …</code>) are dropped. Lines
+after the last result keep <code>test_file</code> but get no test fields.</p>
+<p>Without <code>-v</code>, prove prints no result lines and a file's <code>diag()</code> output comes
+before its header (<code>t/db.t ......</code>), so lines get only <code>test_file</code>, taken from
+the header that follows them.</p>
 <p>Format detection, <code>--multiline</code> and the parser see the comment text;
 <code>--keep-lines</code>, <code>--ignore-lines</code>, <code>--skip-lines</code> and <code>--section-*</code> see the raw
 lines. A result line ends any multiline event. Subtests are not unwrapped: their
