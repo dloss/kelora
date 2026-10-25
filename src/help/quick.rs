@@ -14,7 +14,7 @@ Quick Examples:
   kelora -f json,line mixed_format.log --filter 'e._format == "json"'
   kelora -f auto-per-file -F json services/*/*.log
   kelora web_access_large.log.gz --stats
-  kelora simple_json.jsonl --filter 'e.service == "database"' --exec 'e.duration_s = e.get_path("duration_ms", 0) / 1000' -k timestamp,message,duration_s
+  kelora simple_json.jsonl --filter 'e.service == "database"' --exec 'e.duration_s = e.get_path("duration_ms", 0) / 1000.0' -k timestamp,message,duration_s
   kelora simple_json.jsonl --since 2024-01-15T10:01:00Z --until now -l warn,error --stats
   kelora audit.jsonl --freq action                # quick frequency table for one field
   kelora audit.jsonl --exec 'track_freq("action", e.action)' --metrics

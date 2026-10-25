@@ -84,6 +84,14 @@ pub fn run_interactive_mode() -> Result<()> {
                     break;
                 }
 
+                // Bare `exit`/`quit` is a shell reflex; honour it unless a file
+                // by that name exists, which the user may really mean to read.
+                if (trimmed == "exit" || trimmed == "quit")
+                    && !std::path::Path::new(trimmed).exists()
+                {
+                    break;
+                }
+
                 if trimmed == ":help" {
                     let eof_key = if cfg!(windows) { "Ctrl-Z" } else { "Ctrl-D" };
                     println!("Interactive mode - enter kelora commands without 'kelora' prefix");

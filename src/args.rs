@@ -599,12 +599,17 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
         .to_ascii_lowercase();
 
     let hint = match name.as_str() {
-        "where" | "grep" | "match" => {
+        "where" | "match" => {
             "kelora has no --where/--grep flag. Filter events with --filter:\n    \
              kelora --filter 'e.level == \"ERROR\"' app.log\n  \
              See --help-rhai for expression syntax."
         }
-        "sort" | "top-n" | "topn" | "rank" | "nlargest" => {
+        "grep" => {
+            "kelora has no --grep flag. To keep raw lines matching a regex (before parsing), use --keep-lines:\n    \
+             kelora --keep-lines 'timeout|refused' app.log\n  \
+             To filter on parsed fields, use --filter 'e.level == \"ERROR\"'. See --help-rhai for expression syntax."
+        }
+        "sort" | "top" | "top-n" | "topn" | "rank" | "nlargest" => {
             "kelora has no --sort/--rank flag. To rank by a score, use track_top_by in a script stage:\n    \
              kelora -m --exec 'track_top_by(\"slowest\", e.endpoint, e.latency_ms, 10)' app.log\n  \
              For a frequency top-N, use --freq FIELD (sorted by count, so pipe to head/tail). See --help-functions for details."

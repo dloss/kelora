@@ -24,10 +24,22 @@ fn curated_filter_synonyms_point_to_filter() {
 }
 
 #[test]
+fn curated_grep_points_to_keep_lines() {
+    // --grep means "search the raw text", which is --keep-lines; --filter is the
+    // field-level alternative.
+    let (_out, err, code) = run_kelora_with_input(&["-f", "json", "--grep", "x"], "{}\n");
+    assert_eq!(code, 2);
+    assert!(
+        err.contains("--keep-lines"),
+        "--grep hint should mention --keep-lines, got:\n{err}"
+    );
+}
+
+#[test]
 fn curated_ranking_synonyms_point_to_track_top_by() {
     // kelora has no ranking flag (--freq sorts by count; pipe to head/tail); the
     // curated hint covers the rank-by-score synonyms borrowed from other tools.
-    for flag in ["--sort", "--rank"] {
+    for flag in ["--sort", "--rank", "--top"] {
         let (_out, err, code) = run_kelora_with_input(&["-f", "json", flag, "x"], "{}\n");
         assert_eq!(code, 2, "{flag} should exit 2");
         assert!(
