@@ -5,6 +5,7 @@ use std::cell::RefCell;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::Mutex;
 use std::thread;
 
 use crate::decompression::DecompressionReader;
@@ -25,6 +26,36 @@ static MAX_LINE_BYTES: AtomicUsize = AtomicUsize::new(0);
 // When true, an over-limit line is a hard error (exit 1) instead of the default
 // truncate-and-warn recovery. Mirrors the global `--strict` contract.
 static LINE_OVERFLOW_STRICT: AtomicBool = AtomicBool::new(false);
+
+// Readers that format detection opened on inputs that cannot be read twice
+// (pipes, FIFOs, `<(...)`). Detection consumed their head, and reopening a FIFO
+// blocks waiting for a writer that is gone, so the next open of the path takes
+// the detection reader instead, which replays what it peeked.
+type RetainedReader = Box<dyn BufRead + Send>;
+static RETAINED_READERS: Mutex<Vec<(String, RetainedReader)>> = Mutex::new(Vec::new());
+
+/// Whether `path` can be opened again and read from the start (a regular file).
+/// Unknown paths count as reopenable, so open errors surface as before.
+pub fn is_reopenable(path: &str) -> bool {
+    fs::metadata(path)
+        .map(|m| m.is_file() || m.is_dir())
+        .unwrap_or(true)
+}
+
+/// Keep a reader on a non-reopenable input for the next `open_input_reader`
+/// (or `take_retained_reader`) of the same path.
+pub fn retain_reader(path: &str, reader: RetainedReader) {
+    if let Ok(mut retained) = RETAINED_READERS.lock() {
+        retained.push((path.to_string(), reader));
+    }
+}
+
+/// Take the reader detection kept for `path`, if any.
+pub fn take_retained_reader(path: &str) -> Option<RetainedReader> {
+    let mut retained = RETAINED_READERS.lock().ok()?;
+    let idx = retained.iter().position(|(p, _)| p == path)?;
+    Some(retained.remove(idx).1)
+}
 
 /// Select strict (abort-on-invalid) vs. lossy UTF-8 decoding for all line reads.
 /// Set once during pipeline setup; read on every reader thread.
@@ -461,6 +492,9 @@ pub fn open_input_reader(
             }
         }
     } else {
+        if let Some(reader) = take_retained_reader(file_path) {
+            return Ok(Some(reader));
+        }
         if let Ok(metadata) = fs::metadata(file_path) {
             if metadata.is_dir() {
                 eprintln!(

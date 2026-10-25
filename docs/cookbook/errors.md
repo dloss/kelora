@@ -61,7 +61,7 @@ kelora --unwrap tap -f logfmt,line examples/tap_pass.t examples/tap_fail.t \
 ```
 
 Within one run, compare the passing tests with the failing ones:
-`kelora -j --drain-diff -k msg <(kelora --unwrap tap run.t --filter 'e.test_ok == true' -F json) <(kelora --unwrap tap run.t --filter 'e.test_ok == false' -F json)`.
+`kelora --drain-diff -k msg <(kelora --unwrap tap run.t --filter 'e.test_ok == true' -F json) <(kelora --unwrap tap run.t --filter 'e.test_ok == false' -F json)`.
 [Logs inside test output](../guide/parse.md#logs-inside-test-output-tap)
 
 ## Which exceptions do the stack traces contain?

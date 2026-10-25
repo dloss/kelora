@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Pipes and FIFOs as input files** - With the default `-f auto`, a file argument that can only be read once, such as `<(command)` or a named FIFO, was read for format detection and then reopened for processing: `<(…)` produced no events, and a FIFO made kelora hang. Processing now continues from the detection read. `-f <format>` and `-f auto-per-file` were not affected.
 - **`journalctl -o json` has timestamps** - journald's `__REALTIME_TIMESTAMP` (microseconds since the epoch) was not among the timestamp fields kelora looks for, so `--since`, `--until`, `--span` and other time features found no time on `journalctl -o json` output unless you passed `--ts-field __REALTIME_TIMESTAMP`. It is now recognized, after all other timestamp field names.
 - **`journalctl -o short-iso` is read as syslog** - systemd up to at least v252 (Debian 12, RHEL 9, Ubuntu 22.04) writes the offset without a colon (`2024-10-08T12:16:11+0200 host sshd[1186]: …`); those lines were read as `line`. Both `+0200` and `+02:00` are now accepted.
 - **`--multiline timestamp` on Tomcat and Laravel logs** - Tomcat's `08-Oct-2026 10:27:32.174` date was not recognized as a timestamp, so `-M timestamp` joined the whole log into one event; it is now a known timestamp format. On Laravel logs, correct grouping printed a warning that most joined lines "start at column 0", because PHP stack frames (`#0 /app/Foo.php(12): …`) are not indented; they now count as trace lines.

@@ -524,6 +524,11 @@ pub fn detect_format_from_files(
                 // path is passed along so plain files also get mid-file probes.
                 let candidate =
                     detect_format_sampled(&mut peekable_reader, Some(file_path), unwrap)?;
+                // A pipe or FIFO can't be reopened for processing: hand this
+                // reader, with its peeked lines, to the next open of the path.
+                if !readers::is_reopenable(file_path) {
+                    readers::retain_reader(file_path, Box::new(peekable_reader));
+                }
                 if candidate.saw_content {
                     detected = Some(candidate);
                     break;

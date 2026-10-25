@@ -903,15 +903,17 @@ fn spawn_merged_file_reader(
     ctrl_rx: Receiver<Ctrl>,
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
-        let mut readers: Vec<(
-            BufReader<decompression::DecompressionReader>,
-            MergeTimestampParser,
-            usize,
-        )> = Vec::new();
+        let mut readers: Vec<(Box<dyn BufRead + Send>, MergeTimestampParser, usize)> = Vec::new();
         for file in &reader.files {
-            let decompressed = decompression::DecompressionReader::new(file)?;
+            let file_reader: Box<dyn BufRead + Send> =
+                match crate::readers::take_retained_reader(file) {
+                    Some(retained) => retained,
+                    None => Box::new(BufReader::new(decompression::DecompressionReader::new(
+                        file,
+                    )?)),
+                };
             readers.push((
-                BufReader::new(decompressed),
+                file_reader,
                 build_merge_timestamp_parser(
                     &reader.format,
                     reader.strict,
