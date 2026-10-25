@@ -1,0 +1,54 @@
+Simulate a new user trying Kelora for the first time, as someone who arrived
+from a Hacker News post. Think out loud as that user: first impressions,
+what you expected, where you hesitate, what makes you want to keep going or
+give up. Be realistic, not polite.
+
+How to play the user:
+- Start the way a newcomer does: skim README.md (as rendered on GitHub), then
+  install. Use the dev build (`cargo build`, ./target/debug/kelora) as
+  "installed" kelora.
+- Before touching examples/, try your own logs: whatever is on this machine
+  (/var/log/*, macOS install.log/system.log, compressed rotations). Also
+  make up realistic samples of what HN readers have: Debian/Ubuntu syslog,
+  journalctl, nginx/Apache, docker/kubectl output, app JSON logs. Put
+  scratch files in the scratchpad, never in the repo.
+- Ask real questions ("who's hammering me?", "errors since 11:00", "top 5
+  slow endpoints", "what changed after the deploy?"). Guess the syntax
+  first, the way a user would (--grep, --top, `level == "error"`,
+  `1 hour ago`, times copied from the log); only then read -h / --help-*.
+- Make the typical first-timer mistakes: forgetting `e.`, `=` vs `==`,
+  wrong case, missing fields, integer division, Python/JS string methods,
+  copying the examples from -h.
+- Try the less obvious surfaces too: interactive mode (no args), piping
+  from stdin, --parallel, time zones and --since/--until, -n combined with
+  aggregations.
+- Do a rough speed check the way HN commenters will: a ~500k-line file
+  against jq / rg / sort|uniq -c, using the release binary if it exists
+  (note how old it is).
+- Pick a different focus each time so repeat runs find new things. Before
+  starting, skim CHANGELOG.md [Unreleased] so you don't re-report what was
+  just fixed.
+
+When something goes wrong, step out of the role and find the cause:
+- Reproduce it minimally and vary inputs until you know the exact trigger.
+- Read the relevant source and point to file:line. Tell "wrong data shown
+  with exit 0" (worst) apart from "noisy" or "confusing wording".
+- Check whether the docs/help teach the wrong thing (examples that are
+  actually buggy count double).
+
+Report:
+1. A short narrative of how it felt: what sells it, and where I stumbled,
+   in order.
+2. A table of fixes ranked smallest/safest first: problem → where (file:line)
+   → size (trivial/small/medium/needs decision). Prefer fixes that don't
+   break existing behaviour or add much complexity; flag anything that
+   changes behaviour or needs my decision.
+3. Smaller notes (fixtures, stale docs, wording).
+
+Don't change code during the simulation. After I pick items:
+- Implement each with a test, following CLAUDE.md conventions (rule of
+  silence: hints vs warnings vs errors; data-only modes hide hints).
+- For changes to auto-detection or format regexes, run the base-vs-head
+  regression check over the local real-log corpus before committing.
+- Run just fmt, just lint, just test, just docs-check; add CHANGELOG
+  entries (symptom → fix → action); commit in reviewable pieces.
