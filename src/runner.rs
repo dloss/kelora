@@ -1954,6 +1954,7 @@ fn process_line_sequential<W: Write>(
         text: line,
         line_num: file_line_num,
         filename: current_filename,
+        extra_fields: None,
     };
     match pipeline.process_line(chunk_line, ctx) {
         Ok(results) => {
@@ -2008,45 +2009,11 @@ fn emit_tap_releases<W: Write>(
     gap_tracker: &mut Option<crate::formatters::GapTracker>,
     multiline_state: &mut MultilineSeqState,
 ) -> Result<ProcessingResult> {
-    for release in releases {
-        pipeline.injected_fields = release.fields;
-        let outcome = emit_tap_release(
-            release.items,
-            release.result,
-            pipeline,
-            ctx,
-            config,
-            output,
-            gap_tracker,
-            multiline_state,
-        );
-        pipeline.injected_fields = None;
-        match outcome? {
-            ProcessingResult::Continue => {}
-            stop => return Ok(stop),
-        }
-    }
-    Ok(ProcessingResult::Continue)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_tap_release<W: Write>(
-    items: Vec<pipeline::tap::TapItem>,
-    result_line: Option<pipeline::ChunkLine>,
-    pipeline: &mut pipeline::Pipeline,
-    ctx: &mut pipeline::PipelineContext,
-    config: &KeloraConfig,
-    output: &mut W,
-    gap_tracker: &mut Option<crate::formatters::GapTracker>,
-    multiline_state: &mut MultilineSeqState,
-) -> Result<ProcessingResult> {
-    use pipeline::tap::TapItem;
-
     let keep_blank = matches!(ctx.config.format_name.as_deref(), Some("line"))
         || config.input.multiline.is_some();
-    for item in items {
-        let outcome = match item {
-            TapItem::Inner(line) => {
+    for release in releases {
+        for (is_comment, line) in release.into_lines() {
+            let outcome = if is_comment {
                 if !keep_blank && line.text.trim().is_empty() {
                     continue;
                 }
@@ -2054,27 +2021,22 @@ fn emit_tap_release<W: Write>(
                 multiline_state.note_cap_hit(pipeline, config);
                 multiline_state.note_preset_ts_hint(pipeline, config);
                 outcome
-            }
-            TapItem::Raw(line) => {
+            } else {
                 for formatted in pipeline.flush(ctx)? {
                     write_formatted_output(formatted, output, gap_tracker)?;
                 }
                 pipeline.process_raw_line(line, ctx)
+            };
+            if let ProcessingResult::TakeLimitExhausted =
+                write_tap_outcome(outcome, pipeline, config, output, gap_tracker)?
+            {
+                return Ok(ProcessingResult::TakeLimitExhausted);
             }
-        };
-        if let ProcessingResult::TakeLimitExhausted =
-            write_tap_outcome(outcome, pipeline, config, output, gap_tracker)?
-        {
-            return Ok(ProcessingResult::TakeLimitExhausted);
         }
-    }
-
-    for formatted in pipeline.flush(ctx)? {
-        write_formatted_output(formatted, output, gap_tracker)?;
-    }
-    if let Some(line) = result_line {
-        let outcome = pipeline.process_raw_line(line, ctx);
-        return write_tap_outcome(outcome, pipeline, config, output, gap_tracker);
+        // A test boundary ends any multiline event.
+        for formatted in pipeline.flush(ctx)? {
+            write_formatted_output(formatted, output, gap_tracker)?;
+        }
     }
     Ok(ProcessingResult::Continue)
 }

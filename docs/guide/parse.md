@@ -326,6 +326,8 @@ logs before it reports:
 | `test_directive` | `TODO` or `SKIP` on that line, if any |
 | `test_duration_ms` | `duration_ms` in the YAML block after that line (TAP 13, node) |
 | `test_file` | prove's `t/checkout.t ..` header |
+| `test_subtest` | the subtests a line is nested in below the top-level test (`Timeout / retry`) |
+| `test_time` | the line's own `[HH:MM:SS.mmm](…s)` prefix, as in PostgreSQL's `regress_log_*` files |
 
 Result lines and other lines outside comments (prove's summary, stray output)
 become events with the text in `line`. The plan (`1..N`), blank lines, YAML
@@ -339,9 +341,14 @@ the header that follows them.
 
 Format detection, `--multiline` and the parser see the comment text;
 `--keep-lines`, `--ignore-lines`, `--skip-lines` and `--section-*` see the raw
-lines. A result line ends any multiline event. Subtests are not unwrapped: their
-indented lines count as part of the enclosing test. `--unwrap` runs
-sequentially only.
+lines. A result line ends any multiline event.
+
+In a subtest, the test fields still describe the top-level test, so
+`--filter 'e.test_ok == false'` finds every line of a failing test however deep
+it sits. A subtest's passing results and plan are dropped; a failing result is
+kept as a `line` event, since it names what failed. Test2's buffered subtests
+(`ok 1 - name {` … `}`) work the same way, their lines belonging to the result
+before them. `--unwrap` runs sequentially only.
 
 ## When lines don't parse
 

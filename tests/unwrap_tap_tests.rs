@@ -278,3 +278,122 @@ test_file='t/util.t' line='t/util.t ............. ok'
 "
     );
 }
+
+fn keyed(stdout: &str) -> Vec<String> {
+    stdout.lines().map(str::to_string).collect()
+}
+
+#[test]
+fn subtests_keep_the_top_level_test_and_record_nesting() {
+    let input = r#"# {"level":"info","msg":"server up"}
+    # Subtest: Basics
+    ok 1 - status 200
+    # {"level":"warn","msg":"slow response"}
+        # Subtest: Timeout
+        # {"level":"error","msg":"request timed out"}
+        not ok 1 - got response
+        #   Failed test 'got response'
+        #   at t/basic.t line 12.
+        1..1
+    not ok 2 - Timeout
+    1..2
+not ok 1 - Basics
+ok 2 - cleanup
+"#;
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "json,line",
+            "-k",
+            "test_num,test_name,test_subtest,msg,line",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert_eq!(
+        keyed(&stdout),
+        vec![
+            "test_num=1 test_name='Basics' msg='server up'",
+            "test_num=1 test_name='Basics' msg='slow response'",
+            "test_num=1 test_name='Basics' test_subtest='Timeout' msg='request timed out'",
+            "test_num=1 test_name='Basics' test_subtest='Timeout' line='        not ok 1 - got response'",
+            "test_num=1 test_name='Basics' line='    not ok 2 - Timeout'",
+            "test_num=1 test_name='Basics' line='not ok 1 - Basics'",
+            "test_num=2 test_name='cleanup' line='ok 2 - cleanup'",
+        ]
+    );
+}
+
+#[test]
+fn test2_buffered_subtest_lines_belong_to_the_result_before_them() {
+    let input = r#"ok 1 - Basics {
+    ok 1 - status 200
+    # {"level":"warn","msg":"slow response"}
+    not ok 2 - Inner {
+        # {"level":"error","msg":"deep"}
+        not ok 1 - deep check
+        1..1
+    }
+    1..2
+}
+ok 2 - after
+"#;
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "json,line",
+            "-k",
+            "test_num,test_name,test_subtest,msg",
+            "--filter",
+            "e.has(\"msg\")",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert_eq!(
+        keyed(&stdout),
+        vec![
+            "test_num=1 test_name='Basics' msg='slow response'",
+            "test_num=1 test_name='Basics' test_subtest='Inner' msg='deep'",
+        ]
+    );
+}
+
+/// PostgreSQL's regress_log files prefix TAP lines with the time.
+#[test]
+fn timestamp_prefixed_tap() {
+    let input = "# Checking port 14306
+[04:47:24.885](0.188s) # initializing database system by copying initdb template
+### Starting node \"primary\"
+[04:47:25.699](0.814s) ok 1 - physical slot created on primary
+[04:50:22.056](176.357s) not ok 2 - regression tests pass
+[04:50:22.056](0.000s) #   Failed test 'regression tests pass'
+[04:50:22.056](0.000s) #   at t/027_stream_regress.pl line 95.
+";
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "line",
+            "-k",
+            "test_time,test_num,test_ok,line",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert_eq!(
+        keyed(&stdout),
+        vec![
+            "test_num=1 test_ok=true line='Checking port 14306'",
+            "test_time='04:47:24.885' test_num=1 test_ok=true line='initializing database system by copying initdb template'",
+            "test_num=1 test_ok=true line='## Starting node \"primary\"'",
+            "test_time='04:47:25.699' test_num=1 test_ok=true line='[04:47:25.699](0.814s) ok 1 - physical slot created on primary'",
+            "test_time='04:50:22.056' test_num=2 test_ok=false line='[04:50:22.056](176.357s) not ok 2 - regression tests pass'",
+        ]
+    );
+}

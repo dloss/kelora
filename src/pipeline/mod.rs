@@ -307,6 +307,9 @@ pub struct ChunkLine {
     pub text: String,
     pub line_num: usize,
     pub filename: Option<String>,
+    /// Fields to add to the event this line starts (`--unwrap tap`'s test
+    /// fields). A field the record already has keeps its own value.
+    pub extra_fields: Option<tap::TapFields>,
 }
 
 /// One assembled logical record, carrying the provenance of its *first*
@@ -318,6 +321,8 @@ pub struct Chunk {
     pub first_line_num: usize,
     pub filename: Option<String>,
     pub line_count: usize,
+    /// `extra_fields` of the record's first line.
+    pub extra_fields: Option<tap::TapFields>,
 }
 
 /// Group physical lines into logical records (multiline events, CSV records
@@ -483,9 +488,7 @@ pub struct Pipeline {
     /// Cached `chunker.is_passthrough()`: when true, `process_line` skips the
     /// chunk-buffer machinery entirely (measured ~3% on the line hot path).
     pub chunker_is_passthrough: bool,
-    /// Fields added to every event parsed while set (`--unwrap tap` sets the
-    /// test fields of the lines it releases). A field the record already has
-    /// keeps its own value.
+    /// `extra_fields` of the chunk being parsed, added to its event.
     pub injected_fields: Option<tap::TapFields>,
     /// While true, chunks are parsed as plain `line` events instead of with
     /// the input-format parser (`--unwrap tap` emits its non-comment lines so).
@@ -514,6 +517,7 @@ impl Pipeline {
             ctx.meta.line_num = Some(line.line_num);
             ctx.meta.filename = line.filename;
             ctx.meta.multiline_assembled = false;
+            self.injected_fields = line.extra_fields;
             return self.process_chunk(line.text, ctx);
         }
 
@@ -534,6 +538,7 @@ impl Pipeline {
         ctx.meta.line_num = Some(line.line_num);
         ctx.meta.filename = line.filename;
         ctx.meta.multiline_assembled = false;
+        self.injected_fields = line.extra_fields;
         self.raw_line_mode = true;
         let result = self.process_chunk(line.text, ctx);
         self.raw_line_mode = false;
@@ -569,6 +574,7 @@ impl Pipeline {
             ctx.meta.line_num = Some(chunk.first_line_num);
             ctx.meta.filename = chunk.filename;
             ctx.meta.multiline_assembled = chunk.line_count > 1;
+            self.injected_fields = chunk.extra_fields;
             return self.process_chunk(chunk.text, ctx);
         }
 
@@ -578,6 +584,7 @@ impl Pipeline {
             ctx.meta.line_num = Some(chunk.first_line_num);
             ctx.meta.filename = chunk.filename;
             ctx.meta.multiline_assembled = chunk.line_count > 1;
+            self.injected_fields = chunk.extra_fields;
             match self.process_chunk(chunk.text, ctx) {
                 Ok(formatted) => outputs.extend(formatted),
                 Err(e) => {

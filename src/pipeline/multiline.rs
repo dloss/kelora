@@ -49,6 +49,7 @@ pub struct MultilineChunker {
     buffer: Vec<String>,
     buf_first_line_num: usize,
     buf_filename: Option<String>,
+    buf_extra_fields: Option<super::tap::TapFields>,
     start_regex: Option<Regex>,
     end_regex: Option<Regex>,
     timestamp_detector: Option<TimestampDetector>,
@@ -128,6 +129,7 @@ impl MultilineChunker {
             buffer: Vec::new(),
             buf_first_line_num: 0,
             buf_filename: None,
+            buf_extra_fields: None,
             start_regex,
             end_regex,
             timestamp_detector,
@@ -181,6 +183,7 @@ impl MultilineChunker {
         if self.buffer.is_empty() {
             self.buf_first_line_num = line.line_num;
             self.buf_filename = line.filename;
+            self.buf_extra_fields = line.extra_fields;
         }
         self.buffer.push(line.text);
     }
@@ -204,6 +207,7 @@ impl MultilineChunker {
 
         if self.buffer.is_empty() {
             self.buf_filename = None;
+            self.buf_extra_fields = None;
             return;
         }
 
@@ -233,6 +237,7 @@ impl MultilineChunker {
             first_line_num: self.buf_first_line_num,
             filename: self.buf_filename.take(),
             line_count,
+            extra_fields: self.buf_extra_fields.take(),
         });
     }
 }
@@ -622,6 +627,7 @@ mod tests {
                     text: line.to_string(),
                     line_num: idx + 1,
                     filename: None,
+                    extra_fields: None,
                 },
                 &mut out,
             );
@@ -1143,6 +1149,7 @@ mod tests {
                 text: "test".to_string(),
                 line_num: 1,
                 filename: None,
+                extra_fields: None,
             },
             &mut out,
         );
@@ -1162,6 +1169,7 @@ mod tests {
                 text: "Header".to_string(),
                 line_num: 41,
                 filename: Some("a.log".to_string()),
+                extra_fields: None,
             },
             &mut out,
         );
@@ -1170,6 +1178,7 @@ mod tests {
                 text: "  cont".to_string(),
                 line_num: 42,
                 filename: Some("a.log".to_string()),
+                extra_fields: None,
             },
             &mut out,
         );
@@ -1440,6 +1449,7 @@ mod tests {
                         text: line.to_string(),
                         line_num: idx + 1,
                         filename: Some("a.log".to_string()),
+                        extra_fields: None,
                     },
                     &mut out,
                 );
@@ -1450,6 +1460,7 @@ mod tests {
                     text: "\t/app/main.go:5 +0x20".to_string(),
                     line_num: 1,
                     filename: Some("b.log".to_string()),
+                    extra_fields: None,
                 },
                 &mut out,
             );
@@ -1458,6 +1469,7 @@ mod tests {
                     text: "plain".to_string(),
                     line_num: 2,
                     filename: Some("b.log".to_string()),
+                    extra_fields: None,
                 },
                 &mut out,
             );
@@ -1559,6 +1571,7 @@ mod proptests {
                     text: line.clone(),
                     line_num: idx + 1,
                     filename: None,
+                    extra_fields: None,
                 },
                 &mut out,
             );

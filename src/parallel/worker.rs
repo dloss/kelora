@@ -505,6 +505,7 @@ fn worker_process_batch(
             text: line.clone(),
             line_num: current_line_num,
             filename: line_filename,
+            extra_fields: None,
         };
         match pipeline.process_line(chunk_line, ctx) {
             Ok(formatted_results) => {
@@ -929,6 +930,7 @@ pub(crate) fn chunker_thread(
                     text: line.clone(),
                     line_num,
                     filename: line_filename,
+                    extra_fields: None,
                 },
                 &mut chunks,
             );

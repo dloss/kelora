@@ -46,6 +46,8 @@ pub struct TestResult {
     pub name: String,
     /// `TODO` or `SKIP`, when the result carries that directive.
     pub directive: Option<&'static str>,
+    /// Test2's buffered subtest: `ok 1 - name {`, its lines follow until `}`.
+    pub opens_block: bool,
 }
 
 /// What one raw line is, once the TAP structure is taken off.
@@ -63,6 +65,12 @@ pub enum TapLine<'a> {
     /// A line of a YAML block after a result, with the block's `duration_ms`
     /// when this line holds it and the block follows a top-level result.
     Yaml(Option<f64>),
+    /// A subtest's (indented) result.
+    Nested(TestResult),
+    /// `# Subtest: name`, announcing a subtest.
+    Subtest(&'a str),
+    /// `}`, closing a Test2 buffered subtest.
+    BlockEnd,
     /// Anything else; emitted as a `line` event.
     Other,
     /// TAP structure or Test::More boilerplate with no log content.
@@ -137,8 +145,10 @@ impl TapClassifier {
                 self.in_failure_block = true;
                 return TapLine::Drop;
             }
+            if let Some(name) = text.strip_prefix("Subtest: ") {
+                return TapLine::Subtest(name.trim_end());
+            }
             if text.starts_with("Looks like you")
-                || text.starts_with("Subtest: ")
                 || text == "No tests run!"
                 || text.starts_with("Tests were run but no plan was declared")
                 || is_runner_tally(text)
@@ -154,17 +164,22 @@ impl TapClassifier {
         self.in_failure_block = false;
         self.in_quoted_value = false;
 
-        if line.starts_with("TAP version ") || is_plan(line) {
+        if line.starts_with("TAP version ") || is_plan(trimmed) {
             return TapLine::Drop;
+        }
+        if trimmed.trim_end() == "}" {
+            return TapLine::BlockEnd;
         }
         if let Some(result) = parse_result(line) {
             self.yaml = Yaml::AfterResult { top: true };
             return TapLine::Result(result);
         }
-        if trimmed.len() < line.len() && parse_result(trimmed).is_some() {
-            // A subtest's result: not unwrapped, but its YAML block is dropped.
-            self.yaml = Yaml::AfterResult { top: false };
-            return TapLine::Other;
+        if trimmed.len() < line.len() {
+            if let Some(result) = parse_result(trimmed) {
+                // A subtest's result; its YAML block has no duration for the test.
+                self.yaml = Yaml::AfterResult { top: false };
+                return TapLine::Nested(result);
+            }
         }
         if let Some((file, verdict)) = parse_prove_header(line) {
             return TapLine::Header { file, verdict };
@@ -227,6 +242,11 @@ fn parse_result(line: &str) -> Option<TestResult> {
     if !(rest.is_empty() || rest.starts_with([' ', '\t'])) {
         return None;
     }
+    let trimmed = rest.trim_end();
+    let (rest, opens_block) = match trimmed.strip_suffix(" {") {
+        Some(rest) => (rest, true),
+        None => (trimmed, false),
+    };
 
     let (desc, directive) = split_directive(rest);
     let desc = desc.trim();
@@ -236,6 +256,7 @@ fn parse_result(line: &str) -> Option<TestResult> {
         num,
         name: desc.replace("\\#", "#"),
         directive,
+        opens_block,
     })
 }
 
@@ -285,25 +306,28 @@ fn is_prove_verdict(line: &str) -> bool {
         || (trimmed.starts_with("All ") && trimmed.ends_with("subtests passed"))
 }
 
+/// Fields of one line beyond its test's (`test_subtest`, `test_time`).
+pub type Extra = Vec<(String, Dynamic)>;
+
 /// A prove line released at once with its test file.
-fn file_release(file: &str, line: ChunkLine) -> TapRelease {
+fn file_release(file: &str, line: ChunkLine, extra: Extra) -> TapRelease {
     TapRelease {
         fields: Some(Arc::new(vec![(
             "test_file".to_string(),
             Dynamic::from(file.to_string()),
         )])),
-        items: vec![TapItem::Raw(line)],
+        items: vec![TapItem::Raw(line, extra)],
         result: None,
     }
 }
 
-/// One line on its way to the pipeline.
+/// One line on its way to the pipeline, with its own extra fields.
 #[derive(Debug)]
 pub enum TapItem {
     /// Comment text, for the inner parser (and the multiline chunker).
-    Inner(ChunkLine),
+    Inner(ChunkLine, Extra),
     /// A non-comment line, emitted as a `line` event.
-    Raw(ChunkLine),
+    Raw(ChunkLine, Extra),
 }
 
 /// Buffered lines released together with the fields of the test they belong
@@ -312,7 +336,38 @@ pub enum TapItem {
 pub struct TapRelease {
     pub fields: Option<TapFields>,
     pub items: Vec<TapItem>,
-    pub result: Option<ChunkLine>,
+    pub result: Option<(ChunkLine, Extra)>,
+}
+
+impl TapRelease {
+    /// The lines to feed, in order, each carrying its event's fields: `true`
+    /// for comment text (parsed with the input format), `false` for a `line`
+    /// event. The result line, if any, comes last.
+    pub fn into_lines(self) -> Vec<(bool, ChunkLine)> {
+        let fields = self.fields;
+        let with_fields = |mut line: ChunkLine, extra: Extra| {
+            line.extra_fields = if extra.is_empty() {
+                fields.clone()
+            } else {
+                let mut all = fields.as_deref().cloned().unwrap_or_default();
+                all.extend(extra);
+                Some(Arc::new(all))
+            };
+            line
+        };
+        let mut lines: Vec<(bool, ChunkLine)> = self
+            .items
+            .into_iter()
+            .map(|item| match item {
+                TapItem::Inner(line, extra) => (true, with_fields(line, extra)),
+                TapItem::Raw(line, extra) => (false, with_fields(line, extra)),
+            })
+            .collect();
+        if let Some((line, extra)) = self.result {
+            lines.push((false, with_fields(line, extra)));
+        }
+        lines
+    }
 }
 
 /// Outcome of feeding one raw line.
@@ -323,6 +378,25 @@ pub struct TapStep {
     pub dropped: bool,
     /// The buffer hit `MAX_PENDING_LINES` and was released without test fields.
     pub overflowed: bool,
+}
+
+/// Split off PostgreSQL's `[HH:MM:SS.mmm](0.123s) ` prefix, returning the
+/// time and the rest of the line.
+fn split_time_prefix(line: &str) -> Option<(&str, &str)> {
+    let rest = line.strip_prefix('[')?;
+    let (time, rest) = rest.split_once("](")?;
+    let (delta, rest) = rest.split_once("s) ")?;
+    let is_time = !time.is_empty()
+        && time
+            .bytes()
+            .all(|b| b.is_ascii_digit() || b == b':' || b == b'.');
+    let is_delta = !delta.is_empty() && delta.bytes().all(|b| b.is_ascii_digit() || b == b'.');
+    (is_time && is_delta).then_some((time, rest))
+}
+
+/// Number of leading spaces: a subtest's lines are indented 4 per level.
+fn indent_of(line: &str) -> usize {
+    line.len() - line.trim_start_matches(' ').len()
 }
 
 /// Stateful unwrapper: classifies raw lines and holds each test's lines until
@@ -341,6 +415,11 @@ pub struct TapUnwrapper {
     /// Set right after a header: prove's verdict lines that follow it belong
     /// to its file.
     verdict_file: Option<String>,
+    /// Names of the open subtests, by the indentation of their lines.
+    subtests: Vec<(usize, String)>,
+    /// Fields of a Test2 buffered subtest (`ok 1 - name {`) whose lines are
+    /// still coming: they belong to that result, which came first.
+    block: Option<TapFields>,
     last_filename: Option<Option<String>>,
 }
 
@@ -359,18 +438,18 @@ impl TapUnwrapper {
                 self.test_file = None;
                 self.results_since_header = false;
                 self.verdict_file = None;
+                self.subtests.clear();
                 self.classifier = TapClassifier::default();
             }
             self.last_filename = Some(filename.clone());
         }
 
-        let chunk_line = |text: String| ChunkLine {
-            text,
-            line_num,
-            filename: filename.clone(),
+        let (time, body) = match split_time_prefix(&text) {
+            Some((time, body)) => (Some(time.to_string()), body),
+            None => (None, text.as_str()),
         };
-
-        let line = self.classifier.classify(&text);
+        let indent = indent_of(body);
+        let line = self.classifier.classify(body);
         if let TapLine::Yaml(duration) = line {
             step.dropped = true;
             if let (Some(ms), Some(held)) = (duration, self.held.as_mut()) {
@@ -383,20 +462,66 @@ impl TapUnwrapper {
         step.releases.extend(self.held.take());
         let verdict_file = self.verdict_file.take();
 
+        let chunk_line = |text: String| ChunkLine {
+            text,
+            line_num,
+            filename: filename.clone(),
+            extra_fields: None,
+        };
+        let mut extra = Extra::new();
+        if let Some(subtest) = self.subtest_path(indent) {
+            extra.push(("test_subtest".to_string(), Dynamic::from(subtest)));
+        }
+        if let Some(time) = time {
+            extra.push(("test_time".to_string(), Dynamic::from(time)));
+        }
+
         match line {
             TapLine::Yaml(_) => unreachable!("handled above"),
             TapLine::Drop => step.dropped = true,
             TapLine::Comment(inner) => {
                 let inner = inner.to_string();
-                self.pending.push(TapItem::Inner(chunk_line(inner)));
+                self.pending.push(TapItem::Inner(chunk_line(inner), extra));
             }
             TapLine::Other => match verdict_file {
-                Some(file) if is_prove_verdict(&text) => {
-                    step.releases.push(file_release(&file, chunk_line(text)));
+                Some(file) if is_prove_verdict(body) => {
+                    step.releases
+                        .push(file_release(&file, chunk_line(text), extra));
                     self.verdict_file = Some(file);
                 }
-                _ => self.pending.push(TapItem::Raw(chunk_line(text))),
+                _ => self.pending.push(TapItem::Raw(chunk_line(text), extra)),
             },
+            TapLine::Subtest(name) => {
+                self.open_subtest(indent, name);
+                step.dropped = true;
+            }
+            TapLine::Nested(result) => {
+                if result.opens_block {
+                    self.open_subtest(indent + 4, &result.name);
+                } else {
+                    self.subtests.retain(|(level, _)| *level <= indent);
+                }
+                // A failing assertion says what went wrong; passing ones are
+                // summarized by the test's own result.
+                if result.ok {
+                    step.dropped = true;
+                } else {
+                    self.pending.push(TapItem::Raw(chunk_line(text), extra));
+                }
+            }
+            TapLine::BlockEnd => {
+                step.dropped = true;
+                self.subtests.retain(|(level, _)| *level <= indent);
+                if indent == 0 {
+                    if let Some(fields) = self.block.take() {
+                        step.releases.push(TapRelease {
+                            fields: Some(fields),
+                            items: std::mem::take(&mut self.pending),
+                            result: None,
+                        });
+                    }
+                }
+            }
             TapLine::Header { file, verdict } => {
                 let file = file.to_string();
                 if !self.results_since_header {
@@ -407,8 +532,10 @@ impl TapUnwrapper {
                 step.releases.extend(self.finish());
                 self.test_file = Some(file.clone());
                 self.results_since_header = false;
+                self.subtests.clear();
                 if verdict {
-                    step.releases.push(file_release(&file, chunk_line(text)));
+                    step.releases
+                        .push(file_release(&file, chunk_line(text), extra));
                 } else {
                     step.dropped = true;
                 }
@@ -416,12 +543,21 @@ impl TapUnwrapper {
             }
             TapLine::Result(result) => {
                 self.results_since_header = true;
+                self.subtests.clear();
                 let fields = self.result_fields(&result);
-                self.held = Some(TapRelease {
-                    fields: Some(fields),
+                let release = TapRelease {
+                    fields: Some(fields.clone()),
                     items: std::mem::take(&mut self.pending),
-                    result: Some(chunk_line(text)),
-                });
+                    result: Some((chunk_line(text), extra)),
+                };
+                if result.opens_block {
+                    // Test2 buffered subtest: its lines follow until `}`.
+                    step.releases.push(release);
+                    self.block = Some(fields);
+                    self.open_subtest(4, &result.name);
+                } else {
+                    self.held = Some(release);
+                }
             }
         }
 
@@ -432,16 +568,37 @@ impl TapUnwrapper {
         step
     }
 
+    /// Record a subtest whose lines are indented by `indent`, closing any
+    /// deeper ones.
+    fn open_subtest(&mut self, indent: usize, name: &str) {
+        self.subtests.retain(|(level, _)| *level < indent);
+        self.subtests.push((indent, name.to_string()));
+    }
+
+    /// `test_subtest` for a line at `indent`: the open subtests below the top
+    /// level (whose name is already `test_name`), outermost first.
+    fn subtest_path(&self, indent: usize) -> Option<String> {
+        let names: Vec<&str> = self
+            .subtests
+            .iter()
+            .filter(|(level, _)| *level > 4 && *level <= indent)
+            .map(|(_, name)| name.as_str())
+            .collect();
+        (!names.is_empty()).then(|| names.join(" / "))
+    }
+
     /// Release everything still held (end of input, end of a file): the last
     /// result, then lines that no result line followed. Those keep `test_file`
-    /// but get no test fields.
+    /// but get no test fields (or the fields of an unclosed Test2 subtest).
     pub fn finish(&mut self) -> Vec<TapRelease> {
         let mut releases: Vec<TapRelease> = self.held.take().into_iter().collect();
+        let block = self.block.take();
         if !self.pending.is_empty() {
-            let fields = self
-                .test_file
-                .as_ref()
-                .map(|file| Arc::new(vec![("test_file".to_string(), Dynamic::from(file.clone()))]));
+            let fields = block.or_else(|| {
+                self.test_file.as_ref().map(|file| {
+                    Arc::new(vec![("test_file".to_string(), Dynamic::from(file.clone()))])
+                })
+            });
             releases.push(TapRelease {
                 fields,
                 items: std::mem::take(&mut self.pending),
@@ -484,7 +641,8 @@ mod tests {
                 ok: true,
                 num: 1,
                 name: "server starts".into(),
-                directive: None
+                directive: None,
+                opens_block: false
             })
         );
         let r = result("not ok 6 - refund restores stock # TODO refunds not implemented").unwrap();
@@ -512,6 +670,9 @@ mod tests {
         assert_eq!(result("okay 1"), None);
         assert_eq!(result("ok 1x"), None);
         assert_eq!(result("    ok 1 - subtest"), None);
+        let r = result("ok 1 - Basics {").unwrap();
+        assert_eq!(r.name, "Basics");
+        assert!(r.opens_block);
     }
 
     #[test]
@@ -584,7 +745,7 @@ mod tests {
             c.classify("# Looks like you failed 2 tests of 6."),
             TapLine::Drop
         );
-        assert_eq!(c.classify("# Subtest: inner"), TapLine::Drop);
+        assert_eq!(c.classify("# Subtest: inner"), TapLine::Subtest("inner"));
         assert_eq!(
             c.classify(
                 "# Tests were run but no plan was declared and done_testing() was not seen."
@@ -615,7 +776,7 @@ mod tests {
         assert_eq!(c.classify("  ---"), TapLine::Other);
 
         // A subtest's block is dropped, without a duration for the parent.
-        assert_eq!(c.classify("    ok 1 - inner"), TapLine::Other);
+        assert!(matches!(c.classify("    ok 1 - inner"), TapLine::Nested(_)));
         assert_eq!(c.classify("    ---"), TapLine::Yaml(None));
         assert_eq!(c.classify("    duration_ms: 1.5"), TapLine::Yaml(None));
         assert_eq!(c.classify("    ..."), TapLine::Yaml(None));
@@ -747,8 +908,8 @@ mod tests {
             .items
             .iter()
             .map(|item| match item {
-                TapItem::Inner(l) => ("inner", l.text.as_str()),
-                TapItem::Raw(l) => ("raw", l.text.as_str()),
+                TapItem::Inner(l, _) => ("inner", l.text.as_str()),
+                TapItem::Raw(l, _) => ("raw", l.text.as_str()),
             })
             .collect()
     }
@@ -800,7 +961,7 @@ mod tests {
                 .unwrap(),
             "t/checkout.t"
         );
-        assert_eq!(releases[0].result.as_ref().unwrap().line_num, 4);
+        assert_eq!(releases[0].result.as_ref().unwrap().0.line_num, 4);
 
         assert_eq!(
             texts(&releases[1]),

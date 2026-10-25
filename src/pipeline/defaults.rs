@@ -22,6 +22,7 @@ impl Chunker for SimpleChunker {
             first_line_num: line.line_num,
             filename: line.filename,
             line_count: 1,
+            extra_fields: line.extra_fields,
         });
     }
 
@@ -56,6 +57,7 @@ pub struct CsvChunker {
     first_line_num: usize,
     filename: Option<String>,
     line_count: usize,
+    extra_fields: Option<super::tap::TapFields>,
 }
 
 impl CsvChunker {
@@ -69,6 +71,7 @@ impl CsvChunker {
         if self.buffer.is_empty() {
             self.first_line_num = line.line_num;
             self.filename = line.filename;
+            self.extra_fields = line.extra_fields;
             self.line_count = 0;
         }
         if !self.buffer.is_empty() {
@@ -84,6 +87,7 @@ impl CsvChunker {
             first_line_num: self.first_line_num,
             filename: self.filename.take(),
             line_count: std::mem::take(&mut self.line_count),
+            extra_fields: self.extra_fields.take(),
         }
     }
 }
@@ -100,6 +104,7 @@ impl Chunker for CsvChunker {
                 first_line_num: line.line_num,
                 filename: line.filename,
                 line_count: 1,
+                extra_fields: line.extra_fields,
             });
             return;
         }
@@ -284,6 +289,7 @@ mod tests {
                     text: line.to_string(),
                     line_num: idx + 1,
                     filename: None,
+                    extra_fields: None,
                 },
                 &mut chunks,
             );
@@ -334,6 +340,7 @@ mod tests {
                 text: "\"oops,unclosed".to_string(),
                 line_num: 7,
                 filename: Some("x.csv".to_string()),
+                extra_fields: None,
             },
             &mut chunks,
         );
