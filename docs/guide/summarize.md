@@ -59,7 +59,12 @@ kelora examples/api_latency_incident.jsonl -m \
   -e 'if e.response_time_ms > 500 { track_top("slow_endpoint", e.endpoint, 3) }'
 ```
 
-Each call names its metric, so one run can track many things.
+Each call names its metric, so one run can track many things. Put a value in
+the name to get one metric per value, such as the total time per endpoint:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/api_latency_incident.jsonl -m -e 'track_sum("ms " + e.endpoint, e.response_time_ms)'
+```
 
 | Function | Tracks |
 |---|---|
@@ -69,7 +74,7 @@ Each call names its metric, so one run can track many things.
 | `track_stats(name, n)` | min, max, avg, sum, count, p50/p95/p99 (what `--describe` uses) |
 | `track_percentiles(name, n, [0.5, 0.999])` | chosen percentiles |
 | `track_top(name, value, k)` / `track_bottom` | the k most / least frequent values (bounded memory) |
-| `track_top_by(name, value, score, k)` / `track_bottom_by` | the k values with the highest / lowest score — slowest endpoints, biggest responses |
+| `track_top_by(name, value, score, k)` / `track_bottom_by` | the k values with the highest / lowest single score — slowest endpoints, biggest responses (a maximum, not a total) |
 | `track_unique(name, value)` | the distinct values themselves |
 | `track_cardinality(name, value)` | an estimate of the distinct count (what `--card` uses) |
 

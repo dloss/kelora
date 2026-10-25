@@ -49,7 +49,7 @@ text.is_digit()                      Check if text contains only digits
 text.is_in_cidr(cidr)                Check if IP address is in CIDR network (e.g., "10.0.0.0/8")
 text.is_ipv4()                       Check if text is a valid IPv4 address
 text.is_ipv6()                       Check if text is a valid IPv6 address
-text.is_private_ip()                 Check if IP is in private/internal ranges
+text.is_private_ip()                 Check if IP is RFC 1918, loopback, or IPv6 ULA/link-local (not 169.254/16)
 text.lclip()                         Remove leading non-alphanumeric characters (left side only)
 text.len                             Get string length (builtin)
 text.like(pattern)                   Glob match (*, ?) against entire string
