@@ -91,9 +91,11 @@ impl AdaptiveTsParser {
 
         // Try standard RFC formats (these are very fast)
         if let Ok(dt) = DateTime::parse_from_rfc3339(ts_str) {
+            note_offset(&dt);
             return Some(dt.with_timezone(&Utc));
         }
         if let Ok(dt) = DateTime::parse_from_rfc2822(ts_str) {
+            note_offset(&dt);
             return Some(dt.with_timezone(&Utc));
         }
 
@@ -270,6 +272,14 @@ impl Default for AdaptiveTsParser {
     }
 }
 
+/// Count a timestamp that states a non-zero UTC offset (see
+/// `ProcessingStats::offset_timestamps`).
+fn note_offset(dt: &DateTime<chrono::FixedOffset>) {
+    if dt.offset().local_minus_utc() != 0 {
+        crate::stats::stats_add_offset_timestamp();
+    }
+}
+
 /// Helper function to apply timezone configuration to a naive datetime
 fn apply_timezone_to_naive(
     naive_dt: chrono::NaiveDateTime,
@@ -393,9 +403,10 @@ fn try_parse_with_format(
 
     // Try timezone-aware parsing first
     if let Ok(dt) = DateTime::parse_from_str(&processed_ts_str, &processed_format) {
-        let dt = dt.with_timezone(&Utc);
-        if year_is_plausible(&dt) {
-            return Some(dt);
+        let utc = dt.with_timezone(&Utc);
+        if year_is_plausible(&utc) {
+            note_offset(&dt);
+            return Some(utc);
         }
     }
 
@@ -459,6 +470,12 @@ fn try_parse_with_format(
     if let Ok(naive_dt) =
         chrono::NaiveDateTime::parse_from_str(&processed_ts_str, &processed_format)
     {
+        // A literal trailing `Z` (e.g. "%Y-%m-%d %H:%MZ") names UTC, but chrono
+        // sees no offset in it; honour it instead of applying the default zone.
+        if processed_format.ends_with('Z') && !processed_format.ends_with("%Z") {
+            let dt = naive_dt.and_utc();
+            return year_is_plausible(&dt).then_some(dt);
+        }
         if let Some(dt) = apply_timezone_to_naive(naive_dt, default_timezone) {
             if !year_is_plausible(&dt) {
                 return None;
@@ -713,7 +730,7 @@ pub fn parse_timestamp_arg_with_timezone(
     let mut parser = AdaptiveTsParser::new();
     parser
         .parse_ts_with_config(arg, None, default_timezone)
-        .ok_or_else(|| format!("Could not parse timestamp: {}", arg))
+        .ok_or_else(|| "unrecognized format".to_string())
 }
 
 /// Resolve `--cut-at` to a single instant, accepting the same vocabulary as
@@ -792,6 +809,18 @@ pub fn parse_anchored_timestamp(
         // Not an anchored timestamp, parse normally
         parse_timestamp_arg_with_timezone(arg, default_timezone)
     }
+}
+
+/// Whether a `--since`/`--until`/`--cut-at` value depends on the default zone,
+/// i.e. it names a wall-clock time without an offset ("2024-01-15 10:00").
+/// Resolved under two zones 14 hours apart; relative forms (`-1h`, `now-5m`)
+/// and zoned stamps resolve to the same instant either way.
+pub fn timestamp_arg_is_zone_dependent(arg: &str) -> bool {
+    crate::stats::stats_ignore_timestamp_zones(|| {
+        let utc = parse_anchored_timestamp(arg, None, None, Some("UTC"));
+        let east = parse_anchored_timestamp(arg, None, None, Some("Pacific/Kiritimati"));
+        matches!((utc, east), (Ok(a), Ok(b)) if (a - b).num_hours().abs() >= 1)
+    })
 }
 
 pub type ResolvedTimeRange = (Option<DateTime<Utc>>, Option<DateTime<Utc>>);

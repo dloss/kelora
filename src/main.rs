@@ -290,21 +290,38 @@ fn main() -> Result<()> {
     if cli.since.is_some() || cli.until.is_some() {
         // Use the same timezone logic as the main configuration
         let cli_timezone = config.input.default_timezone.as_deref();
-        let (since, until) = match crate::timestamp::resolve_time_range(
-            cli.since.as_deref(),
-            cli.until.as_deref(),
-            cli_timezone,
-        ) {
+        let resolved = crate::stats::stats_ignore_timestamp_zones(|| {
+            crate::timestamp::resolve_time_range(
+                cli.since.as_deref(),
+                cli.until.as_deref(),
+                cli_timezone,
+            )
+        });
+        let (since, until) = match resolved {
             Ok(range) => range,
             Err(e) => {
                 stderr
-                    .writeln(&config.format_error_message(&e))
+                    .writeln(&config.format_error_message(&format!(
+                        "{}. Try e.g. '2024-01-15 10:00', '2024-01-15T10:00:00Z', '-1h' or 'yesterday'; see --help-time.",
+                        e.trim_end_matches('.')
+                    )))
                     .unwrap_or(());
                 ExitCode::InvalidUsage.exit();
             }
         };
+        let naive_bound = [("--since", &cli.since), ("--until", &cli.until)]
+            .into_iter()
+            .find_map(|(flag, arg)| {
+                arg.as_deref()
+                    .filter(|a| crate::timestamp::timestamp_arg_is_zone_dependent(a))
+                    .map(|a| (flag, a.to_string()))
+            });
 
-        config.processing.timestamp_filter = Some(TimestampFilterConfig { since, until });
+        config.processing.timestamp_filter = Some(TimestampFilterConfig {
+            since,
+            until,
+            naive_bound,
+        });
     }
 
     // Resolve the --drain-diff side rule: a --cut-at timestamp (parsed with the
@@ -313,7 +330,9 @@ fn main() -> Result<()> {
     if config.output.drain_diff.is_some() {
         let rule = if let Some(cut_str) = &cli.cut_at {
             let cli_timezone = config.input.default_timezone.as_deref();
-            match crate::timestamp::resolve_cut_timestamp(cut_str, cli_timezone) {
+            match crate::stats::stats_ignore_timestamp_zones(|| {
+                crate::timestamp::resolve_cut_timestamp(cut_str, cli_timezone)
+            }) {
                 Ok(cut) => config::DrainDiffRule::Timestamp {
                     cut,
                     raw: cut_str.clone(),
@@ -979,7 +998,12 @@ fn maybe_print_naive_tz_hint(
     stats: &stats::ProcessingStats,
     stderr: &mut SafeStderr,
 ) {
-    if stats.naive_timestamps == 0 || !config.input.timezone_assumed {
+    if !config.input.timezone_assumed {
+        return;
+    }
+
+    if stats.naive_timestamps == 0 {
+        maybe_print_naive_bound_hint(config, stats, stderr);
         return;
     }
 
@@ -992,12 +1016,60 @@ fn maybe_print_naive_tz_hint(
     }
 
     let message = if normalize {
-        "Timestamps carry no zone offset; assuming UTC, and --normalize-ts writes that offset into the output. Pass --input-tz <zone> if your source is not UTC."
+        "Input timestamps carry no zone offset; assuming UTC, and --normalize-ts writes that offset into the output. Pass --input-tz <zone> if your source is not UTC."
     } else {
-        "Timestamps carry no zone offset; assuming UTC. Pass --input-tz <zone> if your source is not UTC."
+        "Input timestamps carry no zone offset; assuming UTC. Pass --input-tz <zone> if your source is not UTC."
     };
     let formatted = config
         .format_hint_message(message)
+        .trim_start_matches('\n')
+        .to_string();
+    stderr.writeln(&formatted).unwrap_or(());
+}
+
+/// Hint when the input's timestamps carry their own offsets but a `--since` or
+/// `--until` bound has none. The bound is read as UTC, so a wall-clock time
+/// copied from a `+0200` log line lands two hours off — and the input-side hint
+/// above, which blames the input, would send the reader to `--input-tz` for a
+/// source that needs none.
+fn maybe_print_naive_bound_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    let Some(filter) = config.processing.timestamp_filter.as_ref() else {
+        return;
+    };
+    let Some((flag, raw)) = filter.naive_bound.as_ref() else {
+        return;
+    };
+    if stats.offset_timestamps == 0 {
+        return;
+    }
+    let resolved = if *flag == "--since" {
+        filter.since
+    } else {
+        filter.until
+    };
+    let Some(resolved) = resolved else {
+        return;
+    };
+
+    // Suggest the offset form only where it parses (a bare `11:00` takes none).
+    let with_offset = format!("{raw}+02:00");
+    let example = if crate::stats::stats_ignore_timestamp_zones(|| {
+        crate::timestamp::parse_timestamp_arg_with_timezone(&with_offset, Some("UTC")).is_ok()
+    }) {
+        format!(" (e.g. '{with_offset}')")
+    } else {
+        String::new()
+    };
+    let message = format!(
+        "{flag} '{raw}' has no zone offset and was read as UTC ({}), but the input's timestamps carry non-UTC offsets. To match a time copied from the log, add its offset{example}.",
+        resolved.to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+    );
+    let formatted = config
+        .format_hint_message(&message)
         .trim_start_matches('\n')
         .to_string();
     stderr.writeln(&formatted).unwrap_or(());

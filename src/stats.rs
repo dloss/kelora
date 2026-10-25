@@ -92,6 +92,10 @@ pub struct ProcessingStats {
     /// timezone. Drives the #287 diagnostic that surfaces the silent UTC
     /// assumption; the explicit-vs-default gate is applied at emit time.
     pub naive_timestamps: usize,
+    /// Count of timestamps parsed with an explicit non-zero UTC offset
+    /// (`+0200`). A zone-less `--since` is then likely a wall-clock time copied
+    /// from the log, not UTC; drives the naive-bound hint.
+    pub offset_timestamps: usize,
     /// Count of printed events whose timestamp, re-read after the script
     /// stages, falls outside the `--since`/`--until` window. The window runs
     /// before the script stages and reads the parser's timestamp, so a script
@@ -526,6 +530,33 @@ pub fn stats_add_naive_timestamp() {
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().naive_timestamps += 1;
     });
+}
+
+/// Record a timestamp parsed with a non-zero UTC offset (see
+/// [`ProcessingStats::offset_timestamps`]).
+pub fn stats_add_offset_timestamp() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().offset_timestamps += 1;
+    });
+}
+
+/// Run `f` without letting it count naive or offset timestamps. Parsing a CLI
+/// argument such as `--since` goes through the same parser as the input, but
+/// the argument's zone says nothing about the input's zones.
+pub fn stats_ignore_timestamp_zones<T>(f: impl FnOnce() -> T) -> T {
+    let before = THREAD_STATS.with(|stats| {
+        let stats = stats.borrow();
+        (stats.naive_timestamps, stats.offset_timestamps)
+    });
+    let result = f();
+    THREAD_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        (stats.naive_timestamps, stats.offset_timestamps) = before;
+    });
+    result
 }
 
 pub fn stats_add_error() {

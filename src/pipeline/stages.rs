@@ -1613,6 +1613,7 @@ mod tests {
         let config = TimestampFilterConfig {
             since: Some(since),
             until: None,
+            naive_bound: None,
         };
         let mut stage = TimestampFilterStage::new(config);
 
@@ -1677,6 +1678,7 @@ mod tests {
         let config = TimestampFilterConfig {
             since: None,
             until: Some(until),
+            naive_bound: None,
         };
         let mut stage = TimestampFilterStage::new(config);
 
@@ -1740,6 +1742,7 @@ mod tests {
         let config = TimestampFilterConfig {
             since: Some(Utc::now() - Duration::hours(1)),
             until: Some(Utc::now() + Duration::hours(1)),
+            naive_bound: None,
         };
         let mut stage = TimestampFilterStage::new(config);
 

@@ -515,6 +515,9 @@ pub enum WrapMode {
 pub struct TimestampFilterConfig {
     pub since: Option<chrono::DateTime<chrono::Utc>>,
     pub until: Option<chrono::DateTime<chrono::Utc>>,
+    /// The first bound given without a zone offset, as (flag, value): it was
+    /// resolved in the default zone, which the zone hint names.
+    pub naive_bound: Option<(&'static str, String)>,
 }
 
 /// Timestamp formatting configuration (display-only, affects default output format only)

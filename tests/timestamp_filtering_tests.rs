@@ -1369,6 +1369,99 @@ fn test_offset_ts_no_hint() {
     );
 }
 
+// A zone-less --since against input that carries non-UTC offsets: the bound
+// is read as UTC, so a wall-clock time copied from a `+0200` line lands two
+// hours off. The hint names the bound, not the (zoned, correct) input.
+const OFFSET_LINES: &str = concat!(
+    r#"{"ts":"2025-10-04T10:30:00+02:00","n":1}"#,
+    "\n",
+    r#"{"ts":"2025-10-04T11:30:00+02:00","n":2}"#,
+    "\n",
+);
+
+#[test]
+fn test_naive_bound_hint_names_the_flag_for_offset_input() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-j", "--since", "2025-10-04 11:00", "-q"],
+        OFFSET_LINES,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("--since '2025-10-04 11:00' has no zone offset")
+            && stderr.contains("2025-10-04T11:00:00Z")
+            && stderr.contains("'2025-10-04 11:00+02:00'"),
+        "the hint should name the bound, its UTC reading and the offset form: {stderr}"
+    );
+    assert!(
+        !stderr.contains("Input timestamps carry no zone offset"),
+        "zoned input must not be blamed: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_bound_no_hint_for_utc_input() {
+    // A UTC log matches a UTC reading of the bound; nothing to flag.
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-j", "--since", "2025-10-04 11:00", "-q"],
+        r#"{"ts":"2025-10-04T10:30:00Z"}"#,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "UTC input needs no hint: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_bound_no_hint_for_zoned_bound() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-j", "--since", "2025-10-04 11:00+02:00", "-q"],
+        OFFSET_LINES,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "a bound with an offset is not assumed: {stderr}"
+    );
+}
+
+#[test]
+fn test_minute_precision_z_bound_is_utc_under_input_tz() {
+    // "HH:MMZ" names UTC; --input-tz applies only to zone-less values.
+    let (out, _stderr, code) = run_kelora_with_input(
+        &[
+            "-j",
+            "--input-tz",
+            "Europe/Berlin",
+            "--since",
+            "2025-10-04 09:00Z",
+            "-k",
+            "n",
+        ],
+        OFFSET_LINES,
+    );
+    assert_eq!(code, 0);
+    assert_eq!(
+        out.trim(),
+        "n=2",
+        "09:00Z excludes 08:30Z and keeps 09:30Z, got: {out}"
+    );
+}
+
+#[test]
+fn test_invalid_since_points_to_help_time() {
+    let (_out, stderr, code) =
+        run_kelora_with_input(&["-j", "--since", "1 hour ago"], OFFSET_LINES);
+    assert_eq!(code, 2);
+    assert!(
+        stderr.contains("-1h") && stderr.contains("--help-time"),
+        "an unparsable bound should show working forms: {stderr}"
+    );
+}
+
 #[test]
 fn test_naive_ts_hint_suppressed_by_no_diagnostics() {
     let (_out, stderr, code) = run_kelora_with_input_env(

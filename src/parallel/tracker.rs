@@ -164,6 +164,7 @@ impl GlobalTracker {
         global_stats.timestamp_absent_events += worker_stats.timestamp_absent_events;
         global_stats.yearless_timestamps += worker_stats.yearless_timestamps;
         global_stats.naive_timestamps += worker_stats.naive_timestamps;
+        global_stats.offset_timestamps += worker_stats.offset_timestamps;
         global_stats.window_escaped_events += worker_stats.window_escaped_events;
         global_stats.window_undated_events += worker_stats.window_undated_events;
         global_stats.csv_rows_extra_columns += worker_stats.csv_rows_extra_columns;

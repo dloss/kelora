@@ -45,6 +45,9 @@ fn processing_stats_delta(
         naive_timestamps: after
             .naive_timestamps
             .saturating_sub(before.naive_timestamps),
+        offset_timestamps: after
+            .offset_timestamps
+            .saturating_sub(before.offset_timestamps),
         window_escaped_events: after
             .window_escaped_events
             .saturating_sub(before.window_escaped_events),
@@ -125,6 +128,7 @@ fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
         && stats.timestamp_override_warning.is_none()
         && stats.yearless_timestamps == 0
         && stats.naive_timestamps == 0
+        && stats.offset_timestamps == 0
         && stats.window_escaped_events == 0
         && stats.window_undated_events == 0
         && stats.cascade_format_counts.is_empty()
