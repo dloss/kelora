@@ -20,7 +20,7 @@ kelora examples/api_latency_incident.jsonl --filter 'e.endpoint == "/api/posts"'
 |---|---|
 | `--freq FIELD` | events per value, most frequent first |
 | `--describe FIELD` | count, min, max, average, sum, p50/p95/p99 of a number |
-| `--card FIELD` | an estimate of the number of distinct values (about 1 % error, constant memory) |
+| `--card FIELD` | an estimate of the number of distinct values (about 3 % error, constant memory) |
 
 They count only events that pass your filters, accept dotted paths for nested
 fields (`--freq user.id`), and take several fields, repeated or as a comma list

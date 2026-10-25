@@ -19,7 +19,7 @@ found the timestamp in `ts`. The field names in the first column are what you
 use in every later command. If you see a single `line` field instead, the
 format wasn't recognized — see [Get Logs into Shape](parse.md).
 
-A `~` in **Uniq** marks an estimate (within about 1%), which keeps memory low
+A `~` in **Uniq** marks an estimate (within about 3%), which keeps memory low
 on large files.
 
 ## How much, and over what period?

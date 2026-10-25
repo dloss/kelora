@@ -1461,7 +1461,7 @@ track_unique("users", e.user_id);
 ```
 
 #### `track_cardinality(name, value [, error_rate])`
-Approximate distinct count with HyperLogLog: about 12 KB per metric, ~1% standard error by default. `error_rate` ranges 0.001–0.26 (lower costs more memory). Reported as a whole number, never above the number of values seen; the terminal output marks it with `≈`.
+Approximate distinct count with HyperLogLog: about 1 KB per metric, ~3% standard error by default. `error_rate` ranges 0.001–0.23 (lower costs more memory). Reported as a whole number, never above the number of values seen; the terminal output marks it with `≈`.
 
 ```rhai
 track_cardinality("unique_ips", e.client_ip);
@@ -1470,8 +1470,8 @@ track_cardinality("unique_users", e.user_id, 0.005);
 
 | | `track_unique()` | `track_cardinality()` |
 |-|------------------|----------------------|
-| Memory | grows with distinct values | fixed ~12 KB |
-| Accuracy | exact | ~1% (configurable) |
+| Memory | grows with distinct values | fixed ~1 KB |
+| Accuracy | exact | ~3% (configurable) |
 | Values listed | yes | no, count only |
 
 #### `track_top(name, item [, n])` / `track_bottom(name, item [, n])`

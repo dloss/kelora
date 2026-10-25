@@ -933,7 +933,7 @@ Non-numeric/missing values are skipped.\nControl output with --metrics=short|ful
         value_delimiter = ',',
         help_heading = "Metrics and Stats",
         help = "Estimate the number of distinct values of FIELD (HyperLogLog).\n\nShorthand for track_cardinality(\"FIELD\", e.FIELD). Runs after all\nfilters/transforms and implies -m. Repeatable or comma-separated
-(--card user_id,trace_id). Missing values are skipped.\nThe count is approximate (~1% error) but uses constant memory, so it scales to\nhigh-cardinality fields where track_freq/track_unique would not.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call\ntrack_cardinality directly in a script stage:\n  -m --exec 'track_cardinality(\"prefix\", e.client_ip.split(\".\")[0])'\n\nExamples:\n  --card user.id\n  --filter 'e.status>=500' --card client_ip"
+(--card user_id,trace_id). Missing values are skipped.\nThe count is approximate (~3% error) but uses constant memory, so it scales to\nhigh-cardinality fields where track_freq/track_unique would not.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call\ntrack_cardinality directly in a script stage:\n  -m --exec 'track_cardinality(\"prefix\", e.client_ip.split(\".\")[0])'\n\nExamples:\n  --card user.id\n  --filter 'e.status>=500' --card client_ip"
     )]
     pub card: Vec<String>,
 

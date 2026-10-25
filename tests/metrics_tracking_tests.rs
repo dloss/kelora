@@ -2977,3 +2977,20 @@ fn test_failed_exec_keeps_earlier_stages_and_other_events() {
     assert!(stdout.contains("ok\tINFO\t2"), "{stdout}\n{stderr}");
     assert!(!stdout.contains("ok\tWARN"), "{stdout}\n{stderr}");
 }
+
+#[test]
+fn track_cardinality_largest_documented_error_rate_does_not_crash() {
+    // 0.26 used to be inside the accepted range but made the HLL crate panic.
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "track_cardinality(\"service\", e.service, 0.26)",
+            "-m",
+        ],
+        SUGAR_INPUT,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert!(stdout.contains("service"), "stdout: {stdout}");
+}

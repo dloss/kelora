@@ -35,7 +35,7 @@ pub const DEFAULT_FLATTEN_DEPTH: usize = 3;
 /// Once reached, samples may include duplicates.
 const MAX_DEDUP_TRACKING: usize = 1024;
 
-/// HLL error rate (~1.04% standard error, matching the tracking module).
+/// HLL error rate, matching the tracking module (~3.25% standard error in practice; see `HLL_DEFAULT_ERROR_RATE`).
 const HLL_ERROR_RATE: f64 = 0.01;
 
 /// Fixed seed for deterministic HLL hashing.

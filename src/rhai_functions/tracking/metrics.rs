@@ -156,7 +156,8 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
 ) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "cardinality")?;
     ensure_operation_metadata(&super::card_count_key(key), "count")?;
-    let error_rate = error_rate.clamp(0.001, 0.26);
+    // Above 0.23 the hyperloglog crate picks fewer than 16 registers and panics.
+    let error_rate = error_rate.clamp(0.001, 0.23);
 
     with_user_tracking(|state| {
         let mut hll = if let Some(existing) = state.get(key) {

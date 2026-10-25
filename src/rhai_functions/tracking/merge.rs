@@ -3,8 +3,9 @@ use hyperloglog::HyperLogLog;
 use rhai::Dynamic;
 use tdigests::TDigest;
 
-/// Default error rate for HyperLogLog (~1.04% standard error)
-/// This corresponds to 2^14 = 16384 registers, using ~12KB of memory
+/// Default error rate passed to HyperLogLog. The crate derives its precision
+/// with ln instead of log2, so this gives 2^10 = 1024 registers (~1 KB,
+/// ~3.25% standard error), not the 2^14 the rate would suggest.
 const HLL_DEFAULT_ERROR_RATE: f64 = 0.01;
 
 /// Fixed seed for HyperLogLog to ensure deterministic hashing across instances
