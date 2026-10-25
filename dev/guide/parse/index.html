@@ -2430,7 +2430,8 @@ message such as <code>log4j</code> or <code>glog</code>) handle that. Details: <
 <p>Perl tests that log through <code>note()</code> or <code>diag()</code> leave the log lines in the
 <code>#</code> comments of their TAP output; so does anything else that writes TAP, such
 as node's test runner. Capture the output (<code>prove -v --merge t/ &gt; run.t</code>) and
-<code>--unwrap tap</code> parses the comment text as the log:</p>
+<code>--unwrap tap</code> parses the comment text as the log (without it, Kelora reads
+whole lines and hints at <code>--unwrap tap</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/tap_fail.t<span class="w"> </span>--unwrap<span class="w"> </span>tap<span class="w"> </span>-f<span class="w"> </span>logfmt,line<span class="w"> </span>-l<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-k<span class="w"> </span>test_num,test_name,level,msg
 </code></pre></div>
