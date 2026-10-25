@@ -282,3 +282,30 @@ fn test_take_limit_parallel_unordered() {
         );
     }
 }
+
+#[test]
+fn test_take_zero_processes_no_event() {
+    let input = r#"{"level": "INFO", "message": "Line 1"}
+{"level": "INFO", "message": "Line 2"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-n",
+            "0",
+            "-e",
+            "track_inc(\"seen\")",
+            "--end",
+            "print(metrics.get(\"seen\") ?? 0)",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(
+        stdout.trim(),
+        "0",
+        "-n 0 must not run any event through the stages"
+    );
+}

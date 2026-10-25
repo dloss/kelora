@@ -1765,6 +1765,13 @@ fn process_line_sequential<W: Write>(
     // `lines_read` counts the whole run (for --head); events report the line
     // number within their own file.
     let (line, file_line_num) = line_result?;
+
+    // The limit is otherwise checked after each event, so `-n 0` would still
+    // run one event through the stages and its track_* calls.
+    if pipeline.is_take_limit_exhausted() {
+        return Ok(ProcessingResult::TakeLimitExhausted);
+    }
+
     *lines_read += 1;
 
     // Count line read for stats

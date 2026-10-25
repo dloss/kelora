@@ -40,6 +40,7 @@ These are bug fixes. They are listed here because scripts or pipelines that reli
 
 ### Fixed
 
+- **`-n 0` ran one event** - The first event still went through `--exec`, `track_*`, `--freq` and the other stages, so `-n 0 --freq host` printed a count of 1. No event is processed now; `--begin` and `--end` still run.
 - **A failed `--exec` on the last event changed the metrics** - A stage that fails on an event discards that event's `track_*` calls, but not when the event was the last of the run, or with `--parallel` the last of a batch: `track_inc("n"); if e.a == 2 { throw "x" }` on two events reported `n=2` instead of 1, and with `--parallel` one extra count per batch. Such runs print an `Exec errors` warning; their metrics are now correct.
 - **nginx `main` format lost X-Forwarded-For** - nginx's default `main` log format, used by the official Docker image, ends in `"$http_x_forwarded_for"`. kelora read that position as `request_time` and dropped any value that wasn't a number, so the real client behind a proxy was missing. It is now kept as `forwarded_for` (an IP list) or `extra` (other text).
 - **`kubectl logs --timestamps` read as syslog** - A timestamp followed by a JSON body whose `msg` contained a space parsed as syslog, with `host='{"level":"error",…'` and part of the JSON as `prog`. Syslog host and program names can no longer contain `"`, `{` or `}`. The format reference wrongly listed this output as `cri`; it now shows how to read it with `--extract-prefix`.
