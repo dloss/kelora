@@ -323,6 +323,10 @@ impl LevelmapFormatter {
 
 impl pipeline::Formatter for LevelmapFormatter {
     fn format(&self, event: &Event) -> String {
+        // A wrapper line (`--unwrap`) has no level of its own: not a log event.
+        if event.wrapper_line {
+            return String::new();
+        }
         let mut state = self
             .state
             .lock()

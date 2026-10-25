@@ -1283,6 +1283,12 @@ impl ScriptStage for TimestampFilterStage {
         // Get the parsed timestamp from the event
         let event_timestamp = match event.parsed_ts {
             Some(ts) => ts,
+            None if event.wrapper_line => {
+                // A line of the wrapper around the log (`--unwrap`): never
+                // timestamped, and not a log event, so left out quietly.
+                crate::stats::stats_add_window_wrapper_event();
+                return ScriptResult::Skip;
+            }
             None => {
                 // No timestamp available - use new resiliency model
                 if ctx.config.strict {

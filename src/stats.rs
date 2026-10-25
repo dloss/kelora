@@ -106,6 +106,9 @@ pub struct ProcessingStats {
     /// examined. Counted so that silence can be broken; see
     /// [`ProcessingStats::format_window_undated_warning`].
     pub window_undated_events: usize,
+    /// `--unwrap` wrapper lines (TAP results, prove's summary) the window left
+    /// out: they carry no timestamp by nature, so they get no warning.
+    pub window_wrapper_events: usize,
     pub detected_format: Option<String>, // Format detected for this processing session
     pub detected_format_counts: IndexMap<String, usize>, // Per-file detected format counts
     /// Per-format event counts when running in cascade mode. Empty otherwise.
@@ -492,6 +495,16 @@ pub fn stats_add_window_escaped_event() {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().window_escaped_events += 1;
+    });
+}
+
+/// Record an `--unwrap` wrapper line the `--since`/`--until` window left out.
+pub fn stats_add_window_wrapper_event() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().window_wrapper_events += 1;
     });
 }
 

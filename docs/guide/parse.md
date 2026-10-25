@@ -330,10 +330,13 @@ logs before it reports:
 | `test_time` | the line's own `[HH:MM:SS.mmm](…s)` prefix, as in PostgreSQL's `regress_log_*` files |
 
 Result lines and other lines outside comments (prove's summary, stray output)
-become events with the text in `line`. The plan (`1..N`), blank lines, YAML
-blocks, node's closing tally (`# tests 12`) and Test::More's own failure
-messages (`#   Failed test …`, `# Looks like you failed …`) are dropped. Lines
-after the last result keep `test_file` but get no test fields.
+become events with the text in `tap`, so `--filter '!e.has("tap")'` keeps only
+the log lines. They have no timestamp: `--since`/`--until`, `--span`,
+`-F levelmap` and `--stats` leave them out without a warning. The plan
+(`1..N`), blank lines, YAML blocks, node's closing tally (`# tests 12`) and
+Test::More's own failure messages (`#   Failed test …`, `# Looks like you
+failed …`) are dropped. Lines after the last result keep `test_file` but get no
+test fields.
 
 Without `-v`, prove prints no result lines and a file's `diag()` output comes
 before its header (`t/db.t ...... `), so lines get only `test_file`, taken from
@@ -346,7 +349,7 @@ lines. A result line ends any multiline event.
 In a subtest, the test fields still describe the top-level test, so
 `--filter 'e.test_ok == false'` finds every line of a failing test however deep
 it sits. A subtest's passing results and plan are dropped; a failing result is
-kept as a `line` event, since it names what failed. Test2's buffered subtests
+kept as a `tap` event, since it names what failed. Test2's buffered subtests
 (`ok 1 - name {` … `}`) work the same way, their lines belonging to the result
 before them. `--unwrap` runs sequentially only.
 

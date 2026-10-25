@@ -41,13 +41,13 @@ fn comments_get_the_following_test_fields() {
     assert_eq!(events[0]["test_file"], "t/checkout.t");
     assert_eq!(events[0]["test_num"], 1);
     assert_eq!(events[0]["test_ok"], true);
-    assert_eq!(events[1]["line"], "ok 1 - server starts");
+    assert_eq!(events[1]["tap"], "ok 1 - server starts");
     assert_eq!(events[1]["test_name"], "server starts");
 
     assert_eq!(events[2]["msg"], "coupon lookup failed");
     assert_eq!(events[2]["test_num"], 2);
     assert_eq!(events[2]["test_ok"], false);
-    assert_eq!(events[3]["line"], "not ok 2 - coupon reduces total");
+    assert_eq!(events[3]["tap"], "not ok 2 - coupon reduces total");
 
     // Test::More's failure diagnostics are dropped.
     assert_eq!(events[4]["msg"], "refund endpoint missing");
@@ -58,7 +58,7 @@ fn comments_get_the_following_test_fields() {
     assert_eq!(events[6]["msg"], "stopping test server");
     assert_eq!(events[6]["test_file"], "t/checkout.t");
     assert!(events[6].get("test_num").is_none());
-    assert_eq!(events[7]["line"], "Result: FAIL");
+    assert_eq!(events[7]["tap"], "Result: FAIL");
 }
 
 #[test]
@@ -113,7 +113,10 @@ ok 2 - second
     let events = events(&stdout);
     let lines: Vec<(&str, i64)> = events
         .iter()
-        .map(|e| (e["line"].as_str().unwrap(), e["test_num"].as_i64().unwrap()))
+        .map(|e| {
+            let text = e.get("line").or(e.get("tap")).unwrap();
+            (text.as_str().unwrap(), e["test_num"].as_i64().unwrap())
+        })
         .collect();
     assert_eq!(
         lines,
@@ -232,7 +235,7 @@ ok 2 - retries a failed fetch
         .map(|e| {
             format!(
                 "{} {} {}",
-                e.get("msg").or(e.get("line")).unwrap(),
+                e.get("msg").or(e.get("tap")).unwrap(),
                 e["test_num"],
                 e["test_duration_ms"]
             )
@@ -263,18 +266,18 @@ Failed 2/2 subtests
 t/util.t ............. ok
 ";
     let (stdout, stderr, code) = run_kelora_with_input(
-        &["--unwrap", "tap", "-f", "line", "-k", "test_file,line"],
+        &["--unwrap", "tap", "-f", "line", "-k", "test_file,line,tap"],
         input,
     );
     assert_eq!(code, 0, "stderr: {stderr}");
     assert_eq!(
         stdout,
-        "test_file='t/00-load.t' line='t/00-load.t .......... ok'
+        "test_file='t/00-load.t' tap='t/00-load.t .......... ok'
 test_file='t/db.t' line='[warning] connection refused'
-test_file='t/db.t' line='Can\\'t call method \"run\" on an undefined value at t/db.t line 17.'
-test_file='t/db.t' line='Dubious, test returned 255 (wstat 65280, 0xff00)'
-test_file='t/db.t' line='Failed 2/2 subtests '
-test_file='t/util.t' line='t/util.t ............. ok'
+test_file='t/db.t' tap='Can\\'t call method \"run\" on an undefined value at t/db.t line 17.'
+test_file='t/db.t' tap='Dubious, test returned 255 (wstat 65280, 0xff00)'
+test_file='t/db.t' tap='Failed 2/2 subtests '
+test_file='t/util.t' tap='t/util.t ............. ok'
 "
     );
 }
@@ -307,7 +310,7 @@ ok 2 - cleanup
             "-f",
             "json,line",
             "-k",
-            "test_num,test_name,test_subtest,msg,line",
+            "test_num,test_name,test_subtest,msg,tap",
         ],
         input,
     );
@@ -318,10 +321,10 @@ ok 2 - cleanup
             "test_num=1 test_name='Basics' msg='server up'",
             "test_num=1 test_name='Basics' msg='slow response'",
             "test_num=1 test_name='Basics' test_subtest='Timeout' msg='request timed out'",
-            "test_num=1 test_name='Basics' test_subtest='Timeout' line='        not ok 1 - got response'",
-            "test_num=1 test_name='Basics' line='    not ok 2 - Timeout'",
-            "test_num=1 test_name='Basics' line='not ok 1 - Basics'",
-            "test_num=2 test_name='cleanup' line='ok 2 - cleanup'",
+            "test_num=1 test_name='Basics' test_subtest='Timeout' tap='        not ok 1 - got response'",
+            "test_num=1 test_name='Basics' tap='    not ok 2 - Timeout'",
+            "test_num=1 test_name='Basics' tap='not ok 1 - Basics'",
+            "test_num=2 test_name='cleanup' tap='ok 2 - cleanup'",
         ]
     );
 }
@@ -381,7 +384,7 @@ fn timestamp_prefixed_tap() {
             "-f",
             "line",
             "-k",
-            "test_time,test_num,test_ok,line",
+            "test_time,test_num,test_ok,line,tap",
         ],
         input,
     );
@@ -392,8 +395,63 @@ fn timestamp_prefixed_tap() {
             "test_num=1 test_ok=true line='Checking port 14306'",
             "test_time='04:47:24.885' test_num=1 test_ok=true line='initializing database system by copying initdb template'",
             "test_num=1 test_ok=true line='## Starting node \"primary\"'",
-            "test_time='04:47:25.699' test_num=1 test_ok=true line='[04:47:25.699](0.814s) ok 1 - physical slot created on primary'",
-            "test_time='04:50:22.056' test_num=2 test_ok=false line='[04:50:22.056](176.357s) not ok 2 - regression tests pass'",
+            "test_time='04:47:25.699' test_num=1 test_ok=true tap='[04:47:25.699](0.814s) ok 1 - physical slot created on primary'",
+            "test_time='04:50:22.056' test_num=2 test_ok=false tap='[04:50:22.056](176.357s) not ok 2 - regression tests pass'",
         ]
     );
+}
+
+/// TAP's own lines carry no timestamp; time features leave them out quietly.
+#[test]
+fn time_features_skip_tap_lines_quietly() {
+    for args in [
+        &["--since", "2026-07-01T08:10:02Z"][..],
+        &["--span", "5s", "--span-summary", "-q"][..],
+        &["-F", "levelmap"][..],
+        &["-s"][..],
+    ] {
+        let mut all = vec!["--unwrap", "tap", "-f", "logfmt"];
+        all.extend_from_slice(args);
+        let (stdout, stderr, code) = run_kelora_with_input(&all, TAP);
+        assert_eq!(code, 0, "{args:?}: {stderr}");
+        assert!(!stderr.contains("timestamp"), "{args:?}: {stderr}");
+        assert!(!stdout.contains('?'), "{args:?}: {stdout}");
+        assert!(!stderr.contains("missing"), "{args:?}: {stderr}");
+    }
+
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "logfmt",
+            "--strict",
+            "--since",
+            "2026-07-01T08:10:02Z",
+            "-k",
+            "msg",
+        ],
+        TAP,
+    );
+    assert_eq!(code, 0);
+    assert!(stdout.contains("coupon lookup failed"), "{stdout}");
+}
+
+#[test]
+fn tap_field_separates_tap_lines_from_log_lines() {
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "line",
+            "--filter",
+            "!e.has(\"tap\")",
+            "-k",
+            "line",
+        ],
+        "ok 1 - one\n# plain log text\nok 2 - two\nResult: PASS\n",
+    );
+    assert_eq!(code, 0);
+    assert_eq!(stdout, "line='plain log text'\n");
 }

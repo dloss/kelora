@@ -557,7 +557,10 @@ impl Event {
                     self.timestamp_stats_recorded = true;
                 }
             } else if !self.timestamp_stats_recorded {
-                crate::stats::stats_record_timestamp_absent();
+                // A wrapper line (`--unwrap`) never has one; not worth reporting.
+                if !self.wrapper_line {
+                    crate::stats::stats_record_timestamp_absent();
+                }
                 self.timestamp_stats_recorded = true;
             }
         }

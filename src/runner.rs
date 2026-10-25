@@ -1998,7 +1998,7 @@ fn process_line_sequential<W: Write>(
 
 /// Run lines released by `--unwrap tap` through the pipeline, each release
 /// with the fields of the test it belongs to: comment text through the
-/// chunker and the input-format parser, other lines as `line` events. A test
+/// chunker and the input-format parser, other lines as `tap` events. A test
 /// boundary ends any multiline event.
 fn emit_tap_releases<W: Write>(
     releases: Vec<pipeline::tap::TapRelease>,

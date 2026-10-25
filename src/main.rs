@@ -2674,6 +2674,15 @@ fn handle_pipeline_success(
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }
+                if s.window_wrapper_events > 0 && config.processing.verbose > 0 {
+                    let message = format!(
+                        "--since/--until left out {} --unwrap wrapper line(s), which carry no timestamp.",
+                        s.window_wrapper_events
+                    );
+                    stderr
+                        .writeln(&config.format_info_message(&message))
+                        .unwrap_or(());
+                }
                 // Cascade events whose own `_format` field was kept instead of
                 // being overwritten by the format tag. Exit stays 0 — no data
                 // was lost — but the tag's absence would otherwise be a mystery,

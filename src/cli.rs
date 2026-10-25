@@ -364,7 +364,7 @@ pub struct Cli {
     /// Extract log lines embedded in another format, then parse them as usual.
     /// `tap`: captured TAP output (`prove -v`); log lines in `#` comments get
     /// the fields of the test result that follows them (test_num, test_name,
-    /// test_ok, ...), other lines become `line` events. Sequential mode only.
+    /// test_ok, ...), other lines become events with the text in `tap`. Sequential mode only.
     #[arg(
         long = "unwrap",
         value_enum,

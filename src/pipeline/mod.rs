@@ -490,8 +490,8 @@ pub struct Pipeline {
     pub chunker_is_passthrough: bool,
     /// `extra_fields` of the chunk being parsed, added to its event.
     pub injected_fields: Option<tap::TapFields>,
-    /// While true, chunks are parsed as plain `line` events instead of with
-    /// the input-format parser (`--unwrap tap` emits its non-comment lines so).
+    /// While true, chunks become wrapper-line events (`tap='…'`) instead of
+    /// being parsed with the input format (`--unwrap tap`'s non-comment lines).
     raw_line_mode: bool,
 }
 
@@ -946,7 +946,7 @@ impl Pipeline {
 
         // Parse stage
         let parsed = if self.raw_line_mode {
-            crate::parsers::LineParser::new().parse(&chunk)
+            Ok(tap::wrapper_line_event(&chunk))
         } else {
             self.parser.parse_projected(&chunk, &self.projection)
         };

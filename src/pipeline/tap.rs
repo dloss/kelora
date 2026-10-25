@@ -5,8 +5,8 @@
 //! comments (`# ...`). This module takes the TAP structure off each raw line:
 //!
 //! - a comment's text is handed to the normal parser (the inner log format);
-//! - `ok N` / `not ok N` result lines become `line` events carrying the test
-//!   fields, and close the test: every comment and other line buffered since
+//! - `ok N` / `not ok N` result lines become events with the text in `tap`,
+//!   carrying the test fields, and close the test: every comment and other line buffered since
 //!   the previous result is released with that result's fields, since a test's
 //!   log output comes *before* its result line;
 //! - a TAP 13 YAML block after a result (`  ---` ... `  ...`, as node's test
@@ -21,7 +21,7 @@
 //!   ...` with its indented details, `# Looks like you failed ...`) and node's
 //!   closing tally (`# tests 12`, `# pass 12`, ...);
 //! - any other line (prove's summary, a header's verdict, stray output, `Bail
-//!   out!`) becomes a `line` event.
+//!   out!`) becomes a `tap` event.
 //!
 //! Subtests are not unwrapped: their indented result lines are other lines,
 //! and their comments count as comments of the enclosing test.
@@ -32,6 +32,18 @@ use std::sync::Arc;
 
 /// Fields a TAP result attaches to the events of its test.
 pub type TapFields = Arc<Vec<(String, Dynamic)>>;
+
+/// Field holding a non-comment line (a result, prove's summary, stray
+/// output). Not `line`: with `-f line`, the log lines themselves have that, and
+/// `e.has("tap")` must tell the two apart.
+pub const LINE_FIELD: &str = "tap";
+
+/// Event for a non-comment line: its text in [`LINE_FIELD`].
+pub fn wrapper_line_event(text: &str) -> crate::event::Event {
+    let mut event = crate::event::Event::with_capacity(text.to_string(), 1);
+    event.set_field(LINE_FIELD, Dynamic::from(text.to_string()));
+    event
+}
 
 /// Lines held while waiting for a result line before they are released
 /// without test fields. Bounds memory on input that never reaches a result
@@ -71,7 +83,7 @@ pub enum TapLine<'a> {
     Subtest(&'a str),
     /// `}`, closing a Test2 buffered subtest.
     BlockEnd,
-    /// Anything else; emitted as a `line` event.
+    /// Anything else; emitted as a `tap` event.
     Other,
     /// TAP structure or Test::More boilerplate with no log content.
     Drop,
@@ -326,7 +338,7 @@ fn file_release(file: &str, line: ChunkLine, extra: Extra) -> TapRelease {
 pub enum TapItem {
     /// Comment text, for the inner parser (and the multiline chunker).
     Inner(ChunkLine, Extra),
-    /// A non-comment line, emitted as a `line` event.
+    /// A non-comment line, emitted as a `tap` event.
     Raw(ChunkLine, Extra),
 }
 
@@ -341,7 +353,7 @@ pub struct TapRelease {
 
 impl TapRelease {
     /// The lines to feed, in order, each carrying its event's fields: `true`
-    /// for comment text (parsed with the input format), `false` for a `line`
+    /// for comment text (parsed with the input format), `false` for a `tap`
     /// event. The result line, if any, comes last.
     pub fn into_lines(self) -> Vec<(bool, ChunkLine)> {
         let fields = self.fields;

@@ -444,14 +444,18 @@ impl SpanProcessor {
         let timestamp = match event.parsed_ts {
             Some(ts) => ts,
             None => {
-                if ctx.config.strict {
+                // A wrapper line (`--unwrap`) never has a timestamp: it stays
+                // unassigned without failing --strict or the warning.
+                if ctx.config.strict && !event.wrapper_line {
                     return Err(anyhow!("event missing required timestamp for --span"));
                 }
 
                 let assignment = SpanAssignment::new(SpanStatus::Unassigned);
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
-                self.unassigned_events += 1;
+                if !event.wrapper_line {
+                    self.unassigned_events += 1;
+                }
                 // `--span 5m` is read as a duration before a field name, so a
                 // field literally called `5m` is unreachable. Noted so the
                 // warning can point at the precedence rule, not the timestamps.
@@ -582,14 +586,16 @@ impl SpanProcessor {
         let timestamp = match event.parsed_ts {
             Some(ts) => ts,
             None => {
-                if ctx.config.strict {
+                if ctx.config.strict && !event.wrapper_line {
                     return Err(anyhow!("event missing required timestamp for --span-idle"));
                 }
 
                 let assignment = SpanAssignment::new(SpanStatus::Unassigned);
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
-                self.unassigned_events += 1;
+                if !event.wrapper_line {
+                    self.unassigned_events += 1;
+                }
                 return Ok(());
             }
         };
