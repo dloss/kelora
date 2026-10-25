@@ -2125,7 +2125,7 @@ matching a keyword, and <code>kelora -h</code> prints a one-screen summary.</p>
 <dd>Split a multiline event after this many buffered lines (safety cap; <code>0</code> = unlimited). Default: 10000. Ignored by <a href="#multiline"><code>--multiline all</code></a></dd>
 <dt id="unwrap"><code>--unwrap &lt;WRAPPER&gt;</code></dt>
 <dd>
-<p>Extract log lines embedded in another format, then parse them as usual. <code>tap</code>: captured TAP output (<code>prove -v</code>); log lines in <code>#</code> comments get the fields of the test result that follows them (test_num, test_name, test_ok, ...), other lines become <code>line</code> events. Sequential mode only</p>
+<p>Extract log lines embedded in another format, then parse them as usual. <code>tap</code>: captured TAP output (<code>prove -v</code>); log lines in <code>#</code> comments get the fields of the test result that follows them (test_num, test_name, test_ok, ...), other lines become events with the text in <code>tap</code>. Sequential mode only</p>
 <p>Values:</p>
 <ul>
 <li><code>tap</code>: Captured TAP output (<code>prove -v</code>): log lines in <code>#</code> comments</li>
