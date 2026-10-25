@@ -2041,7 +2041,8 @@ event type. <code>--drain</code> finds those templates in the field you name wit
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   94: Failed to acquire lock on resource &lt;path&gt; after &lt;duration&gt;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   23: Payment gateway &lt;fqdn&gt; rejected transaction &lt;uuid&gt;: insufficient_funds
 </code></pre></div>
-<p><code>--drain=full</code> adds the line range and a sample line for each template;
+<p><code>--drain=full</code> adds the line range and a sample line for each template (with
+several input files, <code>file:line</code>);
 <code>--drain=json</code> and <code>--drain=id</code> are for scripts. Filters run first, so
 <code>-l error --drain -k msg</code> summarizes only errors.</p>
 <h3 id="what-changed-between-two-logs">What changed between two logs?<a class="headerlink" href="#what-changed-between-two-logs" title="Permanent link">&para;</a></h3>
@@ -2119,7 +2120,7 @@ events instead of replacing them.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 800 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 800 total, 17 output, 783 filtered (97.9%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 279999 lines/s in 2ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 365220 lines/s in 2ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: timestamp (auto-detected) - 800/800 parsed (100.0%) — access via meta.parsed_ts.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Input time span (before filtering): 2025-01-20T14:00:00+00:00 to 2025-01-20T14:39:57+00:00 (39m 57s)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Output time span (after filtering): 2025-01-20T14:20:18+00:00 to 2025-01-20T14:24:45+00:00 (4m 27s)
