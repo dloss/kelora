@@ -167,3 +167,36 @@ fn rejects_parallel_and_csv() {
     assert_eq!(code, 2);
     assert!(stderr.contains("csv/tsv"));
 }
+
+#[test]
+fn drain_diff_does_not_warn_about_tap_lines() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let pass = dir.path().join("pass.t");
+    let fail = dir.path().join("fail.t");
+    std::fs::write(&pass, TAP.replace("coupon lookup failed", "coupon applied")).unwrap();
+    std::fs::write(&fail, TAP).unwrap();
+    let args = [
+        "--unwrap",
+        "tap",
+        "-f",
+        "logfmt",
+        "--drain-diff=json",
+        "-k",
+        "msg",
+    ];
+
+    let (stdout, stderr, code) =
+        run_kelora_with_files(&args, &[pass.to_str().unwrap(), fail.to_str().unwrap()]);
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert!(stdout.contains("coupon lookup failed"), "stdout: {stdout}");
+    assert!(!stderr.contains("excluded"), "stderr: {stderr}");
+
+    let mut verbose = args.to_vec();
+    verbose.push("-v");
+    let (_stdout, stderr, _code) =
+        run_kelora_with_files(&verbose, &[pass.to_str().unwrap(), fail.to_str().unwrap()]);
+    assert!(
+        stderr.contains("left out 8 --unwrap wrapper line(s)"),
+        "stderr: {stderr}"
+    );
+}

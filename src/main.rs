@@ -2190,6 +2190,18 @@ fn handle_pipeline_success(
                     std::process::exit(ExitCode::GeneralError as i32);
                 }
                 if terminal_allowed {
+                    // Wrapper lines (--unwrap) never carry the mined field;
+                    // leaving them out is expected, so it's status, not a warning.
+                    let wrapper_lines = crate::drain_diff::excluded_wrapper_lines();
+                    if wrapper_lines > 0 && config.processing.verbose > 0 {
+                        stderr
+                            .writeln(&config.format_info_message(&format!(
+                                "--drain-diff left out {} --unwrap wrapper line(s) with no '{}' value (test results, prove summary).",
+                                wrapper_lines,
+                                mined_field.as_deref().unwrap_or("?"),
+                            )))
+                            .unwrap_or(());
+                    }
                     if config.warnings_allowed() {
                         // Same shared model, same incompleteness: a diff computed
                         // from an evicted template set under-reports both sides.

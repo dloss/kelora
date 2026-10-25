@@ -1228,7 +1228,7 @@ impl ScriptStage for DrainDiffStage {
                 };
 
                 if text.is_empty() {
-                    crate::drain_diff::record_excluded_no_field();
+                    record_excluded_no_field(&event);
                 } else {
                     // Joint mining (learning) plus per-side unique-value counting;
                     // the diff report is computed at end of input.
@@ -1238,7 +1238,7 @@ impl ScriptStage for DrainDiffStage {
                     crate::drain_diff::record(&text, side, event.parsed_ts);
                 }
             }
-            None => crate::drain_diff::record_excluded_no_field(),
+            None => record_excluded_no_field(&event),
         }
 
         ScriptResult::Emit(event)
@@ -1377,6 +1377,17 @@ impl ScriptStage for TimestampConversionStage {
 }
 
 // ContextStage removed - context processing is now integrated into FilterStage and LevelFilterStage
+
+/// Count an event the drain-diff comparison skips for lacking the mined field.
+/// A wrapper line (`--unwrap`) never had it, so it is counted apart and kept
+/// out of the "excluded N events" warning.
+fn record_excluded_no_field(event: &Event) {
+    if event.wrapper_line {
+        crate::drain_diff::record_excluded_wrapper_line();
+    } else {
+        crate::drain_diff::record_excluded_no_field();
+    }
+}
 
 #[cfg(test)]
 mod tests {

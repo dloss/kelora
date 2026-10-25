@@ -112,6 +112,9 @@ struct DiffState {
     /// Events excluded because the mined field carried no text (absent, or
     /// present but empty).
     excluded_no_field: u64,
+    /// Wrapper lines (`--unwrap`) without the mined field: expected, so kept
+    /// out of `excluded_no_field` and its warning.
+    excluded_wrapper_lines: u64,
     /// Observed timestamp span (earliest, latest) of the events counted on each
     /// side, indexed like `counts`. `None` when no event on that side carried a
     /// parseable timestamp, which is the only case where the split echo is
@@ -205,6 +208,19 @@ pub fn record_excluded_no_field() {
     DIFF_STATE.with(|state| {
         state.borrow_mut().excluded_no_field += 1;
     });
+}
+
+/// Record a wrapper line (`--unwrap`) left out of the comparison for lacking
+/// the mined field. Reported only under `-v`.
+pub fn record_excluded_wrapper_line() {
+    DIFF_STATE.with(|state| {
+        state.borrow_mut().excluded_wrapper_lines += 1;
+    });
+}
+
+/// Wrapper lines left out of the comparison so far.
+pub fn excluded_wrapper_lines() -> u64 {
+    DIFF_STATE.with(|state| state.borrow().excluded_wrapper_lines)
 }
 
 /// Pass 2's accumulator for one template: per-side counts, plus one raw line

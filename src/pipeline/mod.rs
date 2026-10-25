@@ -945,6 +945,7 @@ impl Pipeline {
         };
         let mut event = match parsed {
             Ok(mut e) => {
+                e.wrapper_line = self.raw_line_mode;
                 if let Some(fields) = &self.injected_fields {
                     for (key, value) in fields.iter() {
                         if !e.fields.contains_key(key) {

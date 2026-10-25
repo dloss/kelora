@@ -392,6 +392,9 @@ pub struct Event {
     pub context_type: ContextType,
     /// Ensures timestamp parsing statistics are recorded at most once per event
     pub(crate) timestamp_stats_recorded: bool,
+    /// A line of the wrapper format around the log (`--unwrap`), not a log
+    /// line: summaries don't count it as an event missing their field.
+    pub(crate) wrapper_line: bool,
 }
 
 /// Span assignment status for events when --span is active
@@ -444,6 +447,7 @@ impl Event {
             parsed_ts: None,
             context_type: ContextType::None,
             timestamp_stats_recorded: false,
+            wrapper_line: false,
         }
     }
 
