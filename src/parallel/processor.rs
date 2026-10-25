@@ -574,10 +574,21 @@ impl ParallelProcessor {
         mut pipeline_builder: PipelineBuilder,
         config: &crate::config::KeloraConfig,
     ) -> Result<(Box<dyn std::io::BufRead + Send>, PipelineBuilder, usize)> {
+        // The header is the first line after --skip-lines, as in sequential
+        // mode. The skipped lines are replayed raw for the batcher to skip.
+        let mut skipped = Vec::new();
+        for _ in 0..config.input.skip_lines {
+            if reader.read_until(b'\n', &mut skipped)? == 0 {
+                break;
+            }
+        }
+
         let mut first_line = String::new();
         crate::readers::read_line_lossy(&mut reader, &mut first_line)?;
 
         if first_line.trim().is_empty() {
+            skipped.extend_from_slice(first_line.as_bytes());
+            let reader = std::io::Cursor::new(skipped).chain(reader);
             return Ok((Box::new(reader), pipeline_builder, 0)); // Empty line will be processed normally
         }
 
@@ -625,12 +636,11 @@ impl ParallelProcessor {
         // Create a new reader that includes the first line if it should be processed as data
         let final_reader: Box<dyn std::io::BufRead + Send> = if was_consumed {
             // First line was a header, don't include it in processing
-            Box::new(reader)
+            Box::new(std::io::Cursor::new(skipped).chain(reader))
         } else {
             // First line is data, prepend it to the reader
-            let first_line_bytes = first_line.into_bytes();
-            let first_line_reader = std::io::Cursor::new(first_line_bytes);
-            Box::new(first_line_reader.chain(reader))
+            skipped.extend_from_slice(first_line.as_bytes());
+            Box::new(std::io::Cursor::new(skipped).chain(reader))
         };
 
         // Only count the line as preprocessed if it was consumed (not re-inserted)

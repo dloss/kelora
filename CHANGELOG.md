@@ -43,6 +43,7 @@ These are bug fixes. They are listed here because scripts or pipelines that reli
 
 ### Fixed
 
+- **`-P` read a CSV header from skipped lines on stdin** - `cat export.csv | kelora -f csv --skip-lines 2 -P` took the column names from the first line, not from the line after the skipped ones, so every field had the wrong name. Files and sequential mode were not affected.
 - **`-n 0` ran one event** - The first event still went through `--exec`, `track_*`, `--freq` and the other stages, so `-n 0 --freq host` printed a count of 1. No event is processed now; `--begin` and `--end` still run.
 - **`track_cardinality()` crashed with an error rate of 0.26** - The documented range ended at 0.26, but rates above 0.23 made the HyperLogLog library panic (exit 134). Rates are now limited to 0.001–0.23. The accuracy figures for `--card`, `track_cardinality()` and the `~` in `--discover` said ~1% error and 12 KB; it is ~3% and 1 KB, and the docs now say so.
 - **A failed `--exec` on the last event changed the metrics** - A stage that fails on an event discards that event's `track_*` calls, but not when the event was the last of the run, or with `--parallel` the last of a batch: `track_inc("n"); if e.a == 2 { throw "x" }` on two events reported `n=2` instead of 1, and with `--parallel` one extra count per batch. Such runs print an `Exec errors` warning; their metrics are now correct.

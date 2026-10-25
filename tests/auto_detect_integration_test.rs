@@ -1194,3 +1194,26 @@ fn test_real_app_log_fixtures_detect_as_their_format() {
         assert_eq!(parsed, records, "{fixture}: records parsed as {format}");
     }
 }
+
+const CSV_WITH_PREAMBLE: &str = "Report generated 2025-10-25 by exporter\n\nuser,action,bytes\nalice,login,10\nbob,upload,2000\n";
+
+#[test]
+fn test_parallel_stdin_csv_header_after_skip_lines() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "csv",
+            "--skip-lines",
+            "2",
+            "-P",
+            "-e",
+            "e.n = meta.line_num",
+        ],
+        CSV_WITH_PREAMBLE,
+    );
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        stdout.contains("user='alice' action='login' bytes='10' n=4"),
+        "{stdout}\n{stderr}"
+    );
+}
