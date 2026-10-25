@@ -148,6 +148,17 @@ fn numeric_arg(
     if let Some(f) = value.clone().try_cast::<f32>() {
         return Ok(Some(NumericArg::Float(f as f64)));
     }
+    // CSV/TSV columns and absorb_kv()/parse_kv() values are text, so a number
+    // often arrives as "1942". The text stays constant so repeats collapse.
+    if let Some(s) = value.read_lock::<rhai::ImmutableString>() {
+        if s.trim().parse::<f64>().is_ok() {
+            return Err(format!(
+                "{} {} must be a number; got a string that holds one. Convert it with to_int() or to_float(), or give the column a type when parsing (-f 'csv bytes:int')",
+                fn_name, arg_name
+            )
+            .into());
+        }
+    }
     Err(format!(
         "{} {} must be a number; got {}",
         fn_name,

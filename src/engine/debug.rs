@@ -296,7 +296,8 @@ impl ErrorEnhancer {
             EvalAltResult::ErrorDotExpr(msg, _) if msg.contains("type '()'") => Some(
                 "A field in the path is missing, so the value is (). \
                  Use e.get_path('a.b', default) to read nested fields safely, \
-                 or e.has_path('a.b') to check the path exists first."
+                 or e.has_path('a.b') to check the path exists first. \
+                 If the key itself contains a dot (Zeek's id.orig_h), read it with e[\"id.orig_h\"]."
                     .to_string(),
             ),
             _ => None,

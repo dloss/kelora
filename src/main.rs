@@ -829,18 +829,6 @@ fn resolve_multiline_idle_timeout(
     }
 }
 
-fn collect_filter_field_references(config: &KeloraConfig) -> BTreeSet<String> {
-    let mut fields = BTreeSet::new();
-
-    for stage in &config.processing.stages {
-        if let ScriptStageType::Filter { script, .. } = stage {
-            fields.extend(filter_field_references(script));
-        }
-    }
-
-    fields
-}
-
 /// Field names a filter script refers to via `e.name`.
 ///
 /// `e.name(` is a method call, not a field (#365: `e.has("nope")` used to
@@ -1335,23 +1323,51 @@ fn timestamp_filter_zero_hint(
 }
 
 /// Hint when a `--filter` expression references a field name that never
-/// appeared in any event — the original zero-results behavior.
+/// appeared in any parsed event.
+///
+/// "Not in the input" is only a typo when nothing else could have put the field
+/// there, so the stage order decides the wording: an `--exec` before the filter
+/// may have created it (then the usual culprit is its type: `absorb_kv()`
+/// values are strings), one after it never runs in time. Keys with dots in
+/// their names (Zeek's `id.orig_h`) are named with the bracket syntax that
+/// reads them.
 fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
-    let referenced_fields = collect_filter_field_references(config);
-    if referenced_fields.is_empty() {
-        return None;
-    }
+    let stages = &config.processing.stages;
+    let is_exec = |stage: &ScriptStageType| matches!(stage, ScriptStageType::Exec(_));
+    let mut unseen_fields = BTreeSet::new();
 
-    // A path such as `http.status` (from `e.get_path("http.status")`) counts
-    // as seen when its top-level parent was: nested values aren't tracked as
-    // discovered keys, so the parent is the best evidence available.
-    let unseen_fields: Vec<String> = referenced_fields
-        .into_iter()
-        .filter(|field| {
-            let head = field.split(['.', '[']).next().unwrap_or(field);
-            !stats.discovered_keys.contains(field) && !stats.discovered_keys.contains(head)
-        })
-        .collect();
+    for (index, stage) in stages.iter().enumerate() {
+        let ScriptStageType::Filter { script, .. } = stage else {
+            continue;
+        };
+        let exec_before = stages[..index].iter().any(is_exec);
+        let exec_after = stages[index + 1..].iter().any(is_exec);
+
+        for field in filter_field_references(script) {
+            // A path such as `http.status` (from `e.get_path("http.status")`)
+            // counts as seen when its top-level parent was: nested values
+            // aren't tracked as discovered keys, so the parent is the best
+            // evidence available.
+            let head = field.split(['.', '[']).next().unwrap_or(&field);
+            if stats.discovered_keys.contains(&field) || stats.discovered_keys.contains(head) {
+                continue;
+            }
+            if let Some(message) = dotted_key_hint(&field, &stats.discovered_keys) {
+                return Some(format!("0 events matched. {message}"));
+            }
+            if exec_before {
+                return Some(format!(
+                    "0 events matched. Filter referenced e.{field}, which is not in the parsed input. If an --exec before the filter creates it, check its type: absorb_kv()/parse_kv() values and untyped CSV/TSV columns are strings, so compare numbers with e.{field}.to_int(). Otherwise it may be a typo; rerun with -s to inspect discovered keys."
+                ));
+            }
+            if exec_after {
+                return Some(format!(
+                    "0 events matched. Filter referenced e.{field}, which is not in the parsed input, and every --exec runs after the filter. Stages run in the order given: if an --exec creates {field}, put the --filter after it."
+                ));
+            }
+            unseen_fields.insert(field);
+        }
+    }
     if unseen_fields.is_empty() {
         return None;
     }
@@ -1359,8 +1375,69 @@ fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     Some(format!(
         "0 events matched. Filter referenced unseen field{}: {}. This may be a typo; rerun with -s to inspect discovered keys.",
         if unseen_fields.len() == 1 { "" } else { "s" },
-        unseen_fields.join(", ")
+        unseen_fields.into_iter().collect::<Vec<_>>().join(", ")
     ))
+}
+
+/// For a field read as `e.id` that isn't there while keys such as `id.orig_h`
+/// are: those are top-level keys with a dot in their name, which `e.id.orig_h`
+/// (a nested lookup) can't reach.
+fn dotted_key_hint(field: &str, discovered: &BTreeSet<String>) -> Option<String> {
+    const MAX_LISTED: usize = 4;
+    let prefix = format!("{field}.");
+    let dotted: Vec<&str> = discovered
+        .iter()
+        .filter(|key| key.starts_with(&prefix))
+        .map(String::as_str)
+        .collect();
+    let first = dotted.first()?;
+    let mut listed = dotted
+        .iter()
+        .take(MAX_LISTED)
+        .copied()
+        .collect::<Vec<_>>()
+        .join(", ");
+    if dotted.len() > MAX_LISTED {
+        listed.push_str(", ...");
+    }
+    Some(format!(
+        "There is no field '{field}', but there are keys with dots in their names: {listed}. e.{first} looks inside a nested '{field}' map; read such a key with e[\"{first}\"]."
+    ))
+}
+
+/// Hint when a `--filter` reads a field that only an `--exec` *after* it
+/// creates. The filter then always sees `()`, yet events can still pass
+/// (`!state.contains(e.src + ":" + e.port)`), so this is wrong output with
+/// exit 0 and fires whatever the match count. Certain only when no `--exec`
+/// precedes the filter, the input lacks the field, and output events have it.
+fn filter_before_exec_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+) -> Option<String> {
+    let stages = &config.processing.stages;
+    let is_exec = |stage: &ScriptStageType| matches!(stage, ScriptStageType::Exec(_));
+    for (index, stage) in stages.iter().enumerate() {
+        let ScriptStageType::Filter { script, .. } = stage else {
+            continue;
+        };
+        if stages[..index].iter().any(is_exec) {
+            // Any later filter has an --exec before it too.
+            return None;
+        }
+        if !stages[index + 1..].iter().any(is_exec) {
+            continue;
+        }
+        for field in filter_field_references(script) {
+            if !stats.discovered_keys.contains(&field)
+                && stats.discovered_keys_output.contains(&field)
+            {
+                return Some(format!(
+                    "--filter reads e.{field} before the --exec that creates it (stages run in the order given), so the filter saw () on every event. Move the --filter after that --exec."
+                ));
+            }
+        }
+    }
+    None
 }
 
 /// Hint when a `--filter` compares a *seen* field for equality against a
@@ -1415,6 +1492,17 @@ fn maybe_print_key_typo_hint(
     // We can only tell a typo from a legitimately-absent field once we know what
     // fields the input actually carries; an empty run is "no data", not a typo.
     if stats.events_created == 0 {
+        return;
+    }
+    // Fields an --exec creates are only known from events that were output; with
+    // none, such a field would be reported as a typo.
+    if stats.events_output == 0
+        && config
+            .processing
+            .stages
+            .iter()
+            .any(|stage| matches!(stage, ScriptStageType::Exec(_)))
+    {
         return;
     }
 
@@ -2558,6 +2646,17 @@ fn handle_pipeline_success(
             let (flag_typos, typos): (Vec<_>, Vec<_>) = typos
                 .into_iter()
                 .partition(|(name, _)| config.processing.metric_sugar_fields.contains(name));
+            // A field that exists but recorded nothing failed on its values
+            // (`--describe` on strings); the exec-error summary says why.
+            let flag_typos: Vec<_> = flag_typos
+                .into_iter()
+                .filter(|(name, _)| {
+                    !pipeline_result.stats.as_ref().is_some_and(|stats| {
+                        stats.discovered_keys.contains(name)
+                            || stats.discovered_keys_output.contains(name)
+                    })
+                })
+                .collect();
 
             let mut messages = Vec::new();
             if !flag_typos.is_empty() {
@@ -2826,6 +2925,13 @@ fn handle_pipeline_success(
                 // nothing was created — the empty-input case it can't explain.
                 maybe_print_no_input_hint(config, s, stderr);
                 maybe_print_zero_results_hint(config, s, stderr);
+                if let Some(message) = filter_before_exec_hint(config, s) {
+                    let formatted = config
+                        .format_hint_message(&message)
+                        .trim_start_matches('\n')
+                        .to_string();
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
                 // Surfaces the silent UTC assumption for naive timestamps when a
                 // time filter, span, or --normalize-ts relies on it (#287).
                 maybe_print_naive_tz_hint(config, s, stderr);

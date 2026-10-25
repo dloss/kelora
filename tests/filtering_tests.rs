@@ -1529,3 +1529,94 @@ fn test_levels_on_plain_lines_still_suggests_parsing() {
 
     assert!(stderr.contains("looks unstructured"), "{stderr}");
 }
+
+#[test]
+fn test_unseen_filter_field_after_exec_points_at_type_not_typo() {
+    // absorb_kv() creates DPT as a string, so `< 1024` matches nothing; the
+    // field exists, so calling it a typo would send the user the wrong way.
+    let input = "SRC=192.0.2.7 DPT=22\nSRC=192.0.2.8 DPT=8080";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-e",
+            r#"e.absorb_kv("line")"#,
+            "--filter",
+            "e.DPT < 1024",
+            "-k",
+            "SRC,DPT",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(stderr.contains("e.DPT.to_int()"), "stderr: {stderr}");
+    assert!(!stderr.contains("unseen field"), "stderr: {stderr}");
+    assert!(!stderr.contains("never present"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_unseen_filter_field_before_exec_names_stage_order() {
+    let input = "SRC=192.0.2.7 DPT=22";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "--filter",
+            r#"e.DPT == "22""#,
+            "-e",
+            r#"e.absorb_kv("line")"#,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("put the --filter after it"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_filter_before_creating_exec_hints_even_when_events_pass() {
+    // The filter always sees () for SRC, yet `!state.contains(...)` passes the
+    // first event: wrong output with exit 0, so the hint must not depend on
+    // zero matches.
+    let input = "SRC=192.0.2.7 DPT=22\nSRC=192.0.2.8 DPT=23";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "--filter",
+            r#"!state.contains(e.SRC + ":" + e.DPT)"#,
+            "-e",
+            r#"state[e.SRC + ":" + e.DPT] = true; e.absorb_kv("line")"#,
+            "-k",
+            "SRC",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(stdout.lines().count(), 1, "stdout: {stdout}");
+    assert!(
+        stderr.contains("--filter reads e.SRC before the --exec that creates it"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_unseen_filter_field_names_dotted_keys() {
+    // Zeek-style top-level keys with dots: e.id.resp_h is a nested lookup.
+    let input = "{\"id.orig_h\": \"10.0.0.1\", \"id.resp_h\": \"192.0.2.1\"}";
+
+    let (_stdout, stderr, _exit_code) = run_kelora_with_input(
+        &["-f", "json", "--filter", r#"e.id.resp_h == "192.0.2.1""#],
+        input,
+    );
+
+    assert!(stderr.contains(r#"e["id.orig_h"]"#), "stderr: {stderr}");
+}

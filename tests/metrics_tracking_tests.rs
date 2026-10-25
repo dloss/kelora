@@ -2994,3 +2994,24 @@ fn track_cardinality_largest_documented_error_rate_does_not_crash() {
     assert_eq!(code, 0, "stderr: {stderr}");
     assert!(stdout.contains("service"), "stdout: {stdout}");
 }
+
+#[test]
+fn describe_on_numeric_strings_suggests_conversion_not_typo() {
+    let input = "n=12\nn=30";
+    let (_stdout, stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-e",
+            r#"e.absorb_kv("line")"#,
+            "--describe",
+            "n",
+        ],
+        input,
+    );
+    assert!(stderr.contains("to_int()"), "stderr: {stderr}");
+    assert!(
+        !stderr.contains("No event has a field named"),
+        "the field exists; stderr: {stderr}"
+    );
+}
