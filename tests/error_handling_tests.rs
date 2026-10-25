@@ -790,3 +790,23 @@ fn test_multi_pattern_format_lists_all_patterns() {
         "{stderr}"
     );
 }
+
+#[test]
+fn test_repeated_filter_error_is_printed_once() {
+    // A script bug fails identically on every event: the diagnostic (with its
+    // "Did you mean" hint) prints once, further samples say "same error".
+    let input = "{\"level\":\"INFO\"}\n{\"level\":\"ERROR\"}\n{\"level\":\"WARN\"}\n";
+    let (_out, stderr, code) =
+        run_kelora_with_input(&["-j", "--filter", "level == \"ERROR\""], input);
+    assert_eq!(code, 1);
+    assert_eq!(
+        stderr.matches("Did you mean").count(),
+        1,
+        "the diagnostic should print once: {stderr}"
+    );
+    assert_eq!(stderr.matches("same error").count(), 2, "{stderr}");
+    assert!(
+        !stderr.contains("Filter error: filter error"),
+        "the stage name should not repeat: {stderr}"
+    );
+}

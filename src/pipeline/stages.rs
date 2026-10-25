@@ -271,10 +271,17 @@ impl ScriptStage for FilterStage {
                 }
             }
             Err(e) => {
+                // The engine's diagnostic already opens with "filter error";
+                // capitalize it rather than print "Filter error: filter error".
+                let detail = e.to_string();
+                let message = match detail.strip_prefix("filter error") {
+                    Some(rest) => format!("Filter error{rest}"),
+                    None => format!("Filter error: {detail}"),
+                };
                 crate::rhai_functions::tracking::track_error(
                     "filter",
                     ctx.meta.line_num,
-                    &format!("Filter error: {}", e),
+                    &message,
                     Some(&event.original_line),
                     ctx.meta.filename.as_deref(),
                     ctx.config.verbose,

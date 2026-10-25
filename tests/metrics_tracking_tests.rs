@@ -2890,3 +2890,21 @@ fn test_metrics_cardinality_bookkeeping_key_is_hidden() {
         "scripts should see the same whole count the table prints: {stdout}"
     );
 }
+
+#[test]
+fn test_take_with_freq_warns_that_it_limits_events() {
+    // `--freq x -n 3` reads as "top 3 rows" but stops input after 3 events.
+    let input = "{\"x\":\"a\"}\n{\"x\":\"a\"}\n{\"x\":\"b\"}\n{\"x\":\"a\"}\n";
+    let (_out, stderr, code) = run_kelora_with_input(&["-j", "--freq", "x", "-n", "2"], input);
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("-n 2 stops after 2 events") && stderr.contains("--freq"),
+        "-n with --freq should warn: {stderr}"
+    );
+
+    let (_out, stderr, _code) = run_kelora_with_input(&["-j", "--freq", "x"], input);
+    assert!(
+        !stderr.contains("stops after"),
+        "no warning without -n: {stderr}"
+    );
+}

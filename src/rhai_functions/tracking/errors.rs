@@ -794,6 +794,10 @@ pub fn extract_error_summary_from_tracking(
 
     let mut shown_samples = 0;
     let mut last_pattern: Option<String> = None;
+    // A script bug fails the same way on every event; print a repeated message
+    // once and list the further locations as "same error", so a multi-line
+    // diagnostic (and its "Did you mean" hint) is not buried in copies.
+    let mut last_message: Option<String> = None;
     for sample_obj in ordered {
         if let Some(pattern) = pattern_of(sample_obj) {
             if last_pattern.as_deref() != Some(pattern.as_str()) {
@@ -827,7 +831,14 @@ pub fn extract_error_summary_from_tracking(
             .and_then(|v| v.clone().into_string().ok());
         let location = format_sample_location(sample_obj);
 
+        let message = message.trim_end().to_string();
+        if last_message.as_deref() == Some(message.as_str()) {
+            summary.push_str(&format!("\n  {}: same error", location));
+            shown_samples += 1;
+            continue;
+        }
         summary.push_str(&format!("\n  {}: {}", location, message));
+        last_message = Some(message);
 
         if verbose > 0 {
             if let Some(orig_line) = original_line {

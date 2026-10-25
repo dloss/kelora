@@ -230,6 +230,25 @@ fn main() -> Result<()> {
                 .writeln(&config.format_warning_message(&message))
                 .unwrap_or(());
         }
+        // `--freq path -n 3` reads as "top 3 rows" but stops input after 3
+        // events, so the table shows plausible but wrong counts.
+        if let Some(n) = config.processing.take_limit {
+            let table_flag = if !cli.freq.is_empty() {
+                Some("--freq")
+            } else if !cli.describe.is_empty() {
+                Some("--describe")
+            } else {
+                None
+            };
+            if let Some(flag) = table_flag {
+                let message = format!(
+                    "-n {n} stops after {n} events, so {flag} counts only those; it does not limit table rows. For the top rows, drop -n and pipe to head."
+                );
+                stderr
+                    .writeln(&config.format_warning_message(&message))
+                    .unwrap_or(());
+            }
+        }
     }
 
     // Context is computed against the leading run of match filters (see
