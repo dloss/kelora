@@ -391,3 +391,48 @@ fn test_pseudonym_empty_secret_error() {
     // Process should exit with error
     assert!(!output.status.success());
 }
+
+fn run_pseudonym_ip(secret: &str, input: &[u8]) -> String {
+    let output = Command::new(kelora_binary())
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env("KELORA_SECRET", secret)
+        .args([
+            "-f",
+            "line",
+            "--exec",
+            "e.p = e.line.pseudonym_ip()",
+            "-k",
+            "p",
+        ])
+        .arg("-")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(input).ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora");
+    assert!(output.status.success());
+    String::from_utf8_lossy(&output.stdout).into_owned()
+}
+
+#[test]
+fn test_pseudonym_ip_keyed_by_secret() {
+    let input = b"10.0.5.23\n10.0.5.24\n2001:db8::1\nnot-an-ip\n";
+    let first = run_pseudonym_ip("secret-a", input);
+    assert_eq!(first, run_pseudonym_ip("secret-a", input));
+    assert_ne!(first, run_pseudonym_ip("secret-b", input));
+
+    let lines: Vec<&str> = first.lines().collect();
+    // Two IPv4 pseudonyms sharing the /24, one IPv6; non-IP leaves `p` unset,
+    // so -k p prints nothing for it
+    assert_eq!(lines.len(), 3, "{first}");
+    let net = |l: &str| l.rsplit_once('.').unwrap().0.to_string();
+    assert_eq!(net(lines[0]), net(lines[1]));
+    assert!(lines[2].contains(':'));
+}

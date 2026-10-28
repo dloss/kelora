@@ -86,6 +86,7 @@ sha2 = "0.10"  # SHA-256 hashing exposed to Rhai scripts
 argon2 = "0.5"  # Argon2 password hashing for pseudonymization
 hkdf = "0.12"  # HKDF key derivation for pseudonymization
 hmac = "0.12"  # HMAC message authentication for pseudonymization
+aes = "0.8"  # AES-128 block cipher for CryptoPAn IP pseudonymization
 
 # Rhai built-in functions - statistics
 tdigests = "1.0"  # T-digest algorithm for streaming percentile estimation exposed to Rhai scripts

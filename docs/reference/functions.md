@@ -437,6 +437,24 @@ e.net16 = e.client_ip.mask_ip(2);                // "192.168.1.100" → "192.168
 e.v6 = e.ip6.mask_ip(2);                         // "2001:db8:1:2:3:4:5:6" → "2001:db8:1:2:3:4::"
 ```
 
+#### `text.pseudonym_ip()`
+Keyed, prefix-preserving pseudonym for an IPv4 or IPv6 address ([CryptoPAn](https://en.wikipedia.org/wiki/Crypto-PAn)): two addresses that share their first *k* bits get pseudonyms that share their first *k* bits, so subnets stay grouped while the addresses themselves are hidden. The result is an address of the same family. Text that is not a bare address (`"10.0.0.1:80"`, `"unknown"`) gives `()`, so the field is removed rather than leaked. The key comes from `KELORA_SECRET`, as for [`pseudonym()`](#pseudonymvalue-domain).
+
+```rhai
+e.client_ip = e.client_ip.pseudonym_ip();        // "192.168.1.100" → e.g. "63.107.22.141"
+```
+
+Choose between the two by what the output must keep:
+
+| | `pseudonym_ip()` | `pseudonym(ip, "ips")` |
+|---|---|---|
+| Output | an address; subnets, `--freq` by /24, CIDR checks still work | 24-character token; only equality survives |
+| Leaks | which addresses share a prefix, and how long it is | nothing but equality |
+| Known addresses | an attacker who knows (or plants) some real addresses in the log learns the leading bits of their pseudonyms, and so narrows down their neighbours | no help to an attacker |
+| Looks like | a real, possibly routable address that belongs to someone else | obviously not an address |
+
+Use `pseudonym()` when the data leaves your control; use `pseudonym_ip()` when the recipient needs the network layout and is trusted not to try reversing it. Neither is reversible without the key, and both change when `KELORA_SECRET` changes.
+
 ### Pattern Normalization
 
 #### `text.normalized([patterns])` / `map.normalized([patterns])`
@@ -1230,7 +1248,7 @@ e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZC
 e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-Related: `hash()` (one-way digest), `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
+Related: `hash()` (one-way digest), `pseudonym_ip()`, `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
 
 #### `read_file(path)` / `read_lines(path)`
 File contents as one string, or as an array of lines. **Only allowed in `--begin`**; keep the result in `state` for later stages.

@@ -57,6 +57,7 @@ text.lower()                         Convert text to lowercase
 text.lstrip([chars])                 Remove leading whitespace or specified characters
 text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4/IPv6)
 text.matches(pattern)                Regex search (cached; invalid pattern raises error)
+text.pseudonym_ip()                  Prefix-preserving IP pseudonym (CryptoPAn; keyed by KELORA_SECRET; () if not an IP)
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
@@ -831,7 +832,7 @@ kelora -j api_logs.jsonl --filter 'e.status >= 500' --exec '
 
 SECURITY & DATA PRIVACY:
 # To redact / anonymize / mask values, use pseudonym() (stable hashing), hash(),
-# mask_ip() (IP octets), or normalized() (replace patterns with placeholders).
+# mask_ip() (IP octets), pseudonym_ip() (IPs, subnets kept), or normalized() (replace patterns with placeholders).
 
 # Mask IP addresses (keep first 3 octets)
 kelora -f combined web_access.log --exec 'e.ip = e.ip.mask_ip(1)'
