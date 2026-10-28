@@ -7038,10 +7038,11 @@ into <code>()</code>, which removes the field on assignment, so <code>!= ()</cod
 </code></pre></div>
 <p>To turn named groups into fields of the <em>current</em> event, use <a href="#eabsorb_regexfield-pattern-options"><code>absorb_regex()</code></a>.</p>
 <h4 id="textextract_ipnth-textextract_ips"><code>text.extract_ip([nth])</code> / <code>text.extract_ips()</code><a class="headerlink" href="#textextract_ipnth-textextract_ips" title="Permanent link">&para;</a></h4>
-<p>IPv4 address(es) found in text (<code>nth</code>: 1=first, -1=last). IPv6 addresses are not matched.</p>
+<p>IPv4 and IPv6 address(es) found in text, in the order they appear (<code>nth</code>: 1=first, -1=last). Brackets, ports and zone IDs are left off (<code>[fe80::1%eth0]:22</code> gives <code>fe80::1</code>); an IPv4-mapped address stays whole (<code>::ffff:10.0.0.1</code>). An IPv6 address must stand alone, so <code>Class::method</code>, times and MAC addresses don't match; neither does the bare <code>::</code>. To keep one family, filter with <code>is_ipv4()</code>/<code>is_ipv6()</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>e.client_ip = e.headers.extract_ip();            // first
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>e.origin_ip = e.forwarded.extract_ip(-1);        // last
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>e.all_ips = e.headers.extract_ips();             // ["10.0.0.1", "192.168.1.1"]
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>e.all_ips = e.headers.extract_ips();             // ["2001:db8::5", "10.0.0.1"]
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>e.v4 = e.msg.extract_ips().filter(|ip| ip.is_ipv4());
 </code></pre></div>
 <h4 id="textextract_urlnth"><code>text.extract_url([nth])</code><a class="headerlink" href="#textextract_urlnth" title="Permanent link">&para;</a></h4>
 <p>URL found in text (<code>nth</code>: 1=first, -1=last).</p>
