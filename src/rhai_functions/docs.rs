@@ -33,8 +33,8 @@ text.extract_regexes(pattern [,group]) Extract all regex matches as array (empty
 text.extract_domain()                Extract domain from URL or email address
 text.extract_email([nth])            Extract email address from text (nth: 1=first, -1=last)
 text.extract_emails()                Extract all email addresses as array
-text.extract_ip([nth])               Extract IP address from text (nth: 1=first, -1=last)
-text.extract_ips()                   Extract all IP addresses as array
+text.extract_ip([nth])               Extract IPv4/IPv6 address from text (nth: 1=first, -1=last)
+text.extract_ips()                   Extract all IPv4/IPv6 addresses as array, in text order
 text.extract_json([nth])             Extract JSON object/array from text (nth: 1=first, -1=last)
 text.extract_jsons()                 Extract all JSON objects/arrays from text as array of strings
 text.extract_regex_maps(pattern, field) Extract regex matches as one-field maps for fan-out

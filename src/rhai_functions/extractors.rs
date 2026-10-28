@@ -5,10 +5,16 @@
 use crate::event::json_to_dynamic;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine};
+use std::net::Ipv6Addr;
+use std::str::FromStr;
 use std::sync::LazyLock;
 
 // Regex patterns (IPv4 validates 0-255 range for each octet)
 const IPV4_PATTERN: &str = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b";
+// IPv6 candidates (validated by `Ipv6Addr` afterwards). The first branch keeps an
+// embedded IPv4 tail (`::ffff:10.0.0.1`) in the same match.
+const IPV6_CANDIDATE_PATTERN: &str =
+    r"[0-9A-Fa-f:]*:[0-9]{1,3}(?:\.[0-9]{1,3}){3}|[0-9A-Fa-f:]*:[0-9A-Fa-f:]*";
 const URL_PATTERN: &str = r##"https?://[^\s<>"]+[^\s<>".,;!?]"##;
 const URL_DOMAIN_PATTERN: &str = r##"https?://([^/\s<>"]+)"##;
 const EMAIL_PATTERN: &str = r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b";
@@ -17,6 +23,8 @@ const EMAIL_DOMAIN_PATTERN: &str = r##"[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-
 // Compiled regex instances
 static IPV4_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(IPV4_PATTERN).expect("failed to compile IPv4 regex"));
+static IPV6_CANDIDATE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(IPV6_CANDIDATE_PATTERN).expect("failed to compile IPv6 regex"));
 static URL_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
 static URL_DOMAIN_REGEX: LazyLock<Regex> =
@@ -31,21 +39,75 @@ static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 // IP Extraction
 // ============================================================================
 
-/// Extract the first IPv4 address from text
+/// Find IPv4 and IPv6 addresses in text order
+fn find_ips(text: &str) -> Vec<&str> {
+    let v4 = IPV4_REGEX.find_iter(text).map(|m| (m.start(), m.end()));
+
+    // Cheap prefilter: an IPv6 address has a `::` or at least six colons
+    let maybe_v6 = text.contains("::") || text.bytes().filter(|&b| b == b':').count() >= 6;
+    if !maybe_v6 {
+        return v4.map(|(s, e)| &text[s..e]).collect();
+    }
+
+    let v6: Vec<(usize, usize)> = IPV6_CANDIDATE_REGEX
+        .find_iter(text)
+        .filter_map(|m| ipv6_span(text, m.start(), m.end()))
+        .collect();
+
+    // Drop IPv4 matches inside an IPv6 address (`::ffff:10.0.0.1`)
+    let mut spans: Vec<(usize, usize)> = v4
+        .filter(|&(s, e)| !v6.iter().any(|&(vs, ve)| s >= vs && e <= ve))
+        .chain(v6.iter().copied())
+        .collect();
+    spans.sort_unstable();
+    spans.into_iter().map(|(s, e)| &text[s..e]).collect()
+}
+
+/// Validate an IPv6 candidate, returning the span of the address
+fn ipv6_span(text: &str, start: usize, mut end: usize) -> Option<(usize, usize)> {
+    // Must stand alone: `Pipeline::carry` or `T10:00:00` are not addresses
+    let is_word = |c: char| c.is_alphanumeric() || c == '_';
+    if text[..start]
+        .chars()
+        .next_back()
+        .is_some_and(|c| is_word(c) || c == '.')
+        || text[end..].chars().next().is_some_and(is_word)
+    {
+        return None;
+    }
+
+    // A colon that ends a sentence-like phrase: "from 2001:db8::1: refused"
+    let candidate = &text[start..end];
+    if candidate.ends_with(':') && !candidate.ends_with("::") {
+        end -= 1;
+    }
+    let candidate = &text[start..end];
+
+    if candidate == "::" || Ipv6Addr::from_str(candidate).is_err() {
+        return None;
+    }
+    // Eight two-digit groups are a hardware ID (WWN, EUI-64), not an address
+    if !candidate.contains("::") && candidate.split(':').all(|g| g.len() == 2) {
+        return None;
+    }
+    Some((start, end))
+}
+
+/// Extract the first IP address from text
 fn extract_ip_first(text: &str) -> String {
-    IPV4_REGEX
-        .find(text)
-        .map(|m| m.as_str().to_string())
+    find_ips(text)
+        .first()
+        .map(|ip| ip.to_string())
         .unwrap_or_default()
 }
 
-/// Extract the nth IPv4 address from text (1-indexed, negative for from end)
+/// Extract the nth IP address from text (1-indexed, negative for from end)
 fn extract_ip_nth(text: &str, nth: i64) -> String {
     if nth == 0 {
         return String::new();
     }
 
-    let matches: Vec<_> = IPV4_REGEX.find_iter(text).collect();
+    let matches = find_ips(text);
 
     if matches.is_empty() {
         return String::new();
@@ -66,14 +128,14 @@ fn extract_ip_nth(text: &str, nth: i64) -> String {
         nth_usize - 1 // Convert to 0-indexed
     };
 
-    matches[idx].as_str().to_string()
+    matches[idx].to_string()
 }
 
-/// Extract all IPv4 addresses from text
+/// Extract all IP addresses from text
 fn extract_ips_impl(text: &str) -> Array {
-    IPV4_REGEX
-        .find_iter(text)
-        .map(|m| Dynamic::from(m.as_str().to_string()))
+    find_ips(text)
+        .into_iter()
+        .map(|ip| Dynamic::from(ip.to_string()))
         .collect()
 }
 
@@ -530,6 +592,56 @@ mod tests {
         assert_eq!(result[0].clone().into_string().unwrap(), "192.168.1.1");
         assert_eq!(result[1].clone().into_string().unwrap(), "10.0.0.1");
         assert_eq!(result[2].clone().into_string().unwrap(), "172.16.0.1");
+    }
+
+    fn ips(text: &str) -> Vec<String> {
+        find_ips(text).into_iter().map(String::from).collect()
+    }
+
+    #[test]
+    fn test_extract_ip_ipv6() {
+        assert_eq!(
+            extract_ip_first("Failed password for root from 2001:db8::7 port 22 ssh2"),
+            "2001:db8::7"
+        );
+        assert_eq!(ips("from ::1 to fe80::1%eth0"), ["::1", "fe80::1"]);
+        assert_eq!(
+            ips("full 2001:0db8:0000:0000:0000:0000:0000:0001 here"),
+            ["2001:0db8:0000:0000:0000:0000:0000:0001"]
+        );
+        assert_eq!(
+            ips("[2001:db8::1]:443 and 2001:db8::2."),
+            ["2001:db8::1", "2001:db8::2"]
+        );
+        assert_eq!(ips("connect to 2001:db8::1: refused"), ["2001:db8::1"]);
+    }
+
+    #[test]
+    fn test_extract_ip_mixed_families_in_text_order() {
+        let text = "XFF: 2001:db8::5, 10.0.0.1";
+        assert_eq!(extract_ip_first(text), "2001:db8::5");
+        assert_eq!(extract_ip_nth(text, -1), "10.0.0.1");
+        assert_eq!(
+            ips("10.0.0.1 then 2001:db8::5 then 10.0.0.2"),
+            ["10.0.0.1", "2001:db8::5", "10.0.0.2"]
+        );
+    }
+
+    #[test]
+    fn test_extract_ip_ipv4_mapped() {
+        assert_eq!(
+            ips("client ::ffff:10.0.0.1 via 2001:db8::1"),
+            ["::ffff:10.0.0.1", "2001:db8::1"]
+        );
+    }
+
+    #[test]
+    fn test_extract_ip_ipv6_false_positives() {
+        assert!(ips("at 12:34:56.789 ts=2024-01-01T10:00:00Z").is_empty());
+        assert!(ips("mac aa:bb:cc:dd:ee:ff wwn 50:06:01:60:3b:20:19:a8").is_empty());
+        assert!(ips(r"Illuminate\Pipeline\Pipeline::carry() Foo::bad std::io").is_empty());
+        assert!(ips("Bind-address: '::' port: 33060").is_empty());
+        assert_eq!(ips("10.0.0.1:8080 and ::1"), ["10.0.0.1", "::1"]);
     }
 
     // ========================================================================
