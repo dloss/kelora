@@ -2507,7 +2507,15 @@ lines. A result line ends any multiline event.</p>
 it sits. A subtest's passing results and plan are dropped; a failing result is
 kept as a <code>tap</code> event, since it names what failed. Test2's buffered subtests
 (<code>ok 1 - name {</code> … <code>}</code>) work the same way, their lines belonging to the result
-before them. <code>--unwrap</code> runs sequentially only.</p>
+before them.</p>
+<p>A test that runs a program writing TAP and prints its output with
+<code>ok(...) or diag(...)</code> leaves a second TAP stream in the comments
+(<code># not ok 1 - …</code>, <code># # log line</code>, <code># 1..1</code>). Its comments are unwrapped as log
+lines too, its failing results kept as <code>tap</code> events and its boilerplate
+dropped. Since <code>diag()</code> runs after the failed result, a stream that starts
+right after a failure (at most one line between, such as <code># runner output:</code>)
+gets that test's fields; elsewhere its lines take the next result's, like any
+comment. <code>--unwrap</code> runs sequentially only.</p>
 <h2 id="when-lines-dont-parse">When lines don't parse<a class="headerlink" href="#when-lines-dont-parse" title="Permanent link">&para;</a></h2>
 <p>Kelora is <strong>resilient</strong> by default: a line that doesn't match the format is
 counted, reported in a summary on stderr, and skipped; the rest of the file is
