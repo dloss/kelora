@@ -474,3 +474,47 @@ fn hint_suggests_unwrap_for_tap_input() {
     );
     assert!(!stderr.contains("--unwrap tap"), "{stderr}");
 }
+
+/// A test that captures a TAP-producing program and `diag()`s its output on
+/// failure: the program's TAP sits in comments after the failed result.
+#[test]
+fn tap_embedded_in_comments_belongs_to_the_failure_before_it() {
+    let input = "1..2
+not ok 1 - change test domain
+#   Failed test 'change test domain'
+#   at outer.t line 5.
+# runner FATAL ERROR output: 1..1
+# # level=info msg=\"job 1 ok\"
+# # level=error msg=\"job 2 failed\"
+# not ok 1 - all exit code zero
+# #   Failed test 'all exit code zero'
+# #   at inner.pl line 4.
+# # Looks like your test exited with 1 just after 1.
+# level=info msg=cleanup
+ok 2 - cleanup
+";
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "--unwrap",
+            "tap",
+            "-f",
+            "logfmt,line",
+            "-k",
+            "test_num,test_ok,msg,line,tap",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "stderr: {stderr}");
+    assert_eq!(
+        keyed(&stdout),
+        vec![
+            "test_num=1 test_ok=false tap='not ok 1 - change test domain'",
+            "test_num=1 test_ok=false line='runner FATAL ERROR output:'",
+            "test_num=1 test_ok=false msg='job 1 ok'",
+            "test_num=1 test_ok=false msg='job 2 failed'",
+            "test_num=1 test_ok=false tap='# not ok 1 - all exit code zero'",
+            "test_num=2 test_ok=true msg='cleanup'",
+            "test_num=2 test_ok=true tap='ok 2 - cleanup'",
+        ]
+    );
+}

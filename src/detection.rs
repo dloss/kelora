@@ -511,7 +511,11 @@ fn detect_format_from_tap_reader<R: std::io::BufRead>(
         .iter()
         .filter_map(
             |line| match classifier.classify(line.trim_end_matches(&['\r', '\n'][..])) {
-                TapLine::Comment(text) if !text.trim().is_empty() => Some(text.to_string()),
+                TapLine::Comment(text) | TapLine::EmbeddedComment(text)
+                    if !text.trim().is_empty() =>
+                {
+                    Some(text.to_string())
+                }
                 _ => None,
             },
         )

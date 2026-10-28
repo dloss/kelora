@@ -359,7 +359,16 @@ In a subtest, the test fields still describe the top-level test, so
 it sits. A subtest's passing results and plan are dropped; a failing result is
 kept as a `tap` event, since it names what failed. Test2's buffered subtests
 (`ok 1 - name {` … `}`) work the same way, their lines belonging to the result
-before them. `--unwrap` runs sequentially only.
+before them.
+
+A test that runs a program writing TAP and prints its output with
+`ok(...) or diag(...)` leaves a second TAP stream in the comments
+(`# not ok 1 - …`, `# # log line`, `# 1..1`). Its comments are unwrapped as log
+lines too, its failing results kept as `tap` events and its boilerplate
+dropped. Since `diag()` runs after the failed result, a stream that starts
+right after a failure (at most one line between, such as `# runner output:`)
+gets that test's fields; elsewhere its lines take the next result's, like any
+comment. `--unwrap` runs sequentially only.
 
 ## When lines don't parse
 

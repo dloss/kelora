@@ -25,6 +25,13 @@
 //!
 //! Subtests are not unwrapped: their indented result lines are other lines,
 //! and their comments count as comments of the enclosing test.
+//!
+//! A test that runs a TAP-producing program and `diag()`s its output leaves a
+//! TAP stream inside comments (`# not ok 1 - ...`, `# # log line`, `# 1..1`).
+//! It is unwrapped one level deeper: its comments are log lines, its failing
+//! results `tap` events, its boilerplate dropped. Printed by `ok(...) or
+//! diag(...)`, it follows the failed result it explains, so a stream starting
+//! right after a failure (at most one line between) belongs to that test.
 
 use crate::pipeline::ChunkLine;
 use rhai::Dynamic;
@@ -83,6 +90,10 @@ pub enum TapLine<'a> {
     Subtest(&'a str),
     /// `}`, closing a Test2 buffered subtest.
     BlockEnd,
+    /// A comment of a TAP stream embedded in comments (`# # text`).
+    EmbeddedComment(&'a str),
+    /// A result of a TAP stream embedded in comments (`# not ok 1`).
+    EmbeddedResult(TestResult),
     /// Anything else; emitted as a `tap` event.
     Other,
     /// TAP structure or Test::More boilerplate with no log content.
@@ -111,6 +122,8 @@ pub struct TapClassifier {
     /// Inside a quoted `got:`/`expected:` value that spans lines.
     in_quoted_value: bool,
     yaml: Yaml,
+    /// Classifier of a TAP stream embedded in comments, while one runs.
+    embedded: Option<Box<TapClassifier>>,
 }
 
 impl TapClassifier {
@@ -141,6 +154,21 @@ impl TapClassifier {
 
         if let Some(rest) = trimmed.strip_prefix('#') {
             let text = rest.strip_prefix(' ').unwrap_or(rest);
+            if let Some(embedded) = self.embedded.as_mut() {
+                match embedded.classify(text) {
+                    TapLine::Comment(text) | TapLine::EmbeddedComment(text) => {
+                        return TapLine::EmbeddedComment(text)
+                    }
+                    TapLine::Result(result)
+                    | TapLine::Nested(result)
+                    | TapLine::EmbeddedResult(result) => return TapLine::EmbeddedResult(result),
+                    TapLine::Drop | TapLine::Yaml(_) | TapLine::Subtest(_) => return TapLine::Drop,
+                    // Plain comment text: the stream has ended.
+                    TapLine::Other | TapLine::Header { .. } | TapLine::BlockEnd => {
+                        self.embedded = None
+                    }
+                }
+            }
             if self.in_failure_block {
                 if self.in_quoted_value {
                     self.in_quoted_value = !text.ends_with('\'');
@@ -167,6 +195,14 @@ impl TapClassifier {
             {
                 return TapLine::Drop;
             }
+            if starts_embedded(text) {
+                return self.start_embedded().classify(line);
+            }
+            if let Some(head) = strip_glued_plan(text) {
+                // `diag "output: $out"`: the stream's plan ends this line.
+                self.start_embedded();
+                return TapLine::Comment(head);
+            }
             return TapLine::Comment(text);
         }
 
@@ -175,6 +211,7 @@ impl TapClassifier {
         }
         self.in_failure_block = false;
         self.in_quoted_value = false;
+        self.embedded = None;
 
         if line.starts_with("TAP version ") || is_plan(trimmed) {
             return TapLine::Drop;
@@ -198,6 +235,30 @@ impl TapClassifier {
         }
         TapLine::Other
     }
+}
+
+impl TapClassifier {
+    fn start_embedded(&mut self) -> &mut Self {
+        self.embedded = Some(Box::default());
+        self
+    }
+}
+
+/// Comment text that is itself TAP: a result, a plan or a comment (`# text`,
+/// from `# # text`), possibly indented by a subtest of the embedded stream.
+fn starts_embedded(text: &str) -> bool {
+    let text = text.trim_start();
+    text == "#" || text.starts_with("# ") || is_plan(text) || parse_result(text).is_some()
+}
+
+/// `output: 1..1`: a diag line with an embedded stream's plan glued to its
+/// end (Perl interpolates the captured output). Returns the text before it.
+fn strip_glued_plan(text: &str) -> Option<&str> {
+    let (head, plan) = text.trim_end().rsplit_once(' ')?;
+    let is_bare_plan = plan
+        .strip_prefix("1..")
+        .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+    (is_bare_plan && head.ends_with(':')).then_some(head)
 }
 
 /// A `got: '...` / `expected: '...` detail line whose quoted value continues
@@ -440,6 +501,14 @@ pub struct TapUnwrapper {
     /// The last result's release, held back until the line after it shows
     /// whether a YAML block adds `test_duration_ms`.
     held: Option<TapRelease>,
+    /// Whether `held` is a failed result.
+    held_failed: bool,
+    /// Fields of the last result, if it failed and no result or header
+    /// followed it yet.
+    last_failure: Option<TapFields>,
+    /// While an embedded TAP stream runs: the fields of the failed result it
+    /// follows, or `None` when its lines wait for the next result as usual.
+    embedded: Option<Option<TapFields>>,
     pending: Vec<TapItem>,
     test_file: Option<String>,
     /// A result line was seen since the last header: `prove -v` output, whose
@@ -473,6 +542,7 @@ impl TapUnwrapper {
                 self.verdict_file = None;
                 self.subtests.clear();
                 self.classifier = TapClassifier::default();
+                self.last_failure = None;
             }
             self.last_filename = Some(filename.clone());
         }
@@ -492,7 +562,18 @@ impl TapUnwrapper {
             }
             return step;
         }
-        step.releases.extend(self.held.take());
+        if let Some(held) = self.held.take() {
+            if self.held_failed {
+                self.last_failure = held.fields.clone();
+            }
+            step.releases.push(held);
+        }
+        if !matches!(
+            line,
+            TapLine::EmbeddedComment(_) | TapLine::EmbeddedResult(_) | TapLine::Drop
+        ) {
+            self.embedded = None;
+        }
         let verdict_file = self.verdict_file.take();
 
         let chunk_line = |text: String| ChunkLine {
@@ -515,6 +596,28 @@ impl TapUnwrapper {
             TapLine::Comment(inner) => {
                 let inner = inner.to_string();
                 self.pending.push(TapItem::Inner(chunk_line(inner), extra));
+            }
+            TapLine::EmbeddedComment(_) | TapLine::EmbeddedResult(_) => {
+                let item = match line {
+                    TapLine::EmbeddedComment(inner) => {
+                        Some(TapItem::Inner(chunk_line(inner.to_string()), extra))
+                    }
+                    // Like a subtest's: only a failing result says something.
+                    TapLine::EmbeddedResult(result) if !result.ok => {
+                        Some(TapItem::Raw(chunk_line(text), extra))
+                    }
+                    _ => None,
+                };
+                let fields = self.embedded_fields(&mut step);
+                match (item, fields) {
+                    (None, _) => step.dropped = true,
+                    (Some(item), Some(fields)) => step.releases.push(TapRelease {
+                        fields: Some(fields),
+                        items: vec![item],
+                        result: None,
+                    }),
+                    (Some(item), None) => self.pending.push(item),
+                }
             }
             TapLine::Other => match verdict_file {
                 Some(file) if is_prove_verdict(body) => {
@@ -576,6 +679,7 @@ impl TapUnwrapper {
             }
             TapLine::Result(result) => {
                 self.results_since_header = true;
+                self.last_failure = None;
                 self.subtests.clear();
                 let fields = self.result_fields(&result);
                 let release = TapRelease {
@@ -590,6 +694,7 @@ impl TapUnwrapper {
                     self.open_subtest(4, &result.name);
                 } else {
                     self.held = Some(release);
+                    self.held_failed = !result.ok;
                 }
             }
         }
@@ -599,6 +704,29 @@ impl TapUnwrapper {
             step.releases.extend(self.finish());
         }
         step
+    }
+
+    /// Fields for a line of an embedded TAP stream, starting the stream if
+    /// needed: those of the failed result it follows, when at most one line
+    /// (the diag introducing it) came between, which then joins it.
+    fn embedded_fields(&mut self, step: &mut TapStep) -> Option<TapFields> {
+        if self.embedded.is_none() {
+            let fields = self
+                .last_failure
+                .take()
+                .filter(|_| self.pending.len() <= 1 && self.block.is_none());
+            if let Some(fields) = &fields {
+                if !self.pending.is_empty() {
+                    step.releases.push(TapRelease {
+                        fields: Some(fields.clone()),
+                        items: std::mem::take(&mut self.pending),
+                        result: None,
+                    });
+                }
+            }
+            self.embedded = Some(fields);
+        }
+        self.embedded.clone().flatten()
     }
 
     /// Record a subtest whose lines are indented by `indent`, closing any
@@ -624,6 +752,8 @@ impl TapUnwrapper {
     /// result, then lines that no result line followed. Those keep `test_file`
     /// but get no test fields (or the fields of an unclosed Test2 subtest).
     pub fn finish(&mut self) -> Vec<TapRelease> {
+        self.embedded = None;
+        self.last_failure = None;
         let mut releases: Vec<TapRelease> = self.held.take().into_iter().collect();
         let block = self.block.take();
         if !self.pending.is_empty() {
@@ -790,6 +920,132 @@ mod tests {
         assert_eq!(
             c.classify("# tests passed"),
             TapLine::Comment("tests passed")
+        );
+    }
+
+    #[test]
+    fn classifies_tap_embedded_in_comments() {
+        let mut c = TapClassifier::default();
+        assert_eq!(c.classify("# output: 1..1"), TapLine::Comment("output:"));
+        assert_eq!(c.classify("# # job 1:"), TapLine::EmbeddedComment("job 1:"));
+        assert!(matches!(
+            c.classify("# not ok 1 - all exit code zero"),
+            TapLine::EmbeddedResult(TestResult {
+                ok: false,
+                num: 1,
+                ..
+            })
+        ));
+        assert_eq!(
+            c.classify("# #   Failed test 'all exit code zero'"),
+            TapLine::Drop
+        );
+        assert_eq!(c.classify("# #   at inner.pl line 4."), TapLine::Drop);
+        assert_eq!(c.classify("#"), TapLine::Drop);
+        assert!(matches!(
+            c.classify("#     not ok 1 - deep"),
+            TapLine::EmbeddedResult(_)
+        ));
+        assert_eq!(
+            c.classify("#     # in a subtest"),
+            TapLine::EmbeddedComment("in a subtest")
+        );
+        assert_eq!(
+            c.classify("# # Looks like your test exited with 1 just after 1."),
+            TapLine::Drop
+        );
+        // Plain text ends the stream.
+        assert_eq!(
+            c.classify("# back to logs"),
+            TapLine::Comment("back to logs")
+        );
+        assert_eq!(c.classify("# ok"), TapLine::Comment("ok"));
+
+        // A plan glued to a line counts only after a colon.
+        assert_eq!(c.classify("# range 1..10"), TapLine::Comment("range 1..10"));
+        assert_eq!(c.classify("# 1..2"), TapLine::Drop);
+        assert_eq!(c.classify("# # x"), TapLine::EmbeddedComment("x"));
+        // A result line ends it too.
+        assert!(matches!(c.classify("ok 3 - next"), TapLine::Result(_)));
+        assert!(matches!(c.classify("# x"), TapLine::Comment("x")));
+    }
+
+    fn run(lines: &[&str]) -> Vec<TapRelease> {
+        let mut tap = TapUnwrapper::new();
+        let mut releases = Vec::new();
+        for (i, line) in lines.iter().enumerate() {
+            releases.extend(tap.push(line.to_string(), i + 1, None).releases);
+        }
+        releases.extend(tap.finish());
+        releases
+    }
+
+    /// (test_num, kind, text) of every line, in order.
+    fn numbered(releases: &[TapRelease]) -> Vec<(Option<i64>, &'static str, String)> {
+        releases
+            .iter()
+            .flat_map(|r| {
+                let num = field(r, "test_num").map(|n| n.as_int().unwrap());
+                let mut lines: Vec<_> = texts(r)
+                    .into_iter()
+                    .map(|(kind, text)| (num, kind, text.to_string()))
+                    .collect();
+                if let Some((line, _)) = &r.result {
+                    lines.push((num, "result", line.text.clone()));
+                }
+                lines
+            })
+            .collect()
+    }
+
+    #[test]
+    fn embedded_stream_belongs_to_the_failure_before_it() {
+        let releases = run(&[
+            "not ok 1 - change test domain",
+            "#   Failed test 'change test domain'",
+            "#   at t/x.t line 5.",
+            "# runner output: 1..1",
+            "# # job 1:",
+            "# not ok 1 - all exit code zero",
+            "# #   Failed test 'all exit code zero'",
+            "# log of test 2",
+            "ok 2 - cleanup",
+        ]);
+        assert_eq!(
+            numbered(&releases),
+            vec![
+                (Some(1), "result", "not ok 1 - change test domain".into()),
+                (Some(1), "inner", "runner output:".into()),
+                (Some(1), "inner", "job 1:".into()),
+                (Some(1), "raw", "# not ok 1 - all exit code zero".into()),
+                (Some(2), "inner", "log of test 2".into()),
+                (Some(2), "result", "ok 2 - cleanup".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn embedded_stream_far_from_a_failure_waits_for_the_next_result() {
+        let releases = run(&[
+            "not ok 1 - one",
+            "# first log",
+            "# second log",
+            "# # child log",
+            "ok 2 - passes",
+            "# # after a pass",
+            "ok 3 - three",
+        ]);
+        assert_eq!(
+            numbered(&releases),
+            vec![
+                (Some(1), "result", "not ok 1 - one".into()),
+                (Some(2), "inner", "first log".into()),
+                (Some(2), "inner", "second log".into()),
+                (Some(2), "inner", "child log".into()),
+                (Some(2), "result", "ok 2 - passes".into()),
+                (Some(3), "inner", "after a pass".into()),
+                (Some(3), "result", "ok 3 - three".into()),
+            ]
         );
     }
 
