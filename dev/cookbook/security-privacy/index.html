@@ -1095,6 +1095,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IPs but keep subnets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#drop-sensitive-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1768,6 +1779,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IPs but keep subnets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#drop-sensitive-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1862,6 +1884,20 @@ same, so you can still count, join, and follow a user across files:</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user</span>='Tq9oFjjc-1WvdC9mCHqAC5YQ' <span class=" -Color -Color-Green">action</span>='logout' <span class=" -Color -Color-Green">ip</span>='192.168.1.0'
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user</span>='4q0StVl3bHi6gqkOSXZzOA8f' <span class=" -Color -Color-Green">action</span>='login' <span class=" -Color -Color-Green">ip</span>='10.0.5.0'
 </code></pre></div>
+<h2 id="pseudonymize-ips-but-keep-subnets">Pseudonymize IPs but keep subnets<a class="headerlink" href="#pseudonymize-ips-but-keep-subnets" title="Permanent link">&para;</a></h2>
+<p><code>pseudonym_ip()</code> replaces each address with another of the same family;
+addresses that share a prefix still share one afterwards (<code>10.0.5.23</code> and
+<code>10.0.5.24</code> stay in one /24):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.ip = e.ip.pseudonym_ip()'</span><span class="w"> </span>-k<span class="w"> </span>user_id,ip
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user001' <span class=" -Color -Color-Green">ip</span>='64.168.98.21'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">ip</span>='245.126.84.248'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user_id</span>='user003' <span class=" -Color -Color-Green">ip</span>='50.206.38.29'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user_id</span>='user004' <span class=" -Color -Color-Green">ip</span>='64.168.98.20'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
+</code></pre></div>
+<p>Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer <code>pseudonym()</code> (<a href="../../reference/functions/#textpseudonym_ip">trade-offs</a>).</p>
 <h2 id="drop-sensitive-fields">Drop sensitive fields<a class="headerlink" href="#drop-sensitive-fields" title="Permanent link">&para;</a></h2>
 <p><code>-K token,password</code> hides fields from the output; <code>e.token = ()</code> in <code>--exec</code>
 removes them before later stages and summaries see them.</p>
