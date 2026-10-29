@@ -2241,7 +2241,7 @@
 </code></pre></div>
 <ul>
 <li>Every pair becomes a top-level field. Keys may contain any non-space characters except <code>=</code> (<code>a.b-c</code>, <code>k:x</code> are fine).</li>
-<li>Unquoted values are typed: <code>500</code> → int, <code>1.5</code> and <code>1e3</code> → float, <code>true</code>/<code>True</code> → bool. <code>007</code> stays a string.</li>
+<li>Values are typed, quoted or not: <code>500</code> and <code>"500"</code> → int, <code>1.5</code> and <code>1e3</code> → float, <code>true</code>/<code>True</code> → bool. <code>007</code> stays a string.</li>
 <li>Quoted values may contain spaces and <code>\"</code>. <code>key=</code> gives an empty string.</li>
 <li>A bare word without <code>=</code> is a parse error.</li>
 </ul>

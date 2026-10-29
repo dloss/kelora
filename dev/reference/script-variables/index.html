@@ -2091,6 +2091,7 @@
 <p><code>span.metrics</code> contains the additive trackers (<code>track_freq</code>, <code>track_sum</code>, <code>track_inc</code>, <code>track_avg</code>, <code>track_unique</code>) and the span's own <code>track_min</code>/<code>track_max</code> extremes. Trackers that cannot be split per window (<code>track_percentiles</code>, <code>track_cardinality</code>, <code>track_top</code>/<code>track_bottom</code>, <code>track_top_by</code>/<code>track_bottom_by</code>, and the percentile parts of <code>track_stats</code>) are omitted with a one-time warning, and <code>span.metric()</code> returns <code>()</code> for them, as for a min/max the span never recorded. Compute those from <code>span.events</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>let rts = span.events.pluck_as_nums("rt");
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>let max_rt = if rts.is_empty() { () } else { rts.max() };
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>let p95_rt = if rts.is_empty() { () } else { rts.percentile(95) };  // 0–100, not 0.95
 </code></pre></div>
 <p><code>span.events</code> holds every event of the span in memory. More: <a href="../../guide/spans/">Group into Spans</a>.</p>
 

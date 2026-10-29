@@ -1858,7 +1858,16 @@ only; Kelora says so and leaves them out of the rows:</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-05-06T08:12:40Z  events=3  ms_avg=1550.33  ms_count=3  ms_max=2390  ms_min=51  ms_sum=4651
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>2024-05-06T08:41:10Z  events=5  ms_avg=106  ms_count=5  ms_max=125  ms_min=47  ms_sum=530
 </code></pre></div>
-<p>For per-span percentiles, use a <code>--span-close</code> script with <code>span.events</code>.</p>
+<p>For per-span percentiles, compute them in a <code>--span-close</code> script from
+<code>span.events</code>. <code>percentile()</code> takes 0–100, not the 0–1 of <code>track_percentiles()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/worker_bursts.jsonl<span class="w"> </span>--span-idle<span class="w"> </span>5m<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">'let ms = span.events.pluck_as_nums("ms");</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">                print(`${span.label}  p95=${ms.percentile(95).round()} ms`)'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-05-06T08:00:02Z  p95=141.0 ms
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-05-06T08:12:40Z  p95=2372.0 ms
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-05-06T08:41:10Z  p95=124.0 ms
+</code></pre></div>
 <h2 id="your-own-report-per-span-span-close">Your own report per span: <code>--span-close</code><a class="headerlink" href="#your-own-report-per-span-span-close" title="Permanent link">&para;</a></h2>
 <p><code>--span-close</code> runs a script each time a span closes. Inside it, <code>span</code>
 describes the span that just closed:</p>

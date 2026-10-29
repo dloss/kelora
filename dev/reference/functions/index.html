@@ -7258,12 +7258,12 @@ into <code>()</code>, which removes the field on assignment, so <code>!= ()</cod
 </code></pre></div>
 <h3 id="encoding-and-hashing">Encoding and Hashing<a class="headerlink" href="#encoding-and-hashing" title="Permanent link">&para;</a></h3>
 <h4 id="textencode_b64-textdecode_b64"><code>text.encode_b64()</code> / <code>text.decode_b64()</code><a class="headerlink" href="#textencode_b64-textdecode_b64" title="Permanent link">&para;</a></h4>
-<p>Base64. Decoding invalid input is a runtime error.</p>
+<p>Base64. Decoding invalid input, or bytes that are not valid UTF-8, is a runtime error.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>e.encoded = e.data.encode_b64();                 // "hello world" → "aGVsbG8gd29ybGQ="
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>e.decoded = e.payload.decode_b64();
 </code></pre></div>
 <h4 id="textencode_hex-textdecode_hex"><code>text.encode_hex()</code> / <code>text.decode_hex()</code><a class="headerlink" href="#textencode_hex-textdecode_hex" title="Permanent link">&para;</a></h4>
-<p>Hexadecimal.</p>
+<p>Hexadecimal. Decoding invalid input (an odd number of digits, a non-hex character), or bytes that are not valid UTF-8, is a runtime error.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>e.hex = e.data.encode_hex();                     // "hello" → "68656c6c6f"
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>e.text = e.hex_string.decode_hex();
 </code></pre></div>
@@ -8244,6 +8244,7 @@ instead of <code>replace()</code>.</p>
 <p><code>span.size</code> is the number of events that passed the filters and entered the span. <code>span.events</code> holds them in arrival order, each with <code>line</code>, <code>line_num</code>, <code>filename</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code> and <code>span_status</code> added.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>let rts = span.events.pluck_as_nums("rt");
 <a id="__codelineno-176-2" name="__codelineno-176-2" href="#__codelineno-176-2"></a>let max_rt = if rts.is_empty() { () } else { rts.max() };
+<a id="__codelineno-176-3" name="__codelineno-176-3" href="#__codelineno-176-3"></a>let p95_rt = if rts.is_empty() { () } else { rts.percentile(95) };  // 0–100, not 0.95
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> maps metric names to what <code>track_*()</code> recorded while this span was open. Additive trackers appear: <code>track_freq</code>, <code>track_sum</code>, <code>track_inc</code>, <code>track_avg</code> and <code>track_unique</code> (for <code>track_unique</code>, the values first seen in this span), plus <code>track_min</code>/<code>track_max</code> as this span's own extremes, and the count/sum/avg/min/max parts of <code>track_stats</code>. Zero values are omitted, as is a minimum or maximum the span never recorded.</p>
