@@ -64,7 +64,14 @@ only; Kelora says so and leaves them out of the rows:
 kelora examples/worker_bursts.jsonl --span-idle 5m --describe ms --span-summary
 ```
 
-For per-span percentiles, use a `--span-close` script with `span.events`.
+For per-span percentiles, compute them in a `--span-close` script from
+`span.events`. `percentile()` takes 0–100, not the 0–1 of `track_percentiles()`:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/worker_bursts.jsonl --span-idle 5m -q \
+  --span-close 'let ms = span.events.pluck_as_nums("ms");
+                print(`${span.label}  p95=${ms.percentile(95).round()} ms`)'
+```
 
 ## Your own report per span: `--span-close`
 

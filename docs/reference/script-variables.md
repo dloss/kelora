@@ -125,6 +125,7 @@ kelora -j app.log --span 5m -q \
 ```rhai
 let rts = span.events.pluck_as_nums("rt");
 let max_rt = if rts.is_empty() { () } else { rts.max() };
+let p95_rt = if rts.is_empty() { () } else { rts.percentile(95) };  // 0–100, not 0.95
 ```
 
 `span.events` holds every event of the span in memory. More: [Group into Spans](../guide/spans.md).
