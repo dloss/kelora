@@ -273,7 +273,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        openbsd_release: ["7.9", "7.8"]
+        openbsd_release: ["8.0", "7.9"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -319,7 +319,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        freebsd_release: ["14.3", "13.5"]
+        freebsd_release: ["15.1", "14.5"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -331,8 +331,8 @@ jobs:
           release: ${{ matrix.freebsd_release }}
           prepare: |
             # The pkg repo is built for the latest patch release of each branch,
-            # which can be newer than the VM's userland (e.g. 14.4 packages on a
-            # 14.3 VM). Tolerate the skew instead of failing the OS-version check.
+            # which can be newer than the VM's userland (e.g. 15.2 packages on a
+            # 15.1 VM). Tolerate the skew instead of failing the OS-version check.
             export IGNORE_OSVERSION=yes
             pkg update -f
             pkg install -y rust

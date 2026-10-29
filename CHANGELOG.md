@@ -28,6 +28,7 @@ These are bug fixes. They are listed here because scripts or pipelines that reli
 
 ### Changed
 
+- **Builds for current BSD releases** - Release binaries are now built for FreeBSD 15.1 and 14.5 (was 14.3 and 13.5) and OpenBSD 8.0 and 7.9 (was 7.9 and 7.8).
 - **Hints for a `--filter` field that only an `--exec` creates** - A filter placed before the `-e` that creates its field (`--filter '!state.contains(e.SRC + ":" + e.DPT)' -e 'e.absorb_kv("msg")'`) always saw `()`, and still let events through, with no message. kelora now says the filter reads the field before the `--exec` that creates it. When a filter matches nothing, the hint no longer calls a field an "unseen … typo" when an `--exec` might create it: after an `--exec` it suggests the usual cause, string values from `absorb_kv()`/`parse_kv()` (`e.DPT.to_int() < 1024`); before one, it names the stage order. `-k` no longer reports such fields as "never present in the input".
 - **Hint for Zeek TSV logs** - A Zeek log in its default TSV layout was read as `line` with advice for `timestamp LEVEL message` logs. The hint now says it is a Zeek log, which kelora has no format for, and names the two ways to read it: `--ignore-lines '^#'` (unnamed text columns) or Zeek's JSON output (named, typed fields).
 - **Hints for keys with dots in their names** - Zeek and ECS logs have top-level keys such as `id.orig_h`. `e.id.orig_h` reads a nested map, and the error hint suggested `get_path`, which also returns the default for such keys. Both the error hint and the zero-match hint now point to `e["id.orig_h"]`.
