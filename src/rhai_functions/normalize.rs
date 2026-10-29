@@ -120,7 +120,7 @@ fn is_valid_luhn(digits: &str) -> bool {
         })
         .sum();
 
-    sum % 10 == 0
+    sum.is_multiple_of(10)
 }
 
 /// Pattern name to regex mapping for normalization

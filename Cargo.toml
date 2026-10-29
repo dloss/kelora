@@ -2,6 +2,8 @@
 name = "kelora"
 version = "2.2.1"
 edition = "2021"
+rust-version = "1.94"  # Floor: packaged rustc on the oldest BSD in the release matrix (OpenBSD 7.9)
+resolver = "3"  # MSRV-aware: `cargo update` only picks versions that build on rust-version
 authors = ["Dirk Loss <mail@dirk-loss.de>"]
 description = "A command-line log analysis tool with embedded Rhai scripting"
 license = "MIT AND Apache-2.0"
@@ -67,8 +69,6 @@ fastrand = "2.0"  # Fast random number generation for sampling
 
 # Interactive mode
 rustyline = "17.0"  # Readline implementation for interactive mode
-home = "=0.5.9"  # Pin to 0.5.9 for OpenBSD rustc 1.86.0 compatibility (v0.5.12+ requires rustc 1.88)
-                 # This is a transitive dependency via rustyline, explicitly pinned here
 glob = "0.3"  # File pattern expansion for interactive mode
 dirs = "6.0"  # Directory paths for storing interactive history
 

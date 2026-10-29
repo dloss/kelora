@@ -55,11 +55,11 @@ pub fn parse_byte_size(input: &str) -> Result<usize, String> {
 /// as a plain byte count. Used in diagnostics so the cap reads back the way it
 /// was configured (`64 MiB` rather than `67108864`).
 pub fn format_byte_size(bytes: u64) -> String {
-    if bytes >= GIB && bytes % GIB == 0 {
+    if bytes >= GIB && bytes.is_multiple_of(GIB) {
         format!("{} GiB", bytes / GIB)
-    } else if bytes >= MIB && bytes % MIB == 0 {
+    } else if bytes >= MIB && bytes.is_multiple_of(MIB) {
         format!("{} MiB", bytes / MIB)
-    } else if bytes >= KIB && bytes % KIB == 0 {
+    } else if bytes >= KIB && bytes.is_multiple_of(KIB) {
         format!("{} KiB", bytes / KIB)
     } else {
         format!("{bytes} bytes")

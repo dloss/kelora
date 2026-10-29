@@ -217,11 +217,9 @@ skip = [
     { crate = "rand_core@0.6", reason = "required by argon2's password-hash; argon2 0.6 still in pre-release" },
 
     # windows-sys/windows-targets have multiple versions due to different transitive deps:
-    # - 0.52.x: home (pinned for OpenBSD compatibility)
     # - 0.59.x: fd-lock (via rustyline)
     # - 0.60.x: rustyline, terminal_size
     # - 0.61.x: newer crates (anstream, dirs-sys, errno, etc.)
-    { crate = "windows-sys@0.52", reason = "required by home (pinned for OpenBSD compatibility)" },
     { crate = "windows-sys@0.59", reason = "required by fd-lock via rustyline" },
     { crate = "windows-sys@0.60", reason = "required by rustyline and terminal_size" },
 ]

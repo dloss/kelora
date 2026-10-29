@@ -293,7 +293,7 @@ impl CsvParser {
             }
             None => {
                 let name = format!("c{}", i + 1);
-                if !self.headers.iter().any(|h| *h == name) {
+                if !self.headers.contains(&name) {
                     event.set_field(name, Dynamic::from(field.to_string()));
                 }
             }

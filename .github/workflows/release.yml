@@ -86,7 +86,7 @@ jobs:
         id: msrv
         # Keep the product build on the pinned toolchain. Helper tools that move
         # faster than Kelora's MSRV are installed separately below.
-        uses: dtolnay/rust-toolchain@1.86.0
+        uses: dtolnay/rust-toolchain@1.94.1
         with:
           targets: ${{ matrix.target }}
 
@@ -367,7 +367,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # Restore Rust toolchain
-      - uses: dtolnay/rust-toolchain@1.86.0
+      - uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Publish to crates.io
         env:
