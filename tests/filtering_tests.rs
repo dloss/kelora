@@ -513,6 +513,37 @@ fn test_keys_nested_path_and_typo_are_reported_separately() {
 }
 
 #[test]
+fn test_keys_hint_does_not_claim_absence_beyond_n_or_head() {
+    // -n and --head stop reading early; a field on a later line is in the
+    // input, so the hint must not call it "never present in the input".
+    let input = "{\"msg\":\"start\"}\n{\"msg\":\"x\",\"status\":200}\n";
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "-k", "msg,status", "-n", "1"], input);
+    assert!(
+        stderr.contains("'status', which was not present in the events read before -n stopped")
+            && !stderr.contains("never present"),
+        "{stderr}"
+    );
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "-k", "msg,status", "--head", "1"], input);
+    assert!(
+        stderr.contains("'status', which was not present in the first 1 lines (--head)")
+            && !stderr.contains("never present"),
+        "{stderr}"
+    );
+
+    // -n that never reached its limit read everything: keep the strong wording.
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "-k", "msg,zzz", "-n", "5"], input);
+    assert!(
+        stderr.contains("'zzz', which was never present in the input"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn test_keys_flattened_makes_dotted_names_selectable() {
     // The suggested fix must actually work: flattened() yields dotted
     // top-level names that -k then accepts without any hint.

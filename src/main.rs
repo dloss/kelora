@@ -1518,6 +1518,22 @@ fn maybe_print_key_typo_hint(
         .cloned()
         .collect();
 
+    // -n and --head stop reading early, so a field on a later line is still
+    // in the input; claiming otherwise sends the user hunting for a typo.
+    // `lines_read` is only counted under -s, so --head is worded to hold
+    // whether or not the file was longer.
+    let absent_where = if config
+        .processing
+        .take_limit
+        .is_some_and(|n| stats.events_output >= n)
+    {
+        "not present in the events read before -n stopped".to_string()
+    } else if let Some(n) = config.input.head_lines {
+        format!("not present in the first {n} lines (--head)")
+    } else {
+        "never present in the input".to_string()
+    };
+
     let messages = [
         key_typo_message(
             "-k/--keys",
@@ -1525,6 +1541,7 @@ fn maybe_print_key_typo_hint(
             ("", ""),
             &config.output.keys,
             &known_keys,
+            &absent_where,
         ),
         key_typo_message(
             "--exclude-keys",
@@ -1532,6 +1549,7 @@ fn maybe_print_key_typo_hint(
             (", so it was not removed", ", so they were not removed"),
             &config.output.exclude_keys,
             &known_keys,
+            &absent_where,
         ),
     ];
 
@@ -1570,7 +1588,9 @@ fn span_field_typo_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -
 /// Build the typo hint for one key flag, or `None` when every requested key was
 /// seen at least once. `consequence` completes the sentence to explain the
 /// effect, as (singular, plural) forms (empty for `-k`, where empty output
-/// already speaks for itself).
+/// already speaks for itself). `absent_where` says where an absent key was
+/// looked for ("never present in the input", or narrower when -n/--head
+/// stopped the run early).
 ///
 /// Unseen keys are classified first (#371): a dotted path whose top-level
 /// parent *is* present (`http.status` with `http` seen) is a nested value -k
@@ -1583,6 +1603,7 @@ fn key_typo_message(
     consequence: (&str, &str),
     requested: &[String],
     discovered: &BTreeSet<String>,
+    absent_where: &str,
 ) -> Option<String> {
     if requested.is_empty() {
         return None;
@@ -1596,14 +1617,14 @@ fn key_typo_message(
     let absent_text = match absent.as_slice() {
         [] => None,
         [key] => Some(format!(
-            "{flag} names {label} '{key}', which was never present in the input{}. {}",
+            "{flag} names {label} '{key}', which was {absent_where}{}. {}",
             consequence.0,
             unseen_key_suggestion(key, discovered)
         )),
         keys => {
             let names: Vec<&str> = keys.iter().map(|k| k.as_str()).collect();
             Some(format!(
-                "{flag} names {label}s never present in the input{}: {}. {}",
+                "{flag} names {label}s {absent_where}{}: {}. {}",
                 consequence.1,
                 names.join(", "),
                 present_fields_hint(discovered)
