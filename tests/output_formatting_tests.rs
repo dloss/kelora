@@ -1023,3 +1023,35 @@ fn test_color_with_filtering() {
     // Should not contain ANSI codes
     assert!(!stdout.contains("\x1b["));
 }
+
+#[test]
+fn test_float_epoch_timestamp_shows_the_digits_written() {
+    // Caddy and Python write `ts` as float seconds. Through f64 arithmetic,
+    // 1761724794.9 was shown as .900000095 in -z, --normalize-ts and
+    // meta.parsed_ts.
+    let input = r#"{"ts":1761724794.9,"msg":"x"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--normalize-ts",
+            "-e",
+            "e.p = meta.parsed_ts.to_string()",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.contains("ts='2025-10-29T07:59:54.900+00:00'")
+            && stdout.contains("p='2025-10-29T07:59:54.900+00:00'")
+            && !stdout.contains("900000095"),
+        "{stdout}"
+    );
+
+    let (stdout, _stderr, _) = run_kelora_with_input(&["-f", "json", "-Z"], input);
+    assert!(
+        stdout.contains("ts='2025-10-29T07:59:54.900+00:00'"),
+        "{stdout}"
+    );
+}

@@ -569,50 +569,48 @@ fn looks_like_unix_timestamp(ts_str: &str) -> bool {
 
 /// Try to parse Unix timestamp (integer or float format)
 fn try_parse_unix_timestamp(ts_str: &str) -> Option<DateTime<Utc>> {
-    // Check if this is a float (contains decimal point)
+    // Decimal timestamps are read by magnitude
     if ts_str.contains('.') {
-        // Use magnitude-based float parsing for decimal timestamps
-        if let Ok(timestamp_float) = ts_str.parse::<f64>() {
-            return try_parse_unix_float(timestamp_float);
-        }
-    } else {
-        // Use string-length-based integer parsing for whole numbers
-        // This is more precise for integer timestamps (10, 13, 16, 19 digits)
-        if let Ok(timestamp_int) = ts_str.parse::<i64>() {
-            return try_parse_unix_int(ts_str.len(), timestamp_int);
-        }
+        return parse_unix_decimal(ts_str);
     }
-
-    None
+    // Use string-length-based integer parsing for whole numbers
+    // This is more precise for integer timestamps (10, 13, 16, 19 digits)
+    let timestamp_int = ts_str.parse::<i64>().ok()?;
+    try_parse_unix_int(ts_str.len(), timestamp_int)
 }
 
-/// Parse Unix timestamp from float value using magnitude-based precision detection
-fn try_parse_unix_float(timestamp_float: f64) -> Option<DateTime<Utc>> {
-    // Determine precision based on magnitude (same logic as formatters/default.rs)
-    let dt = if timestamp_float >= 1e15 {
-        // Microseconds (16+ digits before decimal)
-        DateTime::from_timestamp(
-            (timestamp_float / 1_000_000.0).floor() as i64,
-            ((timestamp_float % 1_000_000.0) * 1000.0) as u32,
-        )
-    } else if timestamp_float >= 1e12 {
-        // Milliseconds (13+ digits before decimal)
-        DateTime::from_timestamp(
-            (timestamp_float / 1000.0).floor() as i64,
-            ((timestamp_float % 1000.0) * 1_000_000.0) as u32,
-        )
-    } else if timestamp_float >= 1e9 {
-        // Seconds with optional fractional part (10+ digits before decimal)
-        DateTime::from_timestamp(
-            timestamp_float.floor() as i64,
-            (timestamp_float.fract() * 1_000_000_000.0) as u32,
-        )
+/// Parse a decimal Unix timestamp (`1761724794.9`) by magnitude: 10+ integer
+/// digits are seconds, 13+ milliseconds, 16+ microseconds.
+///
+/// The fraction is read from the digits, not through `f64`: `794.9` as a
+/// float is `794.900000095…`, which showed up as `.900000095` in `-z` and
+/// `meta.parsed_ts`. Digits finer than a nanosecond are dropped.
+pub(crate) fn parse_unix_decimal(ts_str: &str) -> Option<DateTime<Utc>> {
+    let (int_part, frac_part) = ts_str.split_once('.').unwrap_or((ts_str, ""));
+    if int_part.is_empty() || !frac_part.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let int_value: i128 = int_part.parse().ok()?;
+    // Nanoseconds per unit, and how many fraction digits reach a nanosecond.
+    let (unit_nanos, frac_digits) = if int_value >= 1_000_000_000_000_000 {
+        (1_000_i128, 3)
+    } else if int_value >= 1_000_000_000_000 {
+        (1_000_000, 6)
+    } else if int_value >= 1_000_000_000 {
+        (1_000_000_000, 9)
     } else {
         // Too small to be a valid Unix timestamp (before ~2001)
-        None
+        return None;
     };
-
-    dt.map(|dt| dt.with_timezone(&Utc))
+    let frac: String = frac_part
+        .chars()
+        .chain(std::iter::repeat('0'))
+        .take(frac_digits)
+        .collect();
+    let total_nanos = int_value.checked_mul(unit_nanos)? + frac.parse::<i128>().ok()?;
+    let secs = i64::try_from(total_nanos.div_euclid(1_000_000_000)).ok()?;
+    let nanos = total_nanos.rem_euclid(1_000_000_000) as u32;
+    DateTime::from_timestamp(secs, nanos)
 }
 
 /// Parse Unix timestamp from integer value using string length for precision detection
@@ -752,8 +750,14 @@ fn dynamic_to_timestamp_string(value: &rhai::Dynamic) -> Option<String> {
 
     // Try float (Unix timestamps with fractional seconds)
     if let Ok(float_val) = value.as_float() {
-        // Format with enough precision to preserve sub-second detail
-        return Some(format!("{:.9}", float_val));
+        // Display is the shortest text that round-trips: 1761724794.9 stays
+        // that, where {:.9} printed float noise (.900000095). Keep the dot so
+        // the value is read by magnitude, as a float, not by digit count.
+        let mut text = float_val.to_string();
+        if !text.contains('.') {
+            text.push_str(".0");
+        }
+        return Some(text);
     }
 
     // Fall back to string conversion
@@ -1282,6 +1286,31 @@ mod tests {
         // Test that very small values are rejected
         let result = parser.parse_ts("123456.789");
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_unix_decimal_fraction_is_exact() {
+        // Through f64, .9 became .900000095
+        let cases = [
+            ("1761724794.9", 1761724794, 900_000_000),
+            ("1761724800.5478408", 1761724800, 547_840_800),
+            ("1735566123.123456789123", 1735566123, 123_456_789),
+            ("1735566123456.789", 1735566123, 456_789_000),
+            ("1735566123456789.5", 1735566123, 456_789_500),
+            ("1735566123.", 1735566123, 0),
+        ];
+        for (input, secs, nanos) in cases {
+            let dt = parse_unix_decimal(input).unwrap_or_else(|| panic!("{input}"));
+            assert_eq!(
+                (dt.timestamp(), dt.timestamp_subsec_nanos()),
+                (secs, nanos),
+                "{input}"
+            );
+        }
+        assert!(parse_unix_decimal("999999999.9").is_none());
+        assert!(parse_unix_decimal("-1735566123.5").is_none());
+        assert!(parse_unix_decimal("NaN").is_none());
+        assert!(parse_unix_decimal(".5").is_none());
     }
 
     #[test]

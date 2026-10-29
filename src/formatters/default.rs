@@ -249,32 +249,9 @@ impl DefaultFormatter {
 
         // Try to parse float timestamps (Unix timestamps with fractional seconds)
         if let Ok(timestamp_float) = value.as_float() {
-            // Handle Unix timestamps in float format by parsing directly
-            use chrono::DateTime;
-
-            // Determine precision based on magnitude
-            let parsed_dt = if timestamp_float >= 1e15 {
-                // Microseconds (16+ digits)
-                DateTime::from_timestamp(
-                    (timestamp_float / 1_000_000.0).floor() as i64,
-                    ((timestamp_float % 1_000_000.0) * 1000.0) as u32,
-                )
-            } else if timestamp_float >= 1e12 {
-                // Milliseconds (13+ digits)
-                DateTime::from_timestamp(
-                    (timestamp_float / 1000.0).floor() as i64,
-                    ((timestamp_float % 1000.0) * 1_000_000.0) as u32,
-                )
-            } else if timestamp_float >= 1e9 {
-                // Seconds with fractional part (10+ digits)
-                DateTime::from_timestamp(
-                    timestamp_float.floor() as i64,
-                    (timestamp_float.fract() * 1_000_000_000.0) as u32,
-                )
-            } else {
-                // Too small to be a valid Unix timestamp
-                None
-            };
+            // f64 Display is the shortest text that round-trips, so a JSON
+            // `1761724794.9` is read as written, not as 794.900000095.
+            let parsed_dt = crate::timestamp::parse_unix_decimal(&timestamp_float.to_string());
 
             if let Some(dt) = parsed_dt {
                 let utc_dt = dt.with_timezone(&Utc);
