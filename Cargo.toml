@@ -58,7 +58,7 @@ signal-hook = { version = "0.3", features = ["iterator"] }  # Graceful shutdown 
 
 # Compression
 flate2 = "1.0"  # Gzip/deflate decompression for reading compressed log files
-zstd = "0.13"  # Zstandard decompression for reading .zst log files
+zstd = "0.14"  # Zstandard decompression for reading .zst log files
 
 # Data structures and utilities
 indexmap = "2.0"  # Order-preserving hash maps for JSON objects and logfmt key-value pairs

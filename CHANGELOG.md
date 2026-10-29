@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Security
 
 - **`parse_json()` no longer runs code from the data it parses** - It was Rhai's built-in, which evaluates its input as a script expression: a log line such as `{"a": exit(7)}` stopped the run and hid every later line, `{"a": print("…")}` printed, and with `--allow-fs-writes` `append_file()` wrote files. kelora now provides its own `parse_json()` that only parses JSON. Upgrade if you run `parse_json()` on logs that others can write to; `absorb_json()`, `extract_json()` and `-f json` were not affected.
+- **zstd library updated for security advisories** - Reading `.zst` files used `zstd` 0.13, which has known memory-safety bugs; one (RUSTSEC-2026-0403) can expose uninitialized memory when decompressing a corrupt legacy-format frame fails. Now `zstd` 0.14 (`zstd-safe` 8.2). Upgrade if you read `.zst` files from untrusted sources.
 
 ### Breaking
 
