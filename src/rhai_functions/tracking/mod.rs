@@ -65,6 +65,19 @@ fn datetime_category(value: &Dynamic) -> Option<String> {
         .map(|dt| dt.to_string())
 }
 
+/// Advice appended to a "must be a string, number, bool, or timestamp" error
+/// when the value is a container: `--freq request.headers.User-Agent` reaches a
+/// Caddy header, which is an array. Constant per type so repeats collapse.
+fn container_value_advice(value: &Dynamic) -> &'static str {
+    if value.is_array() {
+        ". Pick one element (e.tags[0]; --freq and --card accept tags[0] too) or loop over them: for v in e.tags { ... }"
+    } else if value.is_map() {
+        ". Name a key inside it (e.http.status; --freq and --card accept http.status too)"
+    } else {
+        ""
+    }
+}
+
 /// Convert a categorical argument (track_freq value, track_top/track_bottom
 /// item, track_unique bool value) to the string form used as a map key.
 /// Unit `()` means "missing field" and yields `None` so callers can skip the
@@ -96,10 +109,11 @@ fn categorical_to_string(
         return Ok(Some(value.to_string()));
     }
     Err(format!(
-        "{} {} must be a string, number, bool, or timestamp; got {}",
+        "{} {} must be a string, number, bool, or timestamp; got {}{}",
         fn_name,
         arg_name,
-        value.type_name()
+        value.type_name(),
+        container_value_advice(value)
     )
     .into())
 }
@@ -271,8 +285,9 @@ fn track_cardinality_dispatch(
         return insert(key, &ts, error_rate);
     }
     Err(format!(
-        "track_cardinality value must be a string, number, bool, or timestamp; got {}",
-        value.type_name()
+        "track_cardinality value must be a string, number, bool, or timestamp; got {}{}",
+        value.type_name(),
+        container_value_advice(value)
     )
     .into())
 }
@@ -586,8 +601,9 @@ pub fn register_functions(engine: &mut Engine) {
                 return track_unique_string_impl(key, &ts);
             }
             Err(format!(
-                "track_unique value must be a string, number, bool, or timestamp; got {}",
-                value.type_name()
+                "track_unique value must be a string, number, bool, or timestamp; got {}{}",
+                value.type_name(),
+                container_value_advice(&value)
             )
             .into())
         },
@@ -2582,6 +2598,17 @@ mod tests {
             "got: {}",
             err
         );
+        assert!(err.contains("e.http.status"), "got: {}", err);
+
+        // An array value names the element and loop forms
+        for f in ["track_freq", "track_unique", "track_cardinality"] {
+            let err = engine
+                .eval::<()>(&format!(r#"{f}("x", ["a", "b"])"#))
+                .unwrap_err()
+                .to_string();
+            assert!(err.contains("got array. Pick one element"), "{f}: {err}");
+            assert!(err.contains("tags[0]"), "{f}: {err}");
+        }
 
         clear_tracking_state();
     }

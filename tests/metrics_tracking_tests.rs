@@ -3107,3 +3107,33 @@ fn track_sum_by_per_span_window() {
         "{stdout}"
     );
 }
+
+#[test]
+fn test_freq_on_array_or_map_value_names_the_fix() {
+    // Caddy stores each header as an array: `--freq request.headers.User-Agent`
+    // failed on every event without saying how to reach the value.
+    let input = r#"{"request":{"headers":{"User-Agent":["curl/8.5.0"]}}}"#;
+
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &["-f", "json", "--freq", "request.headers.User-Agent"],
+        input,
+    );
+    assert!(
+        stderr.contains(
+            "got array. Pick one element (e.tags[0]; --freq and --card accept tags[0] too)"
+        ),
+        "{stderr}"
+    );
+
+    // The suggested form works.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--freq", "request.headers.User-Agent[0]"],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(stdout.contains("curl/8.5.0"), "{stdout}");
+
+    let (_stdout, stderr, _) =
+        run_kelora_with_input(&["-f", "json", "--freq", "request.headers"], input);
+    assert!(stderr.contains("got map. Name a key inside it"), "{stderr}");
+}
