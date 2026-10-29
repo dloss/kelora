@@ -59,7 +59,7 @@ timestamp=2024-01-15T10:30:00Z level=ERROR status=500 message="Connection failed
 ```
 
 - Every pair becomes a top-level field. Keys may contain any non-space characters except `=` (`a.b-c`, `k:x` are fine).
-- Unquoted values are typed: `500` → int, `1.5` and `1e3` → float, `true`/`True` → bool. `007` stays a string.
+- Values are typed, quoted or not: `500` and `"500"` → int, `1.5` and `1e3` → float, `true`/`True` → bool. `007` stays a string.
 - Quoted values may contain spaces and `\"`. `key=` gives an empty string.
 - A bare word without `=` is a parse error.
 

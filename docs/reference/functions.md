@@ -350,7 +350,7 @@ e.filename = cd["filename"];                     // "report.pdf"
 ### Encoding and Hashing
 
 #### `text.encode_b64()` / `text.decode_b64()`
-Base64. Decoding invalid input is a runtime error.
+Base64. Decoding invalid input, or bytes that are not valid UTF-8, is a runtime error.
 
 ```rhai
 e.encoded = e.data.encode_b64();                 // "hello world" → "aGVsbG8gd29ybGQ="
@@ -358,7 +358,7 @@ e.decoded = e.payload.decode_b64();
 ```
 
 #### `text.encode_hex()` / `text.decode_hex()`
-Hexadecimal.
+Hexadecimal. Decoding invalid input (an odd number of digits, a non-hex character), or bytes that are not valid UTF-8, is a runtime error.
 
 ```rhai
 e.hex = e.data.encode_hex();                     // "hello" → "68656c6c6f"
