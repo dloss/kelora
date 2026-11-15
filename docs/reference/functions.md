@@ -438,23 +438,26 @@ e.net16 = e.client_ip.mask_ip(2);                // "192.168.1.100" → "192.168
 e.v6 = e.ip6.mask_ip(2);                         // "2001:db8:1:2:3:4:5:6" → "2001:db8:1:2:3:4::"
 ```
 
-#### `text.pseudonym_ip()`
-Keyed, prefix-preserving pseudonym for an IPv4 or IPv6 address ([CryptoPAn](https://en.wikipedia.org/wiki/Crypto-PAn)): two addresses that share their first *k* bits get pseudonyms that share their first *k* bits, so subnets stay grouped while the addresses themselves are hidden. The result is an address of the same family. Text that is not a bare address (`"10.0.0.1:80"`, `"unknown"`) gives `()`, so the field is removed rather than leaked. The key comes from `KELORA_SECRET`, as for [`pseudonym()`](#pseudonymvalue-domain).
+#### `text.pseudonymize_ips([mode])` / `map.pseudonymize_ips([mode])`
+Replace every IPv4 and IPv6 address inside text with a keyed pseudonym; by default a tagged token `<ip:TOKEN>`, so the type stays visible. Ports and surrounding text stay; text without an address is returned unchanged. On a map, every string value and every key is rewritten, nested maps and arrays included. Anything shaped like an address is replaced, including a version string such as `1.2.3.4`. The key comes from `KELORA_SECRET`, as for [`pseudonym()`](#pseudonymvalue-domain). To do this for every event without a script, use `--pseudonymize ip` or `--pseudonymize ip-prefix`.
 
 ```rhai
-e.client_ip = e.client_ip.pseudonym_ip();        // "192.168.1.100" → e.g. "63.107.22.141"
+e.msg = e.msg.pseudonymize_ips();                // "from 10.0.0.1 port 22" → e.g. "from <ip:j7lEFbSZvlI4erFlvAwUxbzf> port 22"
+e.msg = e.msg.pseudonymize_ips("prefix");        // "from 10.0.0.1 port 22" → e.g. "from 245.102.45.240 port 22"
+let clean = e.pseudonymize_ips();                // every field
+let wanted = "10.0.0.1".pseudonymize_ips();      // the token to filter on
 ```
 
-Choose between the two by what the output must keep:
+The mode decides what the output keeps:
 
-| | `pseudonym_ip()` | `pseudonym(ip, "ips")` |
+| | `"token"` (default; `--pseudonymize ip`) | `"prefix"` (`--pseudonymize ip-prefix`) |
 |---|---|---|
-| Output | an address; subnets, `--freq` by /24, CIDR checks still work | 24-character token; only equality survives |
-| Leaks | which addresses share a prefix, and how long it is | nothing but equality |
-| Known addresses | an attacker who knows (or plants) some real addresses in the log learns the leading bits of their pseudonyms, and so narrows down their neighbours | no help to an attacker |
-| Looks like | a real, possibly routable address that belongs to someone else | obviously not an address |
+| Output | `<ip:TOKEN>`, TOKEN being `pseudonym(addr, "ip")`; only equality survives | another address of the same family ([CryptoPAn](https://en.wikipedia.org/wiki/Crypto-PAn)): addresses that share their first *k* bits still do, so grouping by subnet works |
+| Leaks | nothing but equality | which addresses share a prefix, and how long it is |
+| Known addresses | no help to an attacker | an attacker who knows (or plants) some real addresses in the log learns the leading bits of their pseudonyms, and so narrows down their neighbours |
+| Looks like | obviously not an address | a real, possibly routable address that belongs to someone else; `is_private_ip()` and known CIDRs no longer apply |
 
-Use `pseudonym()` when the data leaves your control; use `pseudonym_ip()` when the recipient needs the network layout and is trusted not to try reversing it. Neither is reversible without the key, and both change when `KELORA_SECRET` changes.
+Use `"token"` when the data leaves your control; use `"prefix"` when the recipient needs the network layout and is trusted not to try reversing it. Neither is reversible without the key, and both change when `KELORA_SECRET` changes.
 
 ### Pattern Normalization
 
@@ -1244,12 +1247,14 @@ e.branch = get_env("CI_BRANCH", "main");
 #### `pseudonym(value, domain)`
 Stable, keyed alias for a value, separated by `domain` (the same value in two domains gives unrelated aliases). Set `KELORA_SECRET` to get the same aliases across runs; without it kelora uses an ephemeral per-run key and prints a one-time notice (hidden by `--silent` or `--no-diagnostics`).
 
+Aliases hide values, not patterns: the same value always gets the same alias, so counts and timing still show who is who (the alias behind 90% of requests is probably the load balancer). Anyone with two outputs made with the same secret can link them, and anyone with the secret can recompute aliases for guessed values; use a separate, long random secret per recipient.
+
 ```rhai
 e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZCeH"
 e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-Related: `hash()` (one-way digest), `pseudonym_ip()`, `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
+Related: `hash()` (one-way digest), `pseudonymize_ips()`, `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
 
 #### `read_file(path)` / `read_lines(path)`
 File contents as one string, or as an array of lines. **Only allowed in `--begin`**; keep the result in `state` for later stages.

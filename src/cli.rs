@@ -754,6 +754,18 @@ pub struct Cli {
     #[arg(long = "normalize-ts", help_heading = "Processing Options")]
     pub normalize_ts: bool,
 
+    /// Replace IP addresses throughout each event right after parsing.
+    #[arg(
+        long = "pseudonymize",
+        value_name = "KIND",
+        value_delimiter = ',',
+        value_parser = ["ip", "ip-prefix"],
+        help_heading = "Processing Options",
+        help = "Replace IP addresses everywhere in each event: ip (a keyed token, <ip:…>) or ip-prefix (an address that keeps subnets).",
+        long_help = "Replace IP addresses everywhere in each event, right after parsing.\n\nKinds:\n  ip         a tagged token <ip:TOKEN>, TOKEN being pseudonym(addr, \"ip\"); only equality survives\n  ip-prefix  another address of the same family; addresses that share a prefix still share one (CryptoPAn, as pseudonymize_ips(\"prefix\"))\n\nCovers every IPv4/IPv6 address in field values, nested values and field names, and in the line text that meta.line and parse errors quote. Runs before --since/--until, --filter, --exec, --freq and --discover, so none of them sees a real address. Anything shaped like an address is replaced, including version strings such as 1.2.3.4.\n\nThe key comes from KELORA_SECRET; without it pseudonyms change on every run. Use a separate secret per recipient. Prefer ip for data that leaves your control: ip-prefix leaks which addresses share a subnet."
+    )]
+    pub pseudonymize: Vec<String>,
+
     /// Display timestamps as local RFC3339 (ISO 8601 compatible).
     /// Display-only - only affects default formatter output.
     #[arg(

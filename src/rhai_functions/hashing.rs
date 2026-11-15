@@ -2,6 +2,8 @@
 //!
 //! Includes fast hashes, cryptographic digests, and salted pseudonyms.
 
+use crate::event::FieldMap;
+use crate::rhai_functions::extractors::find_ip_spans;
 use aes::cipher::BlockEncrypt;
 use aes::Aes128;
 use argon2::password_hash::{Salt, SaltString};
@@ -10,8 +12,9 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
 use lru::LruCache;
-use rhai::{Dynamic, Engine};
+use rhai::{Array, Dynamic, Engine, ImmutableString, Map};
 use sha2::{Digest, Sha256};
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -276,13 +279,9 @@ thread_local! {
     ));
 }
 
-/// Prefix-preserving IP pseudonym (CryptoPAn). Returns `()` for text that is
-/// not a bare IP address, so unparsed input never passes through unchanged.
-fn pseudonym_ip_impl(ip: &str) -> Dynamic {
-    let Ok(addr) = ip.trim().parse::<IpAddr>() else {
-        return Dynamic::UNIT;
-    };
-    let anon = PSEUDONYM_IP_CACHE.with(|cache| {
+/// CryptoPAn pseudonym of one address, through the per-thread cache.
+fn cryptopan_cached(addr: IpAddr) -> IpAddr {
+    PSEUDONYM_IP_CACHE.with(|cache| {
         let mut cache = cache.borrow_mut();
         if let Some(anon) = cache.get(&addr) {
             return *anon;
@@ -290,8 +289,182 @@ fn pseudonym_ip_impl(ip: &str) -> Dynamic {
         let anon = CRYPTOPAN.anonymize_ip(addr);
         cache.put(addr, anon);
         anon
-    });
-    Dynamic::from(anon.to_string())
+    })
+}
+
+/// How `pseudonymize_ips()` and `--pseudonymize` replace an address.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IpPseudonymMode {
+    /// `<ip:TOKEN>` with TOKEN = `pseudonym(addr, "ip")`; only equality survives.
+    Token,
+    /// An address of the same family that keeps shared prefixes (CryptoPAn).
+    Prefix,
+}
+
+impl IpPseudonymMode {
+    fn from_rhai(mode: &str) -> Result<Self, Box<rhai::EvalAltResult>> {
+        match mode {
+            "token" => Ok(Self::Token),
+            "prefix" => Ok(Self::Prefix),
+            _ => Err(format!(
+                "pseudonymize_ips: unknown mode '{}'; use \"token\" or \"prefix\"",
+                mode
+            )
+            .into()),
+        }
+    }
+}
+
+thread_local! {
+    static IP_TOKEN_CACHE: RefCell<LruCache<IpAddr, String>> = RefCell::new(LruCache::new(
+        NonZeroUsize::new(PSEUDONYM_IP_CACHE_CAPACITY).expect("cache capacity must be non-zero")
+    ));
+}
+
+/// Tagged token for an address: `<ip:TOKEN>`, TOKEN being `pseudonym()` of
+/// the canonical address (so `::1` and `0::1` agree). The tag keeps the type
+/// visible, and a second pass finds no address in it.
+fn ip_token_cached(addr: IpAddr) -> String {
+    IP_TOKEN_CACHE.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        if let Some(token) = cache.get(&addr) {
+            return token.clone();
+        }
+        let token = ip_token(&addr.to_string());
+        cache.put(addr, token.clone());
+        token
+    })
+}
+
+fn ip_token(addr: &str) -> String {
+    let token = pseudonym_impl(addr, "ip").expect("a non-empty domain always yields a pseudonym");
+    format!("<ip:{}>", token)
+}
+
+/// Parse an address `find_ip_spans` matched. Its IPv4 pattern accepts leading
+/// zeros (`010.0.0.1`), which `Ipv4Addr` rejects; read those octets as decimal.
+fn parse_found_ip(text: &str) -> Option<IpAddr> {
+    text.parse().ok().or_else(|| {
+        let mut octets = [0u8; 4];
+        let mut parts = text.split('.');
+        for octet in &mut octets {
+            *octet = parts.next()?.parse().ok()?;
+        }
+        parts
+            .next()
+            .is_none()
+            .then_some(IpAddr::V4(Ipv4Addr::from(octets)))
+    })
+}
+
+/// Replace every IPv4/IPv6 address in `text`; borrowed when there is none.
+pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, str> {
+    // Every address has a `.` or a `:`; skip the regex scan for most values
+    if !text.bytes().any(|b| b == b'.' || b == b':') {
+        return Cow::Borrowed(text);
+    }
+    let spans = find_ip_spans(text);
+    if spans.is_empty() {
+        return Cow::Borrowed(text);
+    }
+    let mut out = String::with_capacity(text.len() + 16 * spans.len());
+    let mut last = 0;
+    for (start, end) in spans {
+        out.push_str(&text[last..start]);
+        let found = &text[start..end];
+        match (parse_found_ip(found), mode) {
+            (Some(addr), IpPseudonymMode::Token) => out.push_str(&ip_token_cached(addr)),
+            (Some(addr), IpPseudonymMode::Prefix) => {
+                out.push_str(&cryptopan_cached(addr).to_string())
+            }
+            // Unreachable for what the scanner matches; never let it through
+            (None, _) => out.push_str(&ip_token(found)),
+        }
+        last = end;
+    }
+    out.push_str(&text[last..]);
+    Cow::Owned(out)
+}
+
+/// Pseudonymize addresses in a string, or in every string and key inside a
+/// map or array (recursively). Other values are left alone.
+pub fn pseudonymize_ips_in_value(value: &mut Dynamic, mode: IpPseudonymMode) {
+    if value.is_string() {
+        let replaced = value.read_lock::<ImmutableString>().and_then(|s| {
+            match pseudonymize_ips_in_text(&s, mode) {
+                Cow::Owned(out) => Some(out),
+                Cow::Borrowed(_) => None,
+            }
+        });
+        if let Some(out) = replaced {
+            *value = Dynamic::from(out);
+        }
+    } else if value.is_map() {
+        if let Some(mut map) = value.write_lock::<Map>() {
+            pseudonymize_ips_in_map(&mut map, mode);
+        }
+    } else if value.is_array() {
+        if let Some(mut array) = value.write_lock::<Array>() {
+            for item in array.iter_mut() {
+                pseudonymize_ips_in_value(item, mode);
+            }
+        }
+    }
+}
+
+fn pseudonymize_ips_in_map(map: &mut Map, mode: IpPseudonymMode) {
+    for item in map.values_mut() {
+        pseudonymize_ips_in_value(item, mode);
+    }
+    // Keys can be addresses too (`{"10.0.0.1": 5}`)
+    let renamed: Vec<_> = map
+        .keys()
+        .filter_map(|key| match pseudonymize_ips_in_text(key, mode) {
+            Cow::Owned(new_key) => Some((key.clone(), new_key)),
+            Cow::Borrowed(_) => None,
+        })
+        .collect();
+    for (old_key, new_key) in renamed {
+        if let Some(item) = map.remove(&old_key) {
+            map.insert(new_key.into(), item);
+        }
+    }
+}
+
+/// Pseudonymize every field of an event: values, nested values and names.
+pub fn pseudonymize_ips_in_fields(fields: &mut FieldMap, mode: IpPseudonymMode) {
+    for item in fields.values_mut() {
+        pseudonymize_ips_in_value(item, mode);
+    }
+    let needs_rename = fields
+        .keys()
+        .any(|key| matches!(pseudonymize_ips_in_text(key, mode), Cow::Owned(_)));
+    if needs_rename {
+        // Rebuild to rename in place, keeping field order
+        *fields = std::mem::take(fields)
+            .into_iter()
+            .map(|(key, item)| (pseudonymize_ips_in_text(&key, mode).into_owned(), item))
+            .collect();
+    }
+}
+
+fn pseudonymize_ips_str(text: &str) -> String {
+    pseudonymize_ips_in_text(text, IpPseudonymMode::Token).into_owned()
+}
+
+fn pseudonymize_ips_str_mode(text: &str, mode: &str) -> Result<String, Box<rhai::EvalAltResult>> {
+    let mode = IpPseudonymMode::from_rhai(mode)?;
+    Ok(pseudonymize_ips_in_text(text, mode).into_owned())
+}
+
+fn pseudonymize_ips_map(mut map: Map) -> Map {
+    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::Token);
+    map
+}
+
+fn pseudonymize_ips_map_mode(mut map: Map, mode: &str) -> Result<Map, Box<rhai::EvalAltResult>> {
+    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::from_rhai(mode)?);
+    Ok(map)
 }
 
 /// Fast non-cryptographic hash for bucketing/sampling
@@ -335,8 +508,11 @@ pub fn register_functions(engine: &mut Engine) {
     // pseudonym() - domain-separated pseudonymization
     engine.register_fn("pseudonym", pseudonym_impl);
 
-    // pseudonym_ip() - prefix-preserving IP pseudonymization (CryptoPAn)
-    engine.register_fn("pseudonym_ip", pseudonym_ip_impl);
+    // pseudonymize_ips() - replace every address inside text or a map
+    engine.register_fn("pseudonymize_ips", pseudonymize_ips_str);
+    engine.register_fn("pseudonymize_ips", pseudonymize_ips_str_mode);
+    engine.register_fn("pseudonymize_ips", pseudonymize_ips_map);
+    engine.register_fn("pseudonymize_ips", pseudonymize_ips_map_mode);
 }
 
 #[cfg(test)]
@@ -386,6 +562,52 @@ mod tests {
             result,
             "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
         );
+    }
+
+    #[test]
+    fn test_pseudonymize_ips_in_text() {
+        let mode = IpPseudonymMode::Token;
+        assert!(matches!(
+            pseudonymize_ips_in_text("no address here", mode),
+            Cow::Borrowed(_)
+        ));
+        // Leading zeros and the canonical form give the same token
+        assert_eq!(
+            pseudonymize_ips_in_text("010.0.0.1", mode),
+            pseudonymize_ips_in_text("10.0.0.1", mode)
+        );
+        // A second pass leaves tokens alone
+        let once = pseudonymize_ips_in_text("from 10.0.0.1 and ::1", mode).into_owned();
+        assert!(matches!(
+            pseudonymize_ips_in_text(&once, mode),
+            Cow::Borrowed(_)
+        ));
+        // Each address is replaced once; ports and neighbours stay intact
+        let out = pseudonymize_ips_in_text("10.0.0.1:80 10.0.0.11 [::1]:443", mode);
+        let token = |ip: &str| format!("<ip:{}>", pseudonym_impl(ip, "ip").unwrap());
+        assert_eq!(
+            out,
+            format!(
+                "{}:80 {} [{}]:443",
+                token("10.0.0.1"),
+                token("10.0.0.11"),
+                token("::1")
+            )
+        );
+    }
+
+    #[test]
+    fn test_pseudonymize_ips_in_fields_renames_keys_in_order() {
+        let mut fields = FieldMap::default();
+        fields.insert("first".into(), Dynamic::from("x"));
+        fields.insert("10.0.0.1".into(), Dynamic::from(1_i64));
+        fields.insert("last".into(), Dynamic::from("y"));
+        pseudonymize_ips_in_fields(&mut fields, IpPseudonymMode::Prefix);
+        let keys: Vec<&String> = fields.keys().collect();
+        assert_eq!(keys[0], "first");
+        assert_eq!(keys[2], "last");
+        assert_ne!(keys[1], "10.0.0.1");
+        assert!(keys[1].parse::<Ipv4Addr>().is_ok());
     }
 
     #[test]
@@ -481,21 +703,18 @@ mod tests {
     }
 
     #[test]
-    fn test_pseudonym_ip() {
-        let a = pseudonym_ip_impl("10.1.2.3").into_string().unwrap();
-        let b = pseudonym_ip_impl("10.1.2.4").into_string().unwrap();
-        assert_eq!(a, pseudonym_ip_impl("10.1.2.3").into_string().unwrap());
+    fn test_pseudonymize_ips_prefix_mode() {
+        let prefix = |ip| pseudonymize_ips_in_text(ip, IpPseudonymMode::Prefix).into_owned();
+        let a = prefix("10.1.2.3");
+        let b = prefix("10.1.2.4");
+        assert_eq!(a, prefix("10.1.2.3"));
         assert!(a.parse::<Ipv4Addr>().is_ok());
         assert_ne!(a, b);
         // Same /24 in, same /24 out
         assert_eq!(a.rsplit_once('.').unwrap().0, b.rsplit_once('.').unwrap().0);
 
-        let v6 = pseudonym_ip_impl("2001:db8::1").into_string().unwrap();
-        assert!(v6.parse::<Ipv6Addr>().is_ok());
-
-        assert!(pseudonym_ip_impl("not-an-ip").is_unit());
-        assert!(pseudonym_ip_impl("10.1.2.3:80").is_unit());
-        assert!(pseudonym_ip_impl("").is_unit());
+        assert!(prefix("2001:db8::1").parse::<Ipv6Addr>().is_ok());
+        assert_eq!(prefix("not-an-ip"), "not-an-ip");
     }
 
     #[test]

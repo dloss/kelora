@@ -1400,7 +1400,7 @@ impl RhaiEngine {
             "pop",
             "print",
             "pseudonym",
-            "pseudonym_ip",
+            "pseudonymize_ips",
             "push",
             "rand",
             "rand_int",

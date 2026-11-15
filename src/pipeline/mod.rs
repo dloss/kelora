@@ -2,6 +2,7 @@
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use rhai::Dynamic;
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use crate::engine::RhaiEngine;
@@ -494,6 +495,9 @@ pub struct Pipeline {
     /// While true, chunks become wrapper-line events (`tap='…'`) instead of
     /// being parsed with the input format (`--unwrap tap`'s non-comment lines).
     raw_line_mode: bool,
+    /// `--pseudonymize`: rewrite addresses in each event right after parsing,
+    /// and in the line text that diagnostics quote.
+    pub pseudonymize_ips: Option<crate::rhai_functions::hashing::IpPseudonymMode>,
 }
 
 impl Pipeline {
@@ -879,6 +883,24 @@ impl Pipeline {
         Ok(outputs)
     }
 
+    /// The line and error a parse failure reports: with `--pseudonymize`,
+    /// their addresses are replaced like the event's would have been.
+    fn shown_parse_failure<'a>(
+        &self,
+        chunk: &'a str,
+        err: anyhow::Error,
+    ) -> (Cow<'a, str>, anyhow::Error) {
+        let Some(mode) = self.pseudonymize_ips else {
+            return (Cow::Borrowed(chunk), err);
+        };
+        use crate::rhai_functions::hashing::pseudonymize_ips_in_text;
+        let err = match pseudonymize_ips_in_text(&format!("{:#}", err), mode) {
+            Cow::Owned(message) => anyhow!(message),
+            Cow::Borrowed(_) => err,
+        };
+        (pseudonymize_ips_in_text(chunk, mode), err)
+    }
+
     fn process_chunk_inner(
         &mut self,
         chunk: String,
@@ -917,6 +939,7 @@ impl Pipeline {
                         &mut ctx.internal_tracker,
                     ),
                     Err(err) => {
+                        let (chunk, err) = self.shown_parse_failure(&chunk, err);
                         crate::stats::stats_add_line_error();
                         crate::stats::stats_record_parse_error_sample(&chunk);
                         ctx.internal_stats.lines_errors += 1;
@@ -962,6 +985,17 @@ impl Pipeline {
                     }
                 }
 
+                // Before anything observes the event: discovery, stats, stages
+                if let Some(mode) = self.pseudonymize_ips {
+                    use crate::rhai_functions::hashing::{
+                        pseudonymize_ips_in_fields, pseudonymize_ips_in_text,
+                    };
+                    pseudonymize_ips_in_fields(&mut e.fields, mode);
+                    if let Cow::Owned(line) = pseudonymize_ips_in_text(&e.original_line, mode) {
+                        e.original_line = line;
+                    }
+                }
+
                 // Event was successfully created from chunk
                 crate::stats::stats_add_event_created();
                 ctx.internal_stats.events_created += 1;
@@ -994,6 +1028,7 @@ impl Pipeline {
                 e
             }
             Err(err) => {
+                let (chunk, err) = self.shown_parse_failure(&chunk, err);
                 crate::stats::stats_add_line_error();
                 crate::stats::stats_record_parse_error_sample(&chunk);
                 ctx.internal_stats.lines_errors += 1;

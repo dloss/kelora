@@ -392,7 +392,7 @@ fn test_pseudonym_empty_secret_error() {
     assert!(!output.status.success());
 }
 
-fn run_pseudonym_ip(secret: &str, input: &[u8]) -> String {
+fn run_pseudonymize_ips_prefix(secret: &str, input: &[u8]) -> String {
     let output = Command::new(kelora_binary())
         .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
         .env("KELORA_SECRET", secret)
@@ -400,7 +400,7 @@ fn run_pseudonym_ip(secret: &str, input: &[u8]) -> String {
             "-f",
             "line",
             "--exec",
-            "e.p = e.line.pseudonym_ip()",
+            r#"e.p = e.line.pseudonymize_ips("prefix")"#,
             "-k",
             "p",
         ])
@@ -422,17 +422,136 @@ fn run_pseudonym_ip(secret: &str, input: &[u8]) -> String {
 }
 
 #[test]
-fn test_pseudonym_ip_keyed_by_secret() {
+fn test_pseudonymize_ips_prefix_keyed_by_secret() {
     let input = b"10.0.5.23\n10.0.5.24\n2001:db8::1\nnot-an-ip\n";
-    let first = run_pseudonym_ip("secret-a", input);
-    assert_eq!(first, run_pseudonym_ip("secret-a", input));
-    assert_ne!(first, run_pseudonym_ip("secret-b", input));
+    let first = run_pseudonymize_ips_prefix("secret-a", input);
+    assert_eq!(first, run_pseudonymize_ips_prefix("secret-a", input));
+    assert_ne!(first, run_pseudonymize_ips_prefix("secret-b", input));
 
     let lines: Vec<&str> = first.lines().collect();
-    // Two IPv4 pseudonyms sharing the /24, one IPv6; non-IP leaves `p` unset,
-    // so -k p prints nothing for it
-    assert_eq!(lines.len(), 3, "{first}");
+    // Two IPv4 pseudonyms sharing the /24, one IPv6; text without an
+    // address passes through
+    assert_eq!(lines.len(), 4, "{first}");
     let net = |l: &str| l.rsplit_once('.').unwrap().0.to_string();
     assert_eq!(net(lines[0]), net(lines[1]));
     assert!(lines[2].contains(':'));
+    assert_eq!(lines[3], "p='not-an-ip'");
+}
+
+fn run_kelora_with_secret(args: &[&str], input: &[u8]) -> std::process::Output {
+    Command::new(kelora_binary())
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env("KELORA_SECRET", "test-secret")
+        .args(args)
+        .arg("-")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(input).ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora")
+}
+
+fn stdout_of(output: &std::process::Output) -> String {
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8_lossy(&output.stdout).into_owned()
+}
+
+#[test]
+fn test_pseudonymize_ips_matches_single_address_functions() {
+    let script = r#"
+        e.token = e.line.pseudonymize_ips();
+        e.token_ok = e.token == "from <ip:" + pseudonym("10.0.0.1", "ip") + ">:80 and <ip:" + pseudonym("10.0.0.11", "ip") + ">";
+        e.prefix = e.line.pseudonymize_ips("prefix");
+        e.prefix_ok = e.prefix == "from " + "10.0.0.1".pseudonymize_ips("prefix") + ":80 and " + "10.0.0.11".pseudonymize_ips("prefix");
+        e.prefix_ok = e.prefix_ok && e.prefix.extract_ip() != "10.0.0.1";
+    "#;
+    let out = stdout_of(&run_kelora_with_secret(
+        &["-f", "line", "-e", script, "-k", "token_ok,prefix_ok"],
+        b"from 10.0.0.1:80 and 10.0.0.11\n",
+    ));
+    assert_eq!(out.trim(), "token_ok=true prefix_ok=true");
+}
+
+#[test]
+fn test_pseudonymize_flag_hides_addresses_everywhere() {
+    let input = b"{\"ip\":\"10.0.0.1\",\"msg\":\"from 2001:db8::1 port 22\",\"peers\":{\"192.168.1.5\":[\"192.168.1.6\"]}}\n";
+    for kind in ["ip", "ip-prefix"] {
+        let output = run_kelora_with_secret(
+            &[
+                "-f",
+                "json",
+                "--pseudonymize",
+                kind,
+                "-F",
+                "json",
+                "--script-output",
+                "-e",
+                "print(meta.line)",
+            ],
+            input,
+        );
+        let out = stdout_of(&output);
+        for ip in ["10.0.0.1", "2001:db8::1", "192.168.1.5", "192.168.1.6"] {
+            assert!(!out.contains(ip), "{kind}: {ip} leaked in {out}");
+        }
+        assert!(out.contains("port 22"), "{out}");
+    }
+}
+
+#[test]
+fn test_pseudonymize_flag_runs_before_filters() {
+    let input = b"{\"ip\":\"10.0.0.1\"}\n{\"ip\":\"10.0.0.2\"}\n";
+    let out = stdout_of(&run_kelora_with_secret(
+        &[
+            "-f",
+            "json",
+            "--pseudonymize",
+            "ip",
+            "--filter",
+            r#"e.ip == "10.0.0.1".pseudonymize_ips()"#,
+        ],
+        input,
+    ));
+    assert_eq!(out.lines().count(), 1, "{out}");
+}
+
+#[test]
+fn test_pseudonymize_flag_parallel_matches_sequential() {
+    let input = b"a 10.0.0.1\nb 10.0.0.2\nc 10.0.0.1\n";
+    let args = ["-f", "line", "--pseudonymize", "ip-prefix"];
+    let sequential = stdout_of(&run_kelora_with_secret(&args, input));
+    let parallel = stdout_of(&run_kelora_with_secret(
+        &[&args[..], &["--parallel"]].concat(),
+        input,
+    ));
+    assert_eq!(sequential, parallel);
+    assert!(!sequential.contains("10.0.0."), "{sequential}");
+}
+
+#[test]
+fn test_pseudonymize_flag_hides_addresses_in_parse_errors() {
+    let output = run_kelora_with_secret(
+        &["-f", "json", "--pseudonymize", "ip", "-v"],
+        b"not json from 10.0.0.1\n",
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("not json from"), "{stderr}");
+    assert!(!stderr.contains("10.0.0.1"), "{stderr}");
+}
+
+#[test]
+fn test_pseudonymize_flag_rejects_both_kinds() {
+    let output = run_kelora_with_secret(&["--pseudonymize", "ip,ip-prefix"], b"");
+    assert_eq!(output.status.code(), Some(2));
 }

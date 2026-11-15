@@ -57,7 +57,7 @@ text.lower()                         Convert text to lowercase
 text.lstrip([chars])                 Remove leading whitespace or specified characters
 text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4/IPv6)
 text.matches(pattern)                Regex search (cached; invalid pattern raises error)
-text.pseudonym_ip()                  Prefix-preserving IP pseudonym (CryptoPAn; keyed by KELORA_SECRET; () if not an IP)
+text.pseudonymize_ips([mode])        Replace every IP inside text with a keyed <ip:…> token, or with "prefix" an address that keeps subnets
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
@@ -150,6 +150,7 @@ map.has_path("field.path")           Check if nested field path exists
 map.keep(["field1", ...])            Return new map with only selected top-level fields
 map.merge(other_map)                 Merge another map into this one (overwrites existing keys)
 map.normalized([patterns])           Return new map with all string fields normalized
+map.pseudonymize_ips([mode])         Return new map with every IP in values and keys replaced (nested too)
 map.path_equals("path", value)       Safe nested field comparison
 map.rename_field("old", "new")       Rename a field, returns true if successful
 map.to_cef()                         Convert map to Common Event Format (CEF) string
@@ -832,7 +833,11 @@ kelora -j api_logs.jsonl --filter 'e.status >= 500' --exec '
 
 SECURITY & DATA PRIVACY:
 # To redact / anonymize / mask values, use pseudonym() (stable hashing), hash(),
-# mask_ip() (IP octets), pseudonym_ip() (IPs, subnets kept), or normalized() (replace patterns with placeholders).
+# mask_ip() (IP octets), pseudonymize_ips() (IPs inside any text), or normalized() (replace patterns with placeholders).
+# For IPs alone, --pseudonymize ip (or ip-prefix) needs no script.
+
+# Replace every IP address, inside messages too, with a keyed token
+KELORA_SECRET=team-key kelora sshd_auth.log --pseudonymize ip
 
 # Mask IP addresses (keep first 3 octets)
 kelora -f combined web_access.log --exec 'e.ip = e.ip.mask_ip(1)'

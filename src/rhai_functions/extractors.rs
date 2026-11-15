@@ -41,12 +41,20 @@ static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 
 /// Find IPv4 and IPv6 addresses in text order
 fn find_ips(text: &str) -> Vec<&str> {
+    find_ip_spans(text)
+        .into_iter()
+        .map(|(s, e)| &text[s..e])
+        .collect()
+}
+
+/// Byte spans of the IPv4 and IPv6 addresses in text, in text order
+pub(crate) fn find_ip_spans(text: &str) -> Vec<(usize, usize)> {
     let v4 = IPV4_REGEX.find_iter(text).map(|m| (m.start(), m.end()));
 
     // Cheap prefilter: an IPv6 address has a `::` or at least six colons
     let maybe_v6 = text.contains("::") || text.bytes().filter(|&b| b == b':').count() >= 6;
     if !maybe_v6 {
-        return v4.map(|(s, e)| &text[s..e]).collect();
+        return v4.collect();
     }
 
     let v6: Vec<(usize, usize)> = IPV6_CANDIDATE_REGEX
@@ -60,7 +68,7 @@ fn find_ips(text: &str) -> Vec<&str> {
         .chain(v6.iter().copied())
         .collect();
     spans.sort_unstable();
-    spans.into_iter().map(|(s, e)| &text[s..e]).collect()
+    spans
 }
 
 /// Validate an IPv6 candidate, returning the span of the address

@@ -42,18 +42,30 @@ KELORA_SECRET=change-me kelora examples/user-data.jsonl \
   -e 'e.user = pseudonym(e.email, "user"); e.email = (); e.ip = e.ip.mask_ip(1)' -k user,action,ip
 ```
 
+## Pseudonymize IP addresses
+
+`--pseudonymize ip` replaces every address in every field, inside messages
+too, with a keyed token. It runs right after parsing, so filters, `--freq` and
+`--discover` see only tokens; the same address keeps the same token while
+`KELORA_SECRET` stays the same:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
+  --pseudonymize ip -k msg -n 3
+```
+
 ## Pseudonymize IPs but keep subnets
 
-`pseudonym_ip()` replaces each address with another of the same family;
-addresses that share a prefix still share one afterwards (`10.0.5.23` and
-`10.0.5.24` stay in one /24):
+`--pseudonymize ip-prefix` replaces each address with another of the same
+family; addresses that share a prefix still share one afterwards (`10.0.5.23`
+and `10.0.5.24` stay in one /24):
 
 ```bash exec="on" source="above" result="ansi"
 KELORA_SECRET=change-me kelora examples/user-data.jsonl \
-  -e 'e.ip = e.ip.pseudonym_ip()' -k user_id,ip
+  --pseudonymize ip-prefix -k user_id,ip
 ```
 
-Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer `pseudonym()` ([trade-offs](../reference/functions.md#textpseudonym_ip)).
+Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer `--pseudonymize ip` ([trade-offs](../reference/functions.md#textpseudonymize_ipsmode-mappseudonymize_ipsmode)). For one field only, use `pseudonymize_ips()` in `--exec`.
 
 ## Drop sensitive fields
 

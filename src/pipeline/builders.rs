@@ -211,6 +211,8 @@ pub struct PipelineBuilder {
     /// discovered fields that a pre-parse drop would change. Other conditions
     /// (parser, stage order, context, span, window) are checked in `build`.
     output_allows_prefilter: bool,
+    /// `--pseudonymize`: rewrite addresses in each event right after parsing.
+    pseudonymize_ips: Option<crate::rhai_functions::hashing::IpPseudonymMode>,
 }
 
 /// Hand `-B`/`-A`/`-C` to the leading run of match filters, as one group.
@@ -721,6 +723,7 @@ impl PipelineBuilder {
             state_available: true,
             csv_type_map: None,
             output_allows_prefilter: true,
+            pseudonymize_ips: None,
         }
     }
 
@@ -1065,6 +1068,7 @@ impl PipelineBuilder {
             chunker_is_passthrough,
             injected_fields: None,
             raw_line_mode: false,
+            pseudonymize_ips: self.pseudonymize_ips,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1397,6 +1401,7 @@ impl PipelineBuilder {
             chunker_is_passthrough,
             injected_fields: None,
             raw_line_mode: false,
+            pseudonymize_ips: self.pseudonymize_ips,
         };
 
         Ok((pipeline, ctx))
@@ -1553,6 +1558,7 @@ pub fn create_pipeline_builder_from_config(
     builder.window_size = config.processing.window_size;
     builder.timestamp_filter = config.processing.timestamp_filter.clone();
     builder.normalize_timestamps = config.processing.normalize_timestamps;
+    builder.pseudonymize_ips = config.processing.pseudonymize_ips;
     builder.ts_field = config.input.ts_field.clone();
     builder.ts_format = config.input.ts_format.clone();
     builder.default_timezone = config.input.default_timezone.clone();
