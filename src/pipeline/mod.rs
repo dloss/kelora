@@ -497,7 +497,7 @@ pub struct Pipeline {
     raw_line_mode: bool,
     /// `--pseudonymize`: rewrite addresses in each event right after parsing,
     /// and in the line text that diagnostics quote.
-    pub pseudonymize_ips: Option<crate::rhai_functions::hashing::IpPseudonymMode>,
+    pub pseudonymize: Option<crate::rhai_functions::hashing::PseudonymizeKinds>,
 }
 
 impl Pipeline {
@@ -890,15 +890,15 @@ impl Pipeline {
         chunk: &'a str,
         err: anyhow::Error,
     ) -> (Cow<'a, str>, anyhow::Error) {
-        let Some(mode) = self.pseudonymize_ips else {
+        let Some(kinds) = self.pseudonymize else {
             return (Cow::Borrowed(chunk), err);
         };
-        use crate::rhai_functions::hashing::pseudonymize_ips_in_text;
-        let err = match pseudonymize_ips_in_text(&format!("{:#}", err), mode) {
+        use crate::rhai_functions::hashing::pseudonymize_in_text;
+        let err = match pseudonymize_in_text(&format!("{:#}", err), kinds) {
             Cow::Owned(message) => anyhow!(message),
             Cow::Borrowed(_) => err,
         };
-        (pseudonymize_ips_in_text(chunk, mode), err)
+        (pseudonymize_in_text(chunk, kinds), err)
     }
 
     fn process_chunk_inner(
@@ -986,13 +986,13 @@ impl Pipeline {
                 }
 
                 // Before anything observes the event: discovery, stats, stages
-                if let Some(mode) = self.pseudonymize_ips {
+                if let Some(kinds) = self.pseudonymize {
                     use crate::rhai_functions::hashing::{
-                        pseudonymize_ips_in_fields, pseudonymize_ips_in_text,
+                        pseudonymize_fields, pseudonymize_in_text,
                     };
-                    let replaced = pseudonymize_ips_in_fields(&mut e.fields, mode);
+                    let replaced = pseudonymize_fields(&mut e.fields, kinds);
                     crate::stats::stats_add_addresses_pseudonymized(replaced);
-                    if let Cow::Owned(line) = pseudonymize_ips_in_text(&e.original_line, mode) {
+                    if let Cow::Owned(line) = pseudonymize_in_text(&e.original_line, kinds) {
                         e.original_line = line;
                     }
                 }

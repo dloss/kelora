@@ -54,6 +54,12 @@ KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
   --pseudonymize ip -k msg -n 3
 ```
 
+Add `email` to replace email addresses the same way:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/user-data.jsonl --pseudonymize ip,email -n 2
+```
+
 ## Find the address behind a token
 
 Tokens can't be reversed, but whoever holds the secret and the original log can

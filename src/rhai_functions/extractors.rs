@@ -281,6 +281,14 @@ fn extract_urls_impl(text: &str) -> Array {
 // Email Extraction
 // ============================================================================
 
+/// Byte spans of the email addresses in text, in text order
+pub(crate) fn find_email_spans(text: &str) -> Vec<(usize, usize)> {
+    EMAIL_REGEX
+        .find_iter(text)
+        .map(|m| (m.start(), m.end()))
+        .collect()
+}
+
 /// Extract the first email address from text
 fn extract_email_first(text: &str) -> String {
     EMAIL_REGEX

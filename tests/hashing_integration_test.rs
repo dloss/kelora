@@ -665,3 +665,24 @@ fn test_pseudonymize_flag_counts_addresses_in_stats() {
         assert!(report.contains("Addresses pseudonymized: 3"), "{report}");
     }
 }
+
+#[test]
+fn test_pseudonymize_flag_emails() {
+    let input = b"{\"to\":\"Alice@Example.com\",\"msg\":\"cc alice@example.com from 10.0.0.1\"}\n";
+    let out = stdout_of(&run_kelora_with_secret(
+        &["-f", "json", "--pseudonymize", "email", "-F", "json"],
+        input,
+    ));
+    assert!(!out.to_lowercase().contains("alice@example.com"), "{out}");
+    // Case doesn't matter; IPs stay without the ip kind
+    assert_eq!(out.matches("<email:").count(), 2, "{out}");
+    let tokens: Vec<&str> = out.split("<email:").skip(1).map(|t| &t[..24]).collect();
+    assert_eq!(tokens[0], tokens[1]);
+    assert!(out.contains("10.0.0.1"), "{out}");
+
+    let both = stdout_of(&run_kelora_with_secret(
+        &["-f", "json", "--pseudonymize", "ip,email", "-F", "json"],
+        input,
+    ));
+    assert!(!both.contains("10.0.0.1"), "{both}");
+}

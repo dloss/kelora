@@ -346,7 +346,14 @@ fn normalized_str_impl(text: &str, patterns: &[String]) -> String {
                         result = regex
                             .replace_all(&result, |caps: &Captures| {
                                 let matched = &caps[0];
-                                if validate(matched) {
+                                let before = &result[..caps.get(0).map_or(0, |m| m.start())];
+                                // Digits after `11.` or `3333-` continue a longer
+                                // number: a fraction, or a UUID's last groups
+                                let continues_number = pattern_name == "credit_card"
+                                    && before.ends_with(['.', '-'])
+                                    && before[..before.len() - 1]
+                                        .ends_with(|c: char| c.is_ascii_digit());
+                                if !continues_number && validate(matched) {
                                     marker.to_string()
                                 } else {
                                     matched.to_string()
@@ -666,6 +673,13 @@ mod tests {
         let result =
             normalized_str_impl("Not a card: 4111111111111112", &["credit_card".to_string()]);
         assert_eq!(result, "Not a card: 4111111111111112");
+
+        // Luhn-valid digits that continue a longer number are not a card
+        let text = "took 11.4111111111111111 ms, id 11111111-2222-3333-4444-555555555555";
+        assert_eq!(
+            normalized_str_impl(text, &["credit_card".to_string()]),
+            text
+        );
     }
 
     #[test]

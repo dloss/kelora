@@ -57,6 +57,7 @@ text.lower()                         Convert text to lowercase
 text.lstrip([chars])                 Remove leading whitespace or specified characters
 text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4/IPv6)
 text.matches(pattern)                Regex search (cached; invalid pattern raises error)
+text.pseudonymize_emails()           Replace every email inside text with a keyed <email:…> token
 text.pseudonymize_ips([mode])        Replace every IP inside text with a keyed <ip:…> token, or with "prefix" an address that keeps subnets
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
@@ -150,6 +151,7 @@ map.has_path("field.path")           Check if nested field path exists
 map.keep(["field1", ...])            Return new map with only selected top-level fields
 map.merge(other_map)                 Merge another map into this one (overwrites existing keys)
 map.normalized([patterns])           Return new map with all string fields normalized
+map.pseudonymize_emails()            Return new map with every email in values and keys replaced (nested too)
 map.pseudonymize_ips([mode])         Return new map with every IP in values and keys replaced (nested too)
 map.path_equals("path", value)       Safe nested field comparison
 map.rename_field("old", "new")       Rename a field, returns true if successful

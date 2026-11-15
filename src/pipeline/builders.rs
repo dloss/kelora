@@ -212,7 +212,7 @@ pub struct PipelineBuilder {
     /// (parser, stage order, context, span, window) are checked in `build`.
     output_allows_prefilter: bool,
     /// `--pseudonymize`: rewrite addresses in each event right after parsing.
-    pseudonymize_ips: Option<crate::rhai_functions::hashing::IpPseudonymMode>,
+    pseudonymize: Option<crate::rhai_functions::hashing::PseudonymizeKinds>,
 }
 
 /// Hand `-B`/`-A`/`-C` to the leading run of match filters, as one group.
@@ -723,7 +723,7 @@ impl PipelineBuilder {
             state_available: true,
             csv_type_map: None,
             output_allows_prefilter: true,
-            pseudonymize_ips: None,
+            pseudonymize: None,
         }
     }
 
@@ -773,7 +773,7 @@ impl PipelineBuilder {
         // Tell the diagnostics layer the parser will only ever see lines carrying a
         // requested level token, so `discovered_levels` is a subset (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
-        crate::stats::set_pseudonymize_active(self.pseudonymize_ips.is_some());
+        crate::stats::set_pseudonymize_active(self.pseudonymize.is_some());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1069,7 +1069,7 @@ impl PipelineBuilder {
             chunker_is_passthrough,
             injected_fields: None,
             raw_line_mode: false,
-            pseudonymize_ips: self.pseudonymize_ips,
+            pseudonymize: self.pseudonymize,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1165,7 +1165,7 @@ impl PipelineBuilder {
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
         // Same subset caveat as the sequential path (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
-        crate::stats::set_pseudonymize_active(self.pseudonymize_ips.is_some());
+        crate::stats::set_pseudonymize_active(self.pseudonymize.is_some());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1403,7 +1403,7 @@ impl PipelineBuilder {
             chunker_is_passthrough,
             injected_fields: None,
             raw_line_mode: false,
-            pseudonymize_ips: self.pseudonymize_ips,
+            pseudonymize: self.pseudonymize,
         };
 
         Ok((pipeline, ctx))
@@ -1560,7 +1560,7 @@ pub fn create_pipeline_builder_from_config(
     builder.window_size = config.processing.window_size;
     builder.timestamp_filter = config.processing.timestamp_filter.clone();
     builder.normalize_timestamps = config.processing.normalize_timestamps;
-    builder.pseudonymize_ips = config.processing.pseudonymize_ips;
+    builder.pseudonymize = config.processing.pseudonymize;
     builder.ts_field = config.input.ts_field.clone();
     builder.ts_format = config.input.ts_format.clone();
     builder.default_timezone = config.input.default_timezone.clone();

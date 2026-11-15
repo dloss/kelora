@@ -229,8 +229,8 @@ pub struct ProcessingConfig {
     pub context: ContextConfig,
     /// Allow Rhai scripts to create directories and write files on disk
     pub allow_fs_writes: bool,
-    /// `--pseudonymize ip|ip-prefix`: rewrite addresses right after parsing
-    pub pseudonymize_ips: Option<crate::rhai_functions::hashing::IpPseudonymMode>,
+    /// `--pseudonymize ip|ip-prefix,email`: rewrite addresses right after parsing
+    pub pseudonymize: Option<crate::rhai_functions::hashing::PseudonymizeKinds>,
 }
 
 /// How --drain-diff decides which side of the comparison an event belongs to.
@@ -1652,7 +1652,7 @@ impl KeloraConfig {
                 quiet_level,
                 context: create_context_config(cli)?,
                 allow_fs_writes: cli.allow_fs_writes,
-                pseudonymize_ips: parse_pseudonymize(cli)?,
+                pseudonymize: parse_pseudonymize(cli)?,
             },
             performance: PerformanceConfig {
                 parallel: cli.parallel,
@@ -1781,7 +1781,7 @@ impl Default for KeloraConfig {
                 quiet_level: 0,
                 context: ContextConfig::disabled(),
                 allow_fs_writes: false,
-                pseudonymize_ips: None,
+                pseudonymize: None,
             },
             performance: PerformanceConfig {
                 parallel: false,
@@ -2185,23 +2185,30 @@ fn determine_input_year(cli: &crate::Cli) -> anyhow::Result<Option<i32>> {
 
 fn parse_pseudonymize(
     cli: &crate::Cli,
-) -> anyhow::Result<Option<crate::rhai_functions::hashing::IpPseudonymMode>> {
-    use crate::rhai_functions::hashing::IpPseudonymMode;
-    let mut mode = None;
+) -> anyhow::Result<Option<crate::rhai_functions::hashing::PseudonymizeKinds>> {
+    use crate::rhai_functions::hashing::{IpPseudonymMode, PseudonymizeKinds};
+    if cli.pseudonymize.is_empty() {
+        return Ok(None);
+    }
+    let mut kinds = PseudonymizeKinds::default();
     for kind in &cli.pseudonymize {
-        let this = match kind.as_str() {
+        let ip = match kind.as_str() {
             "ip" => IpPseudonymMode::Token,
             "ip-prefix" => IpPseudonymMode::Prefix,
+            "email" => {
+                kinds.email = true;
+                continue;
+            }
             other => return Err(anyhow::anyhow!("--pseudonymize: unknown kind '{}'", other)),
         };
-        if mode.is_some_and(|m| m != this) {
+        if kinds.ip.is_some_and(|m| m != ip) {
             return Err(anyhow::anyhow!(
                 "--pseudonymize: choose one of ip and ip-prefix, not both"
             ));
         }
-        mode = Some(this);
+        kinds.ip = Some(ip);
     }
-    Ok(mode)
+    Ok(Some(kinds))
 }
 
 fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
