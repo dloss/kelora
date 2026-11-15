@@ -1,6 +1,6 @@
 [package]
 name = "kelora"
-version = "2.2.1"
+version = "2.3.0"
 edition = "2021"
 rust-version = "1.94"  # Floor: packaged rustc on the oldest BSD in the release matrix (OpenBSD 7.9)
 resolver = "3"  # MSRV-aware: `cargo update` only picks versions that build on rust-version

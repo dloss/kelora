@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-15
+
 ### Security
 
 - **`parse_json()` no longer runs code from the data it parses** - It was Rhai's built-in, which evaluates its input as a script expression: a log line such as `{"a": exit(7)}` stopped the run and hid every later line, `{"a": print("…")}` printed, and with `--allow-fs-writes` `append_file()` wrote files. kelora now provides its own `parse_json()` that only parses JSON. Upgrade if you run `parse_json()` on logs that others can write to; `absorb_json()`, `extract_json()` and `-f json` were not affected.
@@ -1159,7 +1161,8 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/dloss/kelora/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/dloss/kelora/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/dloss/kelora/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/dloss/kelora/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/dloss/kelora/compare/v2.1.0...v2.1.1
