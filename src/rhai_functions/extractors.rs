@@ -29,6 +29,9 @@ static URL_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
 static URL_DOMAIN_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(URL_DOMAIN_PATTERN).expect("failed to compile URL domain regex"));
+// Terminal control sequences such as colour codes (`\x1b[1;32m`)
+static ANSI_CSI_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\x1b\[[0-?]*[ -/]*[@-~]").expect("failed to compile ANSI regex"));
 static EMAIL_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(EMAIL_PATTERN).expect("failed to compile email regex"));
 static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -60,6 +63,17 @@ fn find_ips(text: &str) -> Vec<&str> {
 
 /// Byte spans of the IPv4 and IPv6 addresses in text, in text order
 pub(crate) fn find_ip_spans(text: &str, boundary: IpBoundary) -> Vec<(usize, usize)> {
+    // A colour code ends in a letter (`\x1b[32m10.0.0.1`) that would glue onto
+    // the address; blank such codes out, keeping every byte offset
+    if text.contains('\x1b') {
+        let blanked =
+            ANSI_CSI_REGEX.replace_all(text, |caps: &regex::Captures| " ".repeat(caps[0].len()));
+        return find_ip_spans_unstyled(&blanked, boundary);
+    }
+    find_ip_spans_unstyled(text, boundary)
+}
+
+fn find_ip_spans_unstyled(text: &str, boundary: IpBoundary) -> Vec<(usize, usize)> {
     let v4 = match boundary {
         IpBoundary::Word => IPV4_REGEX
             .find_iter(text)
@@ -738,6 +752,16 @@ mod tests {
         assert!(ips(r"Illuminate\Pipeline\Pipeline::carry() Foo::bad std::io").is_empty());
         assert!(ips("Bind-address: '::' port: 33060").is_empty());
         assert_eq!(ips("10.0.0.1:8080 and ::1"), ["10.0.0.1", "::1"]);
+    }
+
+    #[test]
+    fn test_extract_ip_after_colour_codes() {
+        assert_eq!(
+            ips("\x1b[1m\x1b[32m10.0.0.1\x1b[0m to \x1b[31m2001:db8::1\x1b[0m"),
+            ["10.0.0.1", "2001:db8::1"]
+        );
+        // A non-colour letter still blocks it
+        assert!(ips("v10.0.0.1").is_empty());
     }
 
     #[test]
