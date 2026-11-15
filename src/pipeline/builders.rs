@@ -773,6 +773,7 @@ impl PipelineBuilder {
         // Tell the diagnostics layer the parser will only ever see lines carrying a
         // requested level token, so `discovered_levels` is a subset (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
+        crate::stats::set_pseudonymize_active(self.pseudonymize_ips.is_some());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1164,6 +1165,7 @@ impl PipelineBuilder {
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
         // Same subset caveat as the sequential path (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
+        crate::stats::set_pseudonymize_active(self.pseudonymize_ips.is_some());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);

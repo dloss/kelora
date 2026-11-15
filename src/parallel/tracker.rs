@@ -257,6 +257,7 @@ impl GlobalTracker {
         // needs them to tell "everything pre-filtered" from "empty input" (#369).
         stats.lines_prefiltered = crate::stats::level_prefiltered_line_count();
         stats.level_prefilter_active = crate::stats::level_prefilter_active();
+        stats.addresses_pseudonymized = crate::stats::pseudonymized_address_count();
         // File-open failures happen on reader/decompression threads and land in a
         // process-wide atomic, not in per-worker stats — so read them here (same
         // pattern as decode warnings) to keep the structural-failure exit code

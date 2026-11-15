@@ -990,7 +990,8 @@ impl Pipeline {
                     use crate::rhai_functions::hashing::{
                         pseudonymize_ips_in_fields, pseudonymize_ips_in_text,
                     };
-                    pseudonymize_ips_in_fields(&mut e.fields, mode);
+                    let replaced = pseudonymize_ips_in_fields(&mut e.fields, mode);
+                    crate::stats::stats_add_addresses_pseudonymized(replaced);
                     if let Cow::Owned(line) = pseudonymize_ips_in_text(&e.original_line, mode) {
                         e.original_line = line;
                     }

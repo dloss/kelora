@@ -1245,9 +1245,9 @@ e.branch = get_env("CI_BRANCH", "main");
 ```
 
 #### `pseudonym(value, domain)`
-Stable, keyed alias for a value, separated by `domain` (the same value in two domains gives unrelated aliases). Set `KELORA_SECRET` to get the same aliases across runs; without it kelora uses an ephemeral per-run key and prints a one-time notice (hidden by `--silent` or `--no-diagnostics`).
+Stable, keyed alias for a value, separated by `domain` (the same value in two domains gives unrelated aliases). Set `KELORA_SECRET` to get the same aliases across runs, or `KELORA_SECRET_FILE` to the path of a file holding the secret, which keeps it out of the environment and shell history (a trailing newline is ignored). Without either, kelora uses an ephemeral per-run key and prints a one-time warning (hidden by `--no-warnings`).
 
-Aliases hide values, not patterns: the same value always gets the same alias, so counts and timing still show who is who (the alias behind 90% of requests is probably the load balancer). Anyone with two outputs made with the same secret can link them, and anyone with the secret can recompute aliases for guessed values; use a separate, long random secret per recipient.
+Aliases hide values, not patterns: the same value always gets the same alias, so counts and timing still show who is who (the alias behind 90% of requests is probably the load balancer). Anyone with two outputs made with the same secret can link them, and anyone with the secret can recompute aliases for guessed values; use a separate, long random secret per recipient, e.g. from `openssl rand -base64 24`.
 
 ```rhai
 e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZCeH"

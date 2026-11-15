@@ -78,38 +78,65 @@ fn warn_pseudonym_ephemeral() {
 }
 
 /// Master key for pseudonymization (derived once at startup)
-static MASTER_KEY: LazyLock<MasterKeyState> = LazyLock::new(|| {
-    match std::env::var("KELORA_SECRET") {
-        Ok(secret) if !secret.is_empty() => {
-            match derive_master_key_from_secret(&secret) {
-                Ok(key) => {
-                    log_pseudonym_init("pseudonym: ON (stable; KELORA_SECRET)");
-                    MasterKeyState::Stable(key)
-                }
-                Err(e) => {
-                    // Always show fatal errors
-                    eprintln!("kelora: pseudonym init failed: {}", e);
-                    std::process::exit(1);
-                }
-            }
+static MASTER_KEY: LazyLock<MasterKeyState> = LazyLock::new(|| match read_secret() {
+    Some(secret) => match derive_master_key_from_secret(&secret) {
+        Ok(key) => {
+            log_pseudonym_init("pseudonym: ON (stable; KELORA_SECRET)");
+            MasterKeyState::Stable(key)
         }
-        Ok(_) => {
+        Err(e) => {
             // Always show fatal errors
-            eprintln!("kelora: KELORA_SECRET must not be empty");
+            eprintln!("kelora: pseudonym init failed: {}", e);
             std::process::exit(1);
         }
-        Err(_) => {
-            // Generate ephemeral key
-            let mut key = [0u8; 32];
-            for byte in &mut key {
-                *byte = fastrand::u8(..);
-            }
-            warn_pseudonym_ephemeral();
-            log_pseudonym_init("pseudonym: ON (ephemeral; not stable)");
-            MasterKeyState::Ephemeral(key)
+    },
+    None => {
+        // Generate ephemeral key
+        let mut key = [0u8; 32];
+        for byte in &mut key {
+            *byte = fastrand::u8(..);
         }
+        warn_pseudonym_ephemeral();
+        log_pseudonym_init("pseudonym: ON (ephemeral; not stable)");
+        MasterKeyState::Ephemeral(key)
     }
 });
+
+/// The secret from `KELORA_SECRET`, or from the file `KELORA_SECRET_FILE`
+/// names (which keeps it out of the environment and shell history). A
+/// trailing newline in the file is not part of it. Exits on an empty or
+/// unreadable secret, or when both are set.
+fn read_secret() -> Option<String> {
+    let fail = |message: String| -> ! {
+        // Always show fatal errors
+        eprintln!("kelora: {}", message);
+        std::process::exit(1);
+    };
+    let secret = match (
+        std::env::var("KELORA_SECRET").ok(),
+        std::env::var_os("KELORA_SECRET_FILE"),
+    ) {
+        (None, None) => return None,
+        (Some(_), Some(_)) => fail("set KELORA_SECRET or KELORA_SECRET_FILE, not both".into()),
+        (Some(secret), None) => secret,
+        (None, Some(path)) => match std::fs::read_to_string(&path) {
+            Ok(text) if text.trim_end_matches(['\r', '\n']).is_empty() => fail(format!(
+                "KELORA_SECRET_FILE {} is empty",
+                path.to_string_lossy()
+            )),
+            Ok(text) => text.trim_end_matches(['\r', '\n']).to_string(),
+            Err(e) => fail(format!(
+                "cannot read KELORA_SECRET_FILE {}: {}",
+                path.to_string_lossy(),
+                e
+            )),
+        },
+    };
+    if secret.is_empty() {
+        fail("KELORA_SECRET must not be empty".into());
+    }
+    Some(secret)
+}
 
 /// Domain-specific derived keys (cached)
 static DOMAIN_KEYS: LazyLock<Mutex<HashMap<String, [u8; 32]>>> =
@@ -359,6 +386,11 @@ fn parse_found_ip(text: &str) -> Option<IpAddr> {
 
 /// Replace every IPv4/IPv6 address in `text`; borrowed when there is none.
 pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, str> {
+    replace_ips(text, mode, &mut 0)
+}
+
+/// As `pseudonymize_ips_in_text`, adding the number of addresses replaced to `count`.
+fn replace_ips<'a>(text: &'a str, mode: IpPseudonymMode, count: &mut usize) -> Cow<'a, str> {
     // Every address has a `.` or a `:`; skip the regex scan for most values
     if !text.bytes().any(|b| b == b'.' || b == b':') {
         return Cow::Borrowed(text);
@@ -367,6 +399,7 @@ pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, st
     if spans.is_empty() {
         return Cow::Borrowed(text);
     }
+    *count += spans.len();
     let mut out = String::with_capacity(text.len() + 16 * spans.len());
     let mut last = 0;
     for (start, end) in spans {
@@ -389,38 +422,39 @@ pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, st
 
 /// Pseudonymize addresses in a string, or in every string and key inside a
 /// map or array (recursively). Other values are left alone.
-pub fn pseudonymize_ips_in_value(value: &mut Dynamic, mode: IpPseudonymMode) {
+fn pseudonymize_ips_in_value(value: &mut Dynamic, mode: IpPseudonymMode, count: &mut usize) {
     if value.is_string() {
-        let replaced = value.read_lock::<ImmutableString>().and_then(|s| {
-            match pseudonymize_ips_in_text(&s, mode) {
-                Cow::Owned(out) => Some(out),
-                Cow::Borrowed(_) => None,
-            }
-        });
+        let replaced =
+            value
+                .read_lock::<ImmutableString>()
+                .and_then(|s| match replace_ips(&s, mode, count) {
+                    Cow::Owned(out) => Some(out),
+                    Cow::Borrowed(_) => None,
+                });
         if let Some(out) = replaced {
             *value = Dynamic::from(out);
         }
     } else if value.is_map() {
         if let Some(mut map) = value.write_lock::<Map>() {
-            pseudonymize_ips_in_map(&mut map, mode);
+            pseudonymize_ips_in_map(&mut map, mode, count);
         }
     } else if value.is_array() {
         if let Some(mut array) = value.write_lock::<Array>() {
             for item in array.iter_mut() {
-                pseudonymize_ips_in_value(item, mode);
+                pseudonymize_ips_in_value(item, mode, count);
             }
         }
     }
 }
 
-fn pseudonymize_ips_in_map(map: &mut Map, mode: IpPseudonymMode) {
+fn pseudonymize_ips_in_map(map: &mut Map, mode: IpPseudonymMode, count: &mut usize) {
     for item in map.values_mut() {
-        pseudonymize_ips_in_value(item, mode);
+        pseudonymize_ips_in_value(item, mode, count);
     }
     // Keys can be addresses too (`{"10.0.0.1": 5}`)
     let renamed: Vec<_> = map
         .keys()
-        .filter_map(|key| match pseudonymize_ips_in_text(key, mode) {
+        .filter_map(|key| match replace_ips(key, mode, count) {
             Cow::Owned(new_key) => Some((key.clone(), new_key)),
             Cow::Borrowed(_) => None,
         })
@@ -433,9 +467,11 @@ fn pseudonymize_ips_in_map(map: &mut Map, mode: IpPseudonymMode) {
 }
 
 /// Pseudonymize every field of an event: values, nested values and names.
-pub fn pseudonymize_ips_in_fields(fields: &mut FieldMap, mode: IpPseudonymMode) {
+/// Returns the number of addresses replaced.
+pub fn pseudonymize_ips_in_fields(fields: &mut FieldMap, mode: IpPseudonymMode) -> usize {
+    let mut count = 0;
     for item in fields.values_mut() {
-        pseudonymize_ips_in_value(item, mode);
+        pseudonymize_ips_in_value(item, mode, &mut count);
     }
     let needs_rename = fields
         .keys()
@@ -444,9 +480,10 @@ pub fn pseudonymize_ips_in_fields(fields: &mut FieldMap, mode: IpPseudonymMode) 
         // Rebuild to rename in place, keeping field order
         *fields = std::mem::take(fields)
             .into_iter()
-            .map(|(key, item)| (pseudonymize_ips_in_text(&key, mode).into_owned(), item))
+            .map(|(key, item)| (replace_ips(&key, mode, &mut count).into_owned(), item))
             .collect();
     }
+    count
 }
 
 fn pseudonymize_ips_str(text: &str) -> String {
@@ -459,12 +496,12 @@ fn pseudonymize_ips_str_mode(text: &str, mode: &str) -> Result<String, Box<rhai:
 }
 
 fn pseudonymize_ips_map(mut map: Map) -> Map {
-    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::Token);
+    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::Token, &mut 0);
     map
 }
 
 fn pseudonymize_ips_map_mode(mut map: Map, mode: &str) -> Result<Map, Box<rhai::EvalAltResult>> {
-    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::from_rhai(mode)?);
+    pseudonymize_ips_in_map(&mut map, IpPseudonymMode::from_rhai(mode)?, &mut 0);
     Ok(map)
 }
 

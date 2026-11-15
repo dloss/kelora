@@ -589,3 +589,79 @@ fn test_pseudonymize_flag_hides_glued_addresses() {
         assert!(!out.contains(ip), "{ip} leaked in {out}");
     }
 }
+
+fn run_kelora_env(env: &[(&str, &str)], args: &[&str], input: &[u8]) -> std::process::Output {
+    let mut command = Command::new(kelora_binary());
+    command
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env_remove("KELORA_SECRET")
+        .env_remove("KELORA_SECRET_FILE");
+    for (key, value) in env {
+        command.env(key, value);
+    }
+    command
+        .args(args)
+        .arg("-")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(input).ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora")
+}
+
+#[test]
+fn test_secret_file_matches_secret_env() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("secret");
+    std::fs::write(&path, "file-secret\n").unwrap();
+    let path = path.to_str().unwrap();
+    let args = ["-f", "line", "--pseudonymize", "ip"];
+
+    let from_env = run_kelora_env(&[("KELORA_SECRET", "file-secret")], &args, b"10.0.0.1\n");
+    let from_file = run_kelora_env(&[("KELORA_SECRET_FILE", path)], &args, b"10.0.0.1\n");
+    assert_eq!(stdout_of(&from_env), stdout_of(&from_file));
+    assert!(!String::from_utf8_lossy(&from_file.stderr).contains("ephemeral"));
+
+    let both = run_kelora_env(
+        &[("KELORA_SECRET", "x"), ("KELORA_SECRET_FILE", path)],
+        &args,
+        b"10.0.0.1\n",
+    );
+    assert_eq!(both.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&both.stderr).contains("not both"));
+
+    let empty = dir.path().join("empty");
+    std::fs::write(&empty, "\n").unwrap();
+    let output = run_kelora_env(
+        &[("KELORA_SECRET_FILE", empty.to_str().unwrap())],
+        &args,
+        b"10.0.0.1\n",
+    );
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("is empty"));
+}
+
+#[test]
+fn test_pseudonymize_flag_counts_addresses_in_stats() {
+    for extra in [&[][..], &["--parallel"][..]] {
+        let args = [
+            &["-f", "line", "--pseudonymize", "ip", "--stats", "-q"][..],
+            extra,
+        ]
+        .concat();
+        let output = run_kelora_with_secret(&args, b"10.0.0.1 and ::1\nnone\n10.0.0.1\n");
+        let report = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(report.contains("Addresses pseudonymized: 3"), "{report}");
+    }
+}

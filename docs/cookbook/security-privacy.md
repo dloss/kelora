@@ -54,6 +54,16 @@ KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
   --pseudonymize ip -k msg -n 3
 ```
 
+## Find the address behind a token
+
+Tokens can't be reversed, but whoever holds the secret and the original log can
+look one up, say after a recipient reports `<ip:wuukJmb_X0e9Dmt1FaY0h3SU>`:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
+  --filter 'e.msg.pseudonymize_ips().contains("<ip:wuukJmb_X0e9Dmt1FaY0h3SU>")' -k msg -n 1
+```
+
 ## Pseudonymize IPs but keep subnets
 
 `--pseudonymize ip-prefix` replaces each address with another of the same

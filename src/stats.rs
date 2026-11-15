@@ -153,6 +153,8 @@ pub struct ProcessingStats {
     /// `discovered_levels` holds a *subset* of the levels actually in the input
     /// and must not be reported as the complete vocabulary (#369).
     pub level_prefilter_active: bool,
+    /// Addresses `--pseudonymize` replaced in event fields; `None` without the flag.
+    pub addresses_pseudonymized: Option<usize>,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -190,6 +192,11 @@ static LINE_BYTE_CAP: AtomicUsize = AtomicUsize::new(0);
 // atomics and are merged like the truncation counters above.
 static LINES_PREFILTERED: AtomicUsize = AtomicUsize::new(0);
 static LEVEL_PREFILTER_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+// `--pseudonymize` rewrites events on whichever thread parses them, like the
+// pre-filter, so its counter is process-wide too.
+static ADDRESSES_PSEUDONYMIZED: AtomicUsize = AtomicUsize::new(0);
+static PSEUDONYMIZE_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 // Cascade `_format` tags skipped because the parsed record already had that
 // field. Atomic for the same reason as the pre-filter counter (parsing runs on
@@ -346,6 +353,25 @@ pub fn level_prefiltered_line_count() -> usize {
 /// Not gated on stats collection: it describes the pipeline, not an event.
 pub fn set_level_prefilter_active(active: bool) {
     LEVEL_PREFILTER_ACTIVE.store(active, Ordering::Relaxed);
+}
+
+/// Record that `--pseudonymize` is on, so `--stats` reports its count even at 0.
+pub fn set_pseudonymize_active(active: bool) {
+    PSEUDONYMIZE_ACTIVE.store(active, Ordering::Relaxed);
+}
+
+pub fn stats_add_addresses_pseudonymized(count: usize) {
+    if count == 0 || !stats_enabled() {
+        return;
+    }
+    ADDRESSES_PSEUDONYMIZED.fetch_add(count, Ordering::Relaxed);
+}
+
+/// Addresses `--pseudonymize` replaced (process-wide); `None` without the flag.
+pub fn pseudonymized_address_count() -> Option<usize> {
+    PSEUDONYMIZE_ACTIVE
+        .load(Ordering::Relaxed)
+        .then(|| ADDRESSES_PSEUDONYMIZED.load(Ordering::Relaxed))
 }
 
 /// Whether the level pre-filter was armed for this run (process-wide).
@@ -662,6 +688,7 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.line_byte_cap = LINE_BYTE_CAP.load(Ordering::Relaxed);
         s.lines_prefiltered = LINES_PREFILTERED.load(Ordering::Relaxed);
         s.level_prefilter_active = LEVEL_PREFILTER_ACTIVE.load(Ordering::Relaxed);
+        s.addresses_pseudonymized = pseudonymized_address_count();
         s.cascade_format_collisions = CASCADE_FORMAT_COLLISIONS.load(Ordering::Relaxed);
         s
     })
@@ -1428,6 +1455,10 @@ impl ProcessingStats {
                 output.push_str(&format!("Keys seen: {}\n", keys_input.join(",")));
                 output.push_str(&format!("Keys output: {}\n", keys_output.join(",")));
             }
+        }
+
+        if let Some(count) = self.addresses_pseudonymized {
+            output.push_str(&format!("Addresses pseudonymized: {}\n", count));
         }
 
         output.trim_end().to_string()
