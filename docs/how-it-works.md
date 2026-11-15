@@ -53,6 +53,10 @@ So:
   counts wherever you put it: before a `--filter`, it sees every event.
 - `--since` can't use a timestamp you computed in `--exec`: the range has
   already been applied. Use a `--filter` after the `--exec` instead.
+- Spans count only the events that pass your stages, but events are assigned
+  to a span before the stages run, so `--span FIELD` groups by the field as
+  parsed. To group by a field your `--exec` creates, use a second pass
+  ([Group into Spans](guide/spans.md#choose-how-events-are-grouped)).
 
 ## Stages and their scope
 

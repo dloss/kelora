@@ -34,6 +34,19 @@ them.
 (`a, b, a`) produce several spans for `a`. Sort the input first, or use
 `--freq FIELD` if you only need totals.
 
+Events are assigned to spans as parsed, before `--filter` and `--exec` run
+(so that scripts can read `meta.span_id`). `--span FIELD` therefore can't
+group by a field that a script creates; every event lands in one `(unset)`
+span. Create the field in a first pass and group in a second. Time per CI
+stage:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/ci_pipeline.log -F json \
+  -e 'if e.msg.starts_with("==> stage: ") { state.stage = e.msg.after("stage: ") }
+      e.stage = state.stage' |
+  kelora -j --input-tz UTC --span stage -q --span-close 'print(`${span.label}  ${span.last_ts - span.first_ts}`)'
+```
+
 ## One row per span: `--span-summary`
 
 `--span-summary` prints one row per span with its label, the event count,

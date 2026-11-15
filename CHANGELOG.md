@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **`--span FIELD` hint for a field that `--exec` creates** - Spans are assigned before your stages run, so `--span step` with `-e 'e.step = …'` put every event in one `(unset)` span, and the hint said `step` "was not present on any event", although `-k step` showed it. The hint now says `--span` reads fields as parsed and names the two-pass fix (`… -F json | kelora -j --span step`); the spans guide shows it.
+
 ## [2.3.0] - 2026-11-15
 
 ### Security

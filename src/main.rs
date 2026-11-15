@@ -1631,7 +1631,10 @@ fn maybe_print_key_typo_hint(
 /// the never-seen case — the typo signal — is flagged.
 ///
 /// Span assignment runs before the script stages, so only input fields count
-/// as "present": a field an `--exec` creates is too late to group by.
+/// as "present": a field an `--exec` creates is too late to group by. When the
+/// field does reach the output, it was created by a script, and calling it
+/// absent (with a typo suggestion) would contradict what `-k` shows — say
+/// why it wasn't seen and how to group by it instead.
 fn span_field_typo_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
     let crate::config::SpanMode::Field { field_name } = &config.processing.span.as_ref()?.mode
     else {
@@ -1639,6 +1642,13 @@ fn span_field_typo_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -
     };
     if stats.events_created == 0 || stats.discovered_keys.contains(field_name) {
         return None;
+    }
+    if stats.discovered_keys_output.contains(field_name) {
+        return Some(format!(
+            "--span reads field '{field_name}' as parsed, before --exec runs, so the field your \
+             script creates was not seen and every event landed in one '(unset)' span. Group by \
+             it in a second pass: … -F json | kelora -j --span {field_name} …"
+        ));
     }
     Some(format!(
         "--span field '{field_name}' was not present on any event, so every event landed in one \

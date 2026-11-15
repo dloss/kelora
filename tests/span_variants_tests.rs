@@ -1049,6 +1049,34 @@ fn hint_names_a_span_field_that_no_event_carries() {
 }
 
 #[test]
+fn span_field_hint_says_an_exec_created_field_is_too_late() {
+    // Span assignment runs before the script stages. A field the --exec
+    // creates is on every output event, so "not present on any event" plus a
+    // typo suggestion contradicts what -k shows; name the stage order instead.
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "e.step = e.level",
+            "--span",
+            "step",
+            "--span-summary=text",
+        ],
+        SUMMARY_INPUT,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(stdout.trim_end(), "(unset)  events=5");
+    assert!(
+        stderr.contains("--span reads field 'step' as parsed, before --exec runs"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("kelora -j --span step"), "{stderr}");
+    assert!(!stderr.contains("not present on any event"), "{stderr}");
+}
+
+#[test]
 fn no_span_field_hint_when_the_field_is_on_some_events_or_hints_are_off() {
     let input = "{\"a\":1}\n{\"svc\":\"x\",\"a\":2}";
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
