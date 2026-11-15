@@ -773,7 +773,14 @@ impl PipelineBuilder {
         // Tell the diagnostics layer the parser will only ever see lines carrying a
         // requested level token, so `discovered_levels` is a subset (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
-        crate::stats::set_pseudonymize_active(self.pseudonymize.is_some());
+        crate::stats::set_pseudonymize_active(
+            self.pseudonymize.is_some_and(|kinds| kinds.ip.is_some()),
+            self.pseudonymize.is_some_and(|kinds| kinds.email),
+        );
+        if self.pseudonymize.is_some() {
+            // Read the secret before any output, not at the first address
+            hashing::init_master_key();
+        }
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1165,7 +1172,14 @@ impl PipelineBuilder {
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
         // Same subset caveat as the sequential path (#369).
         crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
-        crate::stats::set_pseudonymize_active(self.pseudonymize.is_some());
+        crate::stats::set_pseudonymize_active(
+            self.pseudonymize.is_some_and(|kinds| kinds.ip.is_some()),
+            self.pseudonymize.is_some_and(|kinds| kinds.email),
+        );
+        if self.pseudonymize.is_some() {
+            // Read the secret before any output, not at the first address
+            hashing::init_master_key();
+        }
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);

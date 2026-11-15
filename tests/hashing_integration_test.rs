@@ -634,18 +634,20 @@ fn test_secret_file_matches_secret_env() {
         &args,
         b"10.0.0.1\n",
     );
-    assert_eq!(both.status.code(), Some(1));
+    assert_eq!(both.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&both.stderr).contains("not both"));
 
+    // Checked at startup, so input without an address fails too
     let empty = dir.path().join("empty");
     std::fs::write(&empty, "\n").unwrap();
     let output = run_kelora_env(
         &[("KELORA_SECRET_FILE", empty.to_str().unwrap())],
         &args,
-        b"10.0.0.1\n",
+        b"no address here\n",
     );
-    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("is empty"));
+    assert!(output.stdout.is_empty());
 }
 
 #[test]
@@ -662,8 +664,35 @@ fn test_pseudonymize_flag_counts_addresses_in_stats() {
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
         );
-        assert!(report.contains("Addresses pseudonymized: 3"), "{report}");
+        assert!(
+            report.contains("Addresses pseudonymized: 3 IP\n"),
+            "{report}"
+        );
     }
+
+    // One count per kind asked for, so a kind that found nothing shows as 0
+    let input = b"bob@example.com from 10.0.0.1 and 10.0.0.2\n";
+    let report = |kinds: &str| {
+        let output = run_kelora_with_secret(
+            &["-f", "line", "--pseudonymize", kinds, "--stats", "-q"],
+            input,
+        );
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        )
+    };
+    let both = report("ip,email");
+    assert!(
+        both.contains("Addresses pseudonymized: 2 IP, 1 email"),
+        "{both}"
+    );
+    let email = report("email");
+    assert!(
+        email.contains("Addresses pseudonymized: 1 email"),
+        "{email}"
+    );
 }
 
 #[test]

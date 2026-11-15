@@ -104,13 +104,14 @@ static MASTER_KEY: LazyLock<MasterKeyState> = LazyLock::new(|| match read_secret
 
 /// The secret from `KELORA_SECRET`, or from the file `KELORA_SECRET_FILE`
 /// names (which keeps it out of the environment and shell history). A
-/// trailing newline in the file is not part of it. Exits on an empty or
-/// unreadable secret, or when both are set.
+/// trailing newline in the file is not part of it. Exits 2 (a usage error,
+/// like a missing --config-file) on an empty or unreadable secret, or when
+/// both are set.
 fn read_secret() -> Option<String> {
     let fail = |message: String| -> ! {
         // Always show fatal errors
         eprintln!("kelora: {}", message);
-        std::process::exit(1);
+        std::process::exit(2);
     };
     let secret = match (
         std::env::var("KELORA_SECRET").ok(),
@@ -136,6 +137,12 @@ fn read_secret() -> Option<String> {
         fail("KELORA_SECRET must not be empty".into());
     }
     Some(secret)
+}
+
+/// Read the secret and derive the master key now instead of at first use,
+/// so a bad secret stops the run before it prints anything
+pub fn init_master_key() {
+    let _ = MASTER_KEY.as_bytes();
 }
 
 /// Domain-specific derived keys (cached)
@@ -406,14 +413,25 @@ impl PseudonymizeKinds {
     }
 }
 
-/// Replace every address of the given kinds in `text`; borrowed when there is none.
-pub fn pseudonymize_in_text(text: &str, kinds: PseudonymizeKinds) -> Cow<'_, str> {
-    replace_kinds(text, kinds, &mut 0)
+/// Addresses replaced, per kind
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct PseudonymizeCounts {
+    pub ip: usize,
+    pub email: usize,
 }
 
-/// As `pseudonymize_in_text`, adding the number of addresses replaced to `count`.
+/// Replace every address of the given kinds in `text`; borrowed when there is none.
+pub fn pseudonymize_in_text(text: &str, kinds: PseudonymizeKinds) -> Cow<'_, str> {
+    replace_kinds(text, kinds, &mut PseudonymizeCounts::default())
+}
+
+/// As `pseudonymize_in_text`, adding the addresses replaced to `count`.
 /// Emails go first: their tokens hold no `.` or `:` for the IP scan to find.
-fn replace_kinds<'a>(text: &'a str, kinds: PseudonymizeKinds, count: &mut usize) -> Cow<'a, str> {
+fn replace_kinds<'a>(
+    text: &'a str,
+    kinds: PseudonymizeKinds,
+    count: &mut PseudonymizeCounts,
+) -> Cow<'a, str> {
     let text = if kinds.email {
         replace_emails(text, count)
     } else {
@@ -428,7 +446,7 @@ fn replace_kinds<'a>(text: &'a str, kinds: PseudonymizeKinds, count: &mut usize)
 
 /// Replace each email with `<email:TOKEN>`, TOKEN being `pseudonym()` of the
 /// lowercased address, so `Alice@Example.com` and `alice@example.com` agree.
-fn replace_emails<'a>(text: &'a str, count: &mut usize) -> Cow<'a, str> {
+fn replace_emails<'a>(text: &'a str, count: &mut PseudonymizeCounts) -> Cow<'a, str> {
     if !text.contains('@') {
         return Cow::Borrowed(text);
     }
@@ -436,7 +454,7 @@ fn replace_emails<'a>(text: &'a str, count: &mut usize) -> Cow<'a, str> {
     if spans.is_empty() {
         return Cow::Borrowed(text);
     }
-    *count += spans.len();
+    count.email += spans.len();
     let mut out = String::with_capacity(text.len() + 16 * spans.len());
     let mut last = 0;
     for (start, end) in spans {
@@ -453,11 +471,15 @@ fn replace_emails<'a>(text: &'a str, count: &mut usize) -> Cow<'a, str> {
 
 /// Replace every IPv4/IPv6 address in `text`; borrowed when there is none.
 pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, str> {
-    replace_ips(text, mode, &mut 0)
+    replace_ips(text, mode, &mut PseudonymizeCounts::default())
 }
 
-/// As `pseudonymize_ips_in_text`, adding the number of addresses replaced to `count`.
-fn replace_ips<'a>(text: &'a str, mode: IpPseudonymMode, count: &mut usize) -> Cow<'a, str> {
+/// As `pseudonymize_ips_in_text`, adding the addresses replaced to `count`.
+fn replace_ips<'a>(
+    text: &'a str,
+    mode: IpPseudonymMode,
+    count: &mut PseudonymizeCounts,
+) -> Cow<'a, str> {
     // Every address has a `.` or a `:`; skip the regex scan for most values
     if !text.bytes().any(|b| b == b'.' || b == b':') {
         return Cow::Borrowed(text);
@@ -466,7 +488,7 @@ fn replace_ips<'a>(text: &'a str, mode: IpPseudonymMode, count: &mut usize) -> C
     if spans.is_empty() {
         return Cow::Borrowed(text);
     }
-    *count += spans.len();
+    count.ip += spans.len();
     let mut out = String::with_capacity(text.len() + 16 * spans.len());
     let mut last = 0;
     for (start, end) in spans {
@@ -489,7 +511,11 @@ fn replace_ips<'a>(text: &'a str, mode: IpPseudonymMode, count: &mut usize) -> C
 
 /// Pseudonymize addresses in a string, or in every string and key inside a
 /// map or array (recursively). Other values are left alone.
-fn pseudonymize_value(value: &mut Dynamic, kinds: PseudonymizeKinds, count: &mut usize) {
+fn pseudonymize_value(
+    value: &mut Dynamic,
+    kinds: PseudonymizeKinds,
+    count: &mut PseudonymizeCounts,
+) {
     if value.is_string() {
         let replaced = value.read_lock::<ImmutableString>().and_then(|s| {
             match replace_kinds(&s, kinds, count) {
@@ -513,7 +539,7 @@ fn pseudonymize_value(value: &mut Dynamic, kinds: PseudonymizeKinds, count: &mut
     }
 }
 
-fn pseudonymize_map(map: &mut Map, kinds: PseudonymizeKinds, count: &mut usize) {
+fn pseudonymize_map(map: &mut Map, kinds: PseudonymizeKinds, count: &mut PseudonymizeCounts) {
     for item in map.values_mut() {
         pseudonymize_value(item, kinds, count);
     }
@@ -533,9 +559,9 @@ fn pseudonymize_map(map: &mut Map, kinds: PseudonymizeKinds, count: &mut usize) 
 }
 
 /// Pseudonymize every field of an event: values, nested values and names.
-/// Returns the number of addresses replaced.
-pub fn pseudonymize_fields(fields: &mut FieldMap, kinds: PseudonymizeKinds) -> usize {
-    let mut count = 0;
+/// Returns the addresses replaced, per kind.
+pub fn pseudonymize_fields(fields: &mut FieldMap, kinds: PseudonymizeKinds) -> PseudonymizeCounts {
+    let mut count = PseudonymizeCounts::default();
     for item in fields.values_mut() {
         pseudonymize_value(item, kinds, &mut count);
     }
@@ -562,22 +588,30 @@ fn pseudonymize_ips_str_mode(text: &str, mode: &str) -> Result<String, Box<rhai:
 }
 
 fn pseudonymize_ips_map(mut map: Map) -> Map {
-    pseudonymize_map(&mut map, PseudonymizeKinds::IPS_TOKEN, &mut 0);
+    pseudonymize_map(
+        &mut map,
+        PseudonymizeKinds::IPS_TOKEN,
+        &mut PseudonymizeCounts::default(),
+    );
     map
 }
 
 fn pseudonymize_ips_map_mode(mut map: Map, mode: &str) -> Result<Map, Box<rhai::EvalAltResult>> {
     let kinds = PseudonymizeKinds::ips(IpPseudonymMode::from_rhai(mode)?);
-    pseudonymize_map(&mut map, kinds, &mut 0);
+    pseudonymize_map(&mut map, kinds, &mut PseudonymizeCounts::default());
     Ok(map)
 }
 
 fn pseudonymize_emails_str(text: &str) -> String {
-    replace_emails(text, &mut 0).into_owned()
+    replace_emails(text, &mut PseudonymizeCounts::default()).into_owned()
 }
 
 fn pseudonymize_emails_map(mut map: Map) -> Map {
-    pseudonymize_map(&mut map, PseudonymizeKinds::EMAILS, &mut 0);
+    pseudonymize_map(
+        &mut map,
+        PseudonymizeKinds::EMAILS,
+        &mut PseudonymizeCounts::default(),
+    );
     map
 }
 
@@ -725,16 +759,16 @@ mod tests {
             ip: Some(IpPseudonymMode::Token),
             email: true,
         };
-        let mut count = 0;
+        let mut count = PseudonymizeCounts::default();
         let out = replace_kinds("Alice@Example.com from 10.0.0.1", kinds, &mut count);
-        assert_eq!(count, 2);
+        assert_eq!(count, PseudonymizeCounts { ip: 1, email: 1 });
         let token = pseudonym_impl("alice@example.com", "email").unwrap();
         assert!(
             out.starts_with(&format!("<email:{}> from <ip:", token)),
             "{out}"
         );
         assert!(matches!(
-            replace_emails("no mail here", &mut 0),
+            replace_emails("no mail here", &mut PseudonymizeCounts::default()),
             Cow::Borrowed(_)
         ));
     }

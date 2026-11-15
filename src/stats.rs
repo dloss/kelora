@@ -154,7 +154,15 @@ pub struct ProcessingStats {
     /// and must not be reported as the complete vocabulary (#369).
     pub level_prefilter_active: bool,
     /// Addresses `--pseudonymize` replaced in event fields; `None` without the flag.
-    pub addresses_pseudonymized: Option<usize>,
+    pub addresses_pseudonymized: Option<PseudonymizedCounts>,
+}
+
+/// Addresses `--pseudonymize` replaced, for each kind it was asked to replace
+/// (`None` for a kind that is off).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct PseudonymizedCounts {
+    pub ip: Option<usize>,
+    pub email: Option<usize>,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -195,8 +203,10 @@ static LEVEL_PREFILTER_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 // `--pseudonymize` rewrites events on whichever thread parses them, like the
 // pre-filter, so its counter is process-wide too.
-static ADDRESSES_PSEUDONYMIZED: AtomicUsize = AtomicUsize::new(0);
-static PSEUDONYMIZE_ACTIVE: AtomicBool = AtomicBool::new(false);
+static IPS_PSEUDONYMIZED: AtomicUsize = AtomicUsize::new(0);
+static EMAILS_PSEUDONYMIZED: AtomicUsize = AtomicUsize::new(0);
+static PSEUDONYMIZE_IP_ACTIVE: AtomicBool = AtomicBool::new(false);
+static PSEUDONYMIZE_EMAIL_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 // Cascade `_format` tags skipped because the parsed record already had that
 // field. Atomic for the same reason as the pre-filter counter (parsing runs on
@@ -355,23 +365,36 @@ pub fn set_level_prefilter_active(active: bool) {
     LEVEL_PREFILTER_ACTIVE.store(active, Ordering::Relaxed);
 }
 
-/// Record that `--pseudonymize` is on, so `--stats` reports its count even at 0.
-pub fn set_pseudonymize_active(active: bool) {
-    PSEUDONYMIZE_ACTIVE.store(active, Ordering::Relaxed);
+/// Record which kinds `--pseudonymize` replaces, so `--stats` reports each
+/// one's count even at 0.
+pub fn set_pseudonymize_active(ip: bool, email: bool) {
+    PSEUDONYMIZE_IP_ACTIVE.store(ip, Ordering::Relaxed);
+    PSEUDONYMIZE_EMAIL_ACTIVE.store(email, Ordering::Relaxed);
 }
 
-pub fn stats_add_addresses_pseudonymized(count: usize) {
-    if count == 0 || !stats_enabled() {
+pub fn stats_add_addresses_pseudonymized(
+    count: crate::rhai_functions::hashing::PseudonymizeCounts,
+) {
+    if !stats_enabled() {
         return;
     }
-    ADDRESSES_PSEUDONYMIZED.fetch_add(count, Ordering::Relaxed);
+    if count.ip > 0 {
+        IPS_PSEUDONYMIZED.fetch_add(count.ip, Ordering::Relaxed);
+    }
+    if count.email > 0 {
+        EMAILS_PSEUDONYMIZED.fetch_add(count.email, Ordering::Relaxed);
+    }
 }
 
 /// Addresses `--pseudonymize` replaced (process-wide); `None` without the flag.
-pub fn pseudonymized_address_count() -> Option<usize> {
-    PSEUDONYMIZE_ACTIVE
+pub fn pseudonymized_address_count() -> Option<PseudonymizedCounts> {
+    let ip = PSEUDONYMIZE_IP_ACTIVE
         .load(Ordering::Relaxed)
-        .then(|| ADDRESSES_PSEUDONYMIZED.load(Ordering::Relaxed))
+        .then(|| IPS_PSEUDONYMIZED.load(Ordering::Relaxed));
+    let email = PSEUDONYMIZE_EMAIL_ACTIVE
+        .load(Ordering::Relaxed)
+        .then(|| EMAILS_PSEUDONYMIZED.load(Ordering::Relaxed));
+    (ip.is_some() || email.is_some()).then_some(PseudonymizedCounts { ip, email })
 }
 
 /// Whether the level pre-filter was armed for this run (process-wide).
@@ -1457,8 +1480,12 @@ impl ProcessingStats {
             }
         }
 
-        if let Some(count) = self.addresses_pseudonymized {
-            output.push_str(&format!("Addresses pseudonymized: {}\n", count));
+        if let Some(counts) = self.addresses_pseudonymized {
+            let parts: Vec<String> = [(counts.ip, "IP"), (counts.email, "email")]
+                .into_iter()
+                .filter_map(|(count, kind)| count.map(|n| format!("{n} {kind}")))
+                .collect();
+            output.push_str(&format!("Addresses pseudonymized: {}\n", parts.join(", ")));
         }
 
         output.trim_end().to_string()

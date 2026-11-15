@@ -37,6 +37,28 @@ static EMAIL_REGEX: LazyLock<Regex> =
 static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(EMAIL_DOMAIN_PATTERN).expect("failed to compile email domain regex")
 });
+// Tokens that `--pseudonymize` and `pseudonymize_ips()`/`pseudonymize_emails()`
+// put where an address was; the extractors return them like addresses
+static IP_TOKEN_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<ip:[A-Za-z0-9_-]+>").expect("failed to compile IP token regex"));
+static EMAIL_TOKEN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<email:[A-Za-z0-9_-]+>").expect("failed to compile email token regex")
+});
+
+/// Add the token matches to address spans, keeping text order
+fn with_tokens(mut spans: Vec<(usize, usize)>, tokens: &Regex, text: &str) -> Vec<(usize, usize)> {
+    let token_spans: Vec<(usize, usize)> = tokens
+        .find_iter(text)
+        .map(|m| (m.start(), m.end()))
+        .collect();
+    if token_spans.is_empty() {
+        return spans;
+    }
+    spans.retain(|&(s, e)| !token_spans.iter().any(|&(ts, te)| s >= ts && e <= te));
+    spans.extend(token_spans);
+    spans.sort_unstable();
+    spans
+}
 
 // ============================================================================
 // IP Extraction
@@ -53,9 +75,9 @@ pub(crate) enum IpBoundary {
     Loose,
 }
 
-/// Find IPv4 and IPv6 addresses in text order
+/// Find IPv4 and IPv6 addresses and `<ip:…>` tokens in text order
 fn find_ips(text: &str) -> Vec<&str> {
-    find_ip_spans(text, IpBoundary::Word)
+    with_tokens(find_ip_spans(text, IpBoundary::Word), &IP_TOKEN_REGEX, text)
         .into_iter()
         .map(|(s, e)| &text[s..e])
         .collect()
@@ -303,11 +325,19 @@ pub(crate) fn find_email_spans(text: &str) -> Vec<(usize, usize)> {
         .collect()
 }
 
+/// Find email addresses and `<email:…>` tokens in text order
+fn find_emails(text: &str) -> Vec<&str> {
+    with_tokens(find_email_spans(text), &EMAIL_TOKEN_REGEX, text)
+        .into_iter()
+        .map(|(s, e)| &text[s..e])
+        .collect()
+}
+
 /// Extract the first email address from text
 fn extract_email_first(text: &str) -> String {
-    EMAIL_REGEX
-        .find(text)
-        .map(|m| m.as_str().to_string())
+    find_emails(text)
+        .first()
+        .map(|email| email.to_string())
         .unwrap_or_default()
 }
 
@@ -317,7 +347,7 @@ fn extract_email_nth(text: &str, nth: i64) -> String {
         return String::new();
     }
 
-    let matches: Vec<_> = EMAIL_REGEX.find_iter(text).collect();
+    let matches = find_emails(text);
 
     if matches.is_empty() {
         return String::new();
@@ -338,14 +368,14 @@ fn extract_email_nth(text: &str, nth: i64) -> String {
         nth_usize - 1 // Convert to 0-indexed
     };
 
-    matches[idx].as_str().to_string()
+    matches[idx].to_string()
 }
 
 /// Extract all email addresses from text
 fn extract_emails_impl(text: &str) -> Array {
-    EMAIL_REGEX
-        .find_iter(text)
-        .map(|m| Dynamic::from(m.as_str().to_string()))
+    find_emails(text)
+        .into_iter()
+        .map(|email| Dynamic::from(email.to_string()))
         .collect()
 }
 
@@ -1080,5 +1110,26 @@ mod tests {
             .eval_with_scope(&mut scope, r#"extract_email(text)"#)
             .unwrap();
         assert!(email.is_empty());
+    }
+
+    #[test]
+    fn test_extract_returns_pseudonym_tokens() {
+        let text = "from <ip:MS88DJcDNFIjRF8MLLJLha_s> via 10.0.0.1 to <ip:9s5V-dYF_5HcPgNk>";
+        assert_eq!(extract_ip_first(text), "<ip:MS88DJcDNFIjRF8MLLJLha_s>");
+        assert_eq!(extract_ip_nth(text, 2), "10.0.0.1");
+        assert_eq!(extract_ip_nth(text, -1), "<ip:9s5V-dYF_5HcPgNk>");
+        assert_eq!(extract_ips_impl(text).len(), 3);
+
+        let text = "mail <email:879TiNCNN9-GoBOoU_y-BZrW> cc bob@example.com";
+        assert_eq!(
+            extract_email_first(text),
+            "<email:879TiNCNN9-GoBOoU_y-BZrW>"
+        );
+        assert_eq!(extract_email_nth(text, 2), "bob@example.com");
+        assert_eq!(extract_emails_impl(text).len(), 2);
+
+        // Each extractor takes only its own kind
+        assert_eq!(extract_ip_first("<email:879TiNCNN9-GoBOoU_y-BZrW>"), "");
+        assert_eq!(extract_email_first("<ip:MS88DJcDNFIjRF8MLLJLha_s>"), "");
     }
 }

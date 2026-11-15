@@ -77,7 +77,7 @@ emit_each(e.log.extract_regexes(#"(ERR-\d+): ([^\n]+)"#).map(|g| #{code: g[0], m
 To turn named groups into fields of the *current* event, use [`absorb_regex()`](#eabsorb_regexfield-pattern-options).
 
 #### `text.extract_ip([nth])` / `text.extract_ips()`
-IPv4 and IPv6 address(es) found in text, in the order they appear (`nth`: 1=first, -1=last). Brackets, ports and zone IDs are left off (`[fe80::1%eth0]:22` gives `fe80::1`); an IPv4-mapped address stays whole (`::ffff:10.0.0.1`). An IPv6 address must stand alone, so `Class::method`, times and MAC addresses don't match; neither does the bare `::`. To keep one family, filter with `is_ipv4()`/`is_ipv6()`.
+IPv4 and IPv6 address(es) found in text, in the order they appear (`nth`: 1=first, -1=last). Brackets, ports and zone IDs are left off (`[fe80::1%eth0]:22` gives `fe80::1`); an IPv4-mapped address stays whole (`::ffff:10.0.0.1`). An IPv6 address must stand alone, so `Class::method`, times and MAC addresses don't match; neither does the bare `::`. To keep one family, filter with `is_ipv4()`/`is_ipv6()`. The `<ip:…>` tokens that [`--pseudonymize ip`](../cookbook/security-privacy.md#pseudonymize-ip-addresses) and `pseudonymize_ips()` leave are returned too, so you can still count and group by address.
 
 ```rhai
 e.client_ip = e.headers.extract_ip();            // first
@@ -94,7 +94,7 @@ e.link = e.message.extract_url();                // "https://api.example.com/pat
 ```
 
 #### `text.extract_email([nth])` / `text.extract_emails()`
-Email address(es) found in text (`nth`: 1=first, -1=last).
+Email address(es) found in text (`nth`: 1=first, -1=last), including the `<email:…>` tokens that `--pseudonymize email` and `pseudonymize_emails()` leave.
 
 ```rhai
 e.sender = e.log.extract_email();                // first

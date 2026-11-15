@@ -54,6 +54,15 @@ KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
   --pseudonymize ip -k msg -n 3
 ```
 
+`extract_ip()` returns the tokens, so you can still count failed logins per
+source address without seeing one:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
+  --pseudonymize ip --filter 'e.msg.starts_with("Failed password")' \
+  -e 'e.src = e.msg.extract_ip()' --freq src
+```
+
 Add `email` to replace email addresses the same way:
 
 ```bash exec="on" source="above" result="ansi"

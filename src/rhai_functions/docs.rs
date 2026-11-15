@@ -31,10 +31,10 @@ text.escape_html()                   Escape HTML special characters (&, <, >, ",
 text.escape_json()                   Escape JSON special characters
 text.extract_regexes(pattern [,group]) Extract all regex matches as array (empty array if none match)
 text.extract_domain()                Extract domain from URL or email address
-text.extract_email([nth])            Extract email address from text (nth: 1=first, -1=last)
-text.extract_emails()                Extract all email addresses as array
-text.extract_ip([nth])               Extract IPv4/IPv6 address from text (nth: 1=first, -1=last)
-text.extract_ips()                   Extract all IPv4/IPv6 addresses as array, in text order
+text.extract_email([nth])            Extract email address or <email:…> token from text (nth: 1=first, -1=last)
+text.extract_emails()                Extract all email addresses and <email:…> tokens as array
+text.extract_ip([nth])               Extract IPv4/IPv6 address or <ip:…> token from text (nth: 1=first, -1=last)
+text.extract_ips()                   Extract all IPv4/IPv6 addresses and <ip:…> tokens as array, in text order
 text.extract_json([nth])             Extract JSON object/array from text (nth: 1=first, -1=last)
 text.extract_jsons()                 Extract all JSON objects/arrays from text as array of strings
 text.extract_regex_maps(pattern, field) Extract regex matches as one-field maps for fan-out
@@ -835,11 +835,14 @@ kelora -j api_logs.jsonl --filter 'e.status >= 500' --exec '
 
 SECURITY & DATA PRIVACY:
 # To redact / anonymize / mask values, use pseudonym() (stable hashing), hash(),
-# mask_ip() (IP octets), pseudonymize_ips() (IPs inside any text), or normalized() (replace patterns with placeholders).
-# For IPs alone, --pseudonymize ip (or ip-prefix) needs no script.
+# mask_ip() (IP octets), pseudonymize_ips()/pseudonymize_emails() (addresses inside any text), or normalized() (replace patterns with placeholders).
+# For IP and email addresses, --pseudonymize ip,email (or ip-prefix) needs no script.
 
 # Replace every IP address, inside messages too, with a keyed token
 KELORA_SECRET=team-key kelora sshd_auth.log --pseudonymize ip
+
+# Count source addresses without revealing them (extract_ip() returns the <ip:…> tokens)
+kelora sshd_auth.log --pseudonymize ip --exec 'e.src = e.msg.extract_ip()' --freq src
 
 # Mask IP addresses (keep first 3 octets)
 kelora -f combined web_access.log --exec 'e.ip = e.ip.mask_ip(1)'
