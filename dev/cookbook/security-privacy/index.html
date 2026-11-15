@@ -1952,6 +1952,14 @@ source address without seeing one:</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;      2
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  &lt;ip:BqgbtaN-gmRl5rBJAHQokX0m&gt;      1
 </code></pre></div>
+<p>A filter never sees a real address either. To look for a known one,
+pseudonymize the literal the same way:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.msg.contains("198.51.100.23".pseudonymize_ips())'</span><span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user oracle from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt; port 51002 ssh2'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user test from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt; port 51188 ssh2'
+</code></pre></div>
 <p>Add <code>email</code> to replace email addresses the same way:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
@@ -1980,6 +1988,13 @@ and <code>10.0.5.24</code> stay in one /24):</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user_id</span>='user003' <span class=" -Color -Color-Green">ip</span>='50.206.38.29'
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user_id</span>='user004' <span class=" -Color -Color-Green">ip</span>='64.168.98.20'
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
+</code></pre></div>
+<p>Pseudonymize a network the same way to filter by it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip-prefix<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.ip.is_in_cidr("10.0.0.0/8".pseudonymize_ips("prefix"))'</span><span class="w"> </span>-k<span class="w"> </span>user_id,ip
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">ip</span>='245.126.84.248'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
 </code></pre></div>
 <p>Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer <code>--pseudonymize ip</code> (<a href="../../reference/functions/#textpseudonymize_ipsmode-mappseudonymize_ipsmode">trade-offs</a>). For one field only, use <code>pseudonymize_ips()</code> in <code>--exec</code>.</p>
 <h2 id="drop-sensitive-fields">Drop sensitive fields<a class="headerlink" href="#drop-sensitive-fields" title="Permanent link">&para;</a></h2>
