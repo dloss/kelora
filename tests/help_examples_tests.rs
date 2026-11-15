@@ -297,6 +297,8 @@ fn help_examples_run_cleanly() {
             .env("KELORA_IGNORE_CONFIG", "1")
             // Fixed zone so the local-time examples select the same events everywhere.
             .env("TZ", "UTC")
+            // As a real user of the pseudonym examples would; without it they warn.
+            .env("KELORA_SECRET", "help-examples")
             .env_remove("KELORA_NO_WARNINGS")
             .env_remove("KELORA_NO_HINTS")
             .output()

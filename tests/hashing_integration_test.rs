@@ -555,3 +555,37 @@ fn test_pseudonymize_flag_rejects_both_kinds() {
     let output = run_kelora_with_secret(&["--pseudonymize", "ip,ip-prefix"], b"");
     assert_eq!(output.status.code(), Some(2));
 }
+
+#[test]
+fn test_pseudonym_ephemeral_warning_obeys_no_warnings() {
+    let output = Command::new(kelora_binary())
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env_remove("KELORA_SECRET")
+        .args(["-f", "line", "--pseudonymize", "ip", "--no-warnings", "-"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(b"10.0.0.1\n").ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success());
+    assert!(!stderr.contains("KELORA_SECRET not set"), "{stderr}");
+}
+
+#[test]
+fn test_pseudonymize_flag_hides_glued_addresses() {
+    let out = stdout_of(&run_kelora_with_secret(
+        &["-f", "line", "--pseudonymize", "ip"],
+        b"user_10.0.0.1 host10.0.0.2 src:2001:db8::1\n",
+    ));
+    for ip in ["10.0.0.1", "10.0.0.2", "2001:db8::1"] {
+        assert!(!out.contains(ip), "{ip} leaked in {out}");
+    }
+}

@@ -439,7 +439,7 @@ e.v6 = e.ip6.mask_ip(2);                         // "2001:db8:1:2:3:4:5:6" → "
 ```
 
 #### `text.pseudonymize_ips([mode])` / `map.pseudonymize_ips([mode])`
-Replace every IPv4 and IPv6 address inside text with a keyed pseudonym; by default a tagged token `<ip:TOKEN>`, so the type stays visible. Ports and surrounding text stay; text without an address is returned unchanged. On a map, every string value and every key is rewritten, nested maps and arrays included. Anything shaped like an address is replaced, including a version string such as `1.2.3.4`. The key comes from `KELORA_SECRET`, as for [`pseudonym()`](#pseudonymvalue-domain). To do this for every event without a script, use `--pseudonymize ip` or `--pseudonymize ip-prefix`.
+Replace every IPv4 and IPv6 address inside text with a keyed pseudonym; by default a tagged token `<ip:TOKEN>`, so the type stays visible. Ports and surrounding text stay; text without an address is returned unchanged. On a map, every string value and every key is rewritten, nested maps and arrays included. Addresses glued to other text (`user_10.0.0.1`, `src:2001:db8::1`) are found too, and anything shaped like an address is replaced, including a version string such as `1.2.3.4`. `::ffff:10.0.0.1` gets the same pseudonym as `10.0.0.1`. Hostnames, MAC addresses, emails and addresses written as integers or hex are not touched: a pseudonymized log still identifies hosts by name. The key comes from `KELORA_SECRET`, as for [`pseudonym()`](#pseudonymvalue-domain). To do this for every event without a script, use `--pseudonymize ip` or `--pseudonymize ip-prefix`.
 
 ```rhai
 e.msg = e.msg.pseudonymize_ips();                // "from 10.0.0.1 port 22" → e.g. "from <ip:j7lEFbSZvlI4erFlvAwUxbzf> port 22"

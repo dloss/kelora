@@ -3,7 +3,7 @@
 //! Includes fast hashes, cryptographic digests, and salted pseudonyms.
 
 use crate::event::FieldMap;
-use crate::rhai_functions::extractors::find_ip_spans;
+use crate::rhai_functions::extractors::{find_ip_spans, IpBoundary};
 use aes::cipher::BlockEncrypt;
 use aes::Aes128;
 use argon2::password_hash::{Salt, SaltString};
@@ -30,7 +30,8 @@ type HmacSha256 = Hmac<Sha256>;
 pub struct HashingRuntimeConfig {
     pub verbose: u8,
     pub use_emoji: bool,
-    pub quiet_level: u8,
+    /// Warnings (🔸) may be shown: not `--silent`, `--no-warnings` or `--no-diagnostics`
+    pub warnings_allowed: bool,
 }
 
 static RUNTIME_CONFIG: LazyLock<RwLock<HashingRuntimeConfig>> =
@@ -55,20 +56,19 @@ fn log_pseudonym_init(message: &str) {
     }
 }
 
-/// Warn that pseudonyms are using an ephemeral key (shown at default verbosity).
+/// Warn that pseudonyms are using an ephemeral key (a 🔸 warning).
 ///
-/// Unlike `log_pseudonym_init`, this safety warning is shown without `-vv` because
-/// the failure mode is silent: pseudonyms won't correlate across separate runs.
-/// Suppressed when diagnostics are off (`--silent`/`--no-diagnostics`, quiet_level >= 1).
+/// Unlike `log_pseudonym_init`, this is shown without `-vv` because the
+/// failure mode is silent: pseudonyms won't correlate across separate runs.
 fn warn_pseudonym_ephemeral() {
     let config = RUNTIME_CONFIG
         .read()
         .expect("hashing runtime config poisoned");
-    if config.quiet_level == 0 {
+    if config.warnings_allowed {
         let prefix = if config.use_emoji {
-            "⚠️"
+            "🔸"
         } else {
-            "kelora:"
+            "kelora warning:"
         };
         eprintln!(
             "{} KELORA_SECRET not set; using ephemeral key, pseudonyms won't be stable across runs",
@@ -341,7 +341,7 @@ fn ip_token(addr: &str) -> String {
     format!("<ip:{}>", token)
 }
 
-/// Parse an address `find_ip_spans` matched. Its IPv4 pattern accepts leading
+/// Parse an address `find_ip_spans` matched. Its IPv4 scanners accept leading
 /// zeros (`010.0.0.1`), which `Ipv4Addr` rejects; read those octets as decimal.
 fn parse_found_ip(text: &str) -> Option<IpAddr> {
     text.parse().ok().or_else(|| {
@@ -363,7 +363,7 @@ pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, st
     if !text.bytes().any(|b| b == b'.' || b == b':') {
         return Cow::Borrowed(text);
     }
-    let spans = find_ip_spans(text);
+    let spans = find_ip_spans(text, IpBoundary::Loose);
     if spans.is_empty() {
         return Cow::Borrowed(text);
     }
@@ -372,7 +372,8 @@ pub fn pseudonymize_ips_in_text(text: &str, mode: IpPseudonymMode) -> Cow<'_, st
     for (start, end) in spans {
         out.push_str(&text[last..start]);
         let found = &text[start..end];
-        match (parse_found_ip(found), mode) {
+        // `::ffff:10.0.0.1` is the host `10.0.0.1`: give it the same pseudonym
+        match (parse_found_ip(found).map(|addr| addr.to_canonical()), mode) {
             (Some(addr), IpPseudonymMode::Token) => out.push_str(&ip_token_cached(addr)),
             (Some(addr), IpPseudonymMode::Prefix) => {
                 out.push_str(&cryptopan_cached(addr).to_string())
@@ -574,6 +575,11 @@ mod tests {
         // Leading zeros and the canonical form give the same token
         assert_eq!(
             pseudonymize_ips_in_text("010.0.0.1", mode),
+            pseudonymize_ips_in_text("10.0.0.1", mode)
+        );
+        // An IPv4-mapped address is the same host
+        assert_eq!(
+            pseudonymize_ips_in_text("::ffff:10.0.0.1", mode),
             pseudonymize_ips_in_text("10.0.0.1", mode)
         );
         // A second pass leaves tokens alone

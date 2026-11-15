@@ -39,31 +39,49 @@ static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 // IP Extraction
 // ============================================================================
 
+/// How far an address must stand apart from the text around it
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum IpBoundary {
+    /// Word boundaries, for extraction: `v10.0.0.1` is not an address
+    Word,
+    /// Only digits and dots bound an IPv4 address, and `_` or an escape
+    /// such as `\n` may touch an IPv6 one, for hiding addresses:
+    /// `user_10.0.0.1`, `host10.0.0.1` and a raw JSON `\n10.0.0.1` count
+    Loose,
+}
+
 /// Find IPv4 and IPv6 addresses in text order
 fn find_ips(text: &str) -> Vec<&str> {
-    find_ip_spans(text)
+    find_ip_spans(text, IpBoundary::Word)
         .into_iter()
         .map(|(s, e)| &text[s..e])
         .collect()
 }
 
 /// Byte spans of the IPv4 and IPv6 addresses in text, in text order
-pub(crate) fn find_ip_spans(text: &str) -> Vec<(usize, usize)> {
-    let v4 = IPV4_REGEX.find_iter(text).map(|m| (m.start(), m.end()));
+pub(crate) fn find_ip_spans(text: &str, boundary: IpBoundary) -> Vec<(usize, usize)> {
+    let v4 = match boundary {
+        IpBoundary::Word => IPV4_REGEX
+            .find_iter(text)
+            .map(|m| (m.start(), m.end()))
+            .collect(),
+        IpBoundary::Loose => loose_ipv4_spans(text),
+    };
 
     // Cheap prefilter: an IPv6 address has a `::` or at least six colons
     let maybe_v6 = text.contains("::") || text.bytes().filter(|&b| b == b':').count() >= 6;
     if !maybe_v6 {
-        return v4.collect();
+        return v4;
     }
 
     let v6: Vec<(usize, usize)> = IPV6_CANDIDATE_REGEX
         .find_iter(text)
-        .filter_map(|m| ipv6_span(text, m.start(), m.end()))
+        .filter_map(|m| ipv6_span(text, m.start(), m.end(), boundary))
         .collect();
 
     // Drop IPv4 matches inside an IPv6 address (`::ffff:10.0.0.1`)
     let mut spans: Vec<(usize, usize)> = v4
+        .into_iter()
         .filter(|&(s, e)| !v6.iter().any(|&(vs, ve)| s >= vs && e <= ve))
         .chain(v6.iter().copied())
         .collect();
@@ -71,15 +89,77 @@ pub(crate) fn find_ip_spans(text: &str) -> Vec<(usize, usize)> {
     spans
 }
 
+/// IPv4 addresses bounded only by digits and dots: each maximal run of
+/// digits and dots yields its dotted quads of valid octets, left to right
+/// (`10.0.0.1.443` gives `10.0.0.1`).
+fn loose_ipv4_spans(text: &str) -> Vec<(usize, usize)> {
+    let bytes = text.as_bytes();
+    let mut spans = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_digit() {
+            i += 1;
+            continue;
+        }
+        let run_start = i;
+        while i < bytes.len() && (bytes[i].is_ascii_digit() || bytes[i] == b'.') {
+            i += 1;
+        }
+        // (offset, text) of each dot-separated group in the run
+        let mut offset = run_start;
+        let groups: Vec<(usize, &str)> = text[run_start..i]
+            .split('.')
+            .map(|group| {
+                let start = offset;
+                offset += group.len() + 1;
+                (start, group)
+            })
+            .collect();
+        let is_octet =
+            |g: &str| (1..=3).contains(&g.len()) && g.parse::<u16>().is_ok_and(|n| n <= 255);
+        let mut g = 0;
+        while g + 4 <= groups.len() {
+            if groups[g..g + 4].iter().all(|(_, group)| is_octet(group)) {
+                let (last_start, last) = groups[g + 3];
+                spans.push((groups[g].0, last_start + last.len()));
+                g += 4;
+            } else {
+                g += 1;
+            }
+        }
+    }
+    spans
+}
+
 /// Validate an IPv6 candidate, returning the span of the address
-fn ipv6_span(text: &str, start: usize, mut end: usize) -> Option<(usize, usize)> {
+fn ipv6_span(
+    text: &str,
+    mut start: usize,
+    mut end: usize,
+    boundary: IpBoundary,
+) -> Option<(usize, usize)> {
     // Must stand alone: `Pipeline::carry` or `T10:00:00` are not addresses
     let is_word = |c: char| c.is_alphanumeric() || c == '_';
-    if text[..start]
+    let loose = boundary == IpBoundary::Loose;
+    let blocked_before = |start: usize| {
+        let before = &text[..start];
+        before.chars().next_back().is_some_and(|c| {
+            let escaped = before[..before.len() - c.len_utf8()].ends_with('\\');
+            (is_word(c) || c == '.') && !(loose && (c == '_' || escaped))
+        })
+    };
+    if blocked_before(start) {
+        // Hex letters of a label glued on: `src:2001:db8::1` matched from `c`
+        let colon = start + text[start..end].find(':')?;
+        if text[colon + 1..].starts_with(':') {
+            return None;
+        }
+        start = colon + 1;
+    }
+    if text[end..]
         .chars()
-        .next_back()
-        .is_some_and(|c| is_word(c) || c == '.')
-        || text[end..].chars().next().is_some_and(is_word)
+        .next()
+        .is_some_and(|c| is_word(c) && !(loose && c == '_'))
     {
         return None;
     }
@@ -650,6 +730,46 @@ mod tests {
         assert!(ips(r"Illuminate\Pipeline\Pipeline::carry() Foo::bad std::io").is_empty());
         assert!(ips("Bind-address: '::' port: 33060").is_empty());
         assert_eq!(ips("10.0.0.1:8080 and ::1"), ["10.0.0.1", "::1"]);
+    }
+
+    #[test]
+    fn test_extract_ip_ipv6_after_label() {
+        // The label's hex letters (`c` of `src`) are not part of the address
+        assert_eq!(
+            ips("src:2001:db8::1 dst:fe80::2"),
+            ["2001:db8::1", "fe80::2"]
+        );
+    }
+
+    fn loose(text: &str) -> Vec<&str> {
+        find_ip_spans(text, IpBoundary::Loose)
+            .into_iter()
+            .map(|(s, e)| &text[s..e])
+            .collect()
+    }
+
+    #[test]
+    fn test_loose_boundary_finds_glued_addresses() {
+        assert_eq!(
+            loose("user_10.0.0.1 host10.0.0.2 10.0.0.3x"),
+            ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
+        );
+        assert_eq!(
+            loose(r"x\n10.0.0.1 y\n2001:db8::1"),
+            ["10.0.0.1", "2001:db8::1"]
+        );
+        assert_eq!(loose("user_2001:db8::5_x"), ["2001:db8::5"]);
+        assert_eq!(
+            loose("10.0.0.1.443 > 10.0.0.2.80"),
+            ["10.0.0.1", "10.0.0.2"]
+        );
+        assert_eq!(
+            loose("010.0.0.1 ::ffff:10.0.0.1"),
+            ["010.0.0.1", "::ffff:10.0.0.1"]
+        );
+        // Still not addresses
+        assert!(loose("300.1.1.1 2024.01.15 3.14 at 10:00:00 T10:00:00").is_empty());
+        assert!(loose("Foo::bar std::vec::Vec mac 00:1a:2b:3c:4d:5e").is_empty());
     }
 
     // ========================================================================
