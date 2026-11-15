@@ -918,6 +918,7 @@ fn maybe_print_zero_results_hint(
     // deliberately dropped (Rule of Silence).
     let hint = level_filter_zero_hint(config, stats)
         .or_else(|| timestamp_filter_zero_hint(config, stats))
+        .or_else(|| filter_pseudonymized_literal_hint(config))
         .or_else(|| filter_field_zero_hint(config, stats))
         .or_else(|| filter_numeric_string_hint(config, stats));
 
@@ -1377,6 +1378,67 @@ fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
         if unseen_fields.len() == 1 { "" } else { "s" },
         unseen_fields.into_iter().collect::<Vec<_>>().join(", ")
     ))
+}
+
+/// Hint when a `--filter` looks for a real address while `--pseudonymize`
+/// replaced every such address right after parsing: the literal can never
+/// match, and the run exits 0 with no output. The fix is to put the literal
+/// through the same replacement, so the hint shows that call. A literal that
+/// already goes through it (`"10.0.0.1".pseudonymize_ips()`,
+/// `pseudonym("10.0.0.1", "ip")`) is left alone.
+fn filter_pseudonymized_literal_hint(config: &KeloraConfig) -> Option<String> {
+    use crate::rhai_functions::extractors::{find_email_spans, find_ip_spans, IpBoundary};
+    use crate::rhai_functions::hashing::IpPseudonymMode;
+
+    let kinds = config.processing.pseudonymize?;
+    let literal =
+        regex::Regex::new(r#""((?:[^"\\]|\\.)*)"|`([^`]*)`"#).expect("valid string literal regex");
+
+    for stage in &config.processing.stages {
+        let ScriptStageType::Filter { script, .. } = stage else {
+            continue;
+        };
+        for captures in literal.captures_iter(script) {
+            let whole = captures.get(0)?;
+            let text = captures.get(1).or_else(|| captures.get(2))?.as_str();
+            let after = script[whole.end()..].trim_start();
+            let before = script[..whole.start()].trim_end();
+            if after.starts_with(".pseudonym")
+                || ["pseudonym(", "pseudonymize_ips(", "pseudonymize_emails("]
+                    .iter()
+                    .any(|call| before.ends_with(call))
+            {
+                continue;
+            }
+            // The loose boundary is what --pseudonymize replaces, so a literal
+            // it would rewrite is one the filter can never see
+            let ip = kinds.ip.and_then(|mode| {
+                let &(start, end) = find_ip_spans(text, IpBoundary::Loose).first()?;
+                Some(match mode {
+                    IpPseudonymMode::Token => (&text[start..end], "ip", ".pseudonymize_ips()"),
+                    IpPseudonymMode::Prefix => (
+                        &text[start..end],
+                        "ip-prefix",
+                        ".pseudonymize_ips(\"prefix\")",
+                    ),
+                })
+            });
+            let found = ip.or_else(|| {
+                if !kinds.email {
+                    return None;
+                }
+                let &(start, end) = find_email_spans(text).first()?;
+                Some((&text[start..end], "email", ".pseudonymize_emails()"))
+            });
+            if let Some((address, kind, call)) = found {
+                return Some(format!(
+                    "0 events matched. The filter looks for {address}, but --pseudonymize {kind} replaced every such address before --filter ran. Pseudonymize the literal the same way: {}{call}.",
+                    whole.as_str()
+                ));
+            }
+        }
+    }
+    None
 }
 
 /// For a field read as `e.id` that isn't there while keys such as `id.orig_h`

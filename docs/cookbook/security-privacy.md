@@ -63,6 +63,14 @@ KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
   -e 'e.src = e.msg.extract_ip()' --freq src
 ```
 
+A filter never sees a real address either. To look for a known one,
+pseudonymize the literal the same way:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/sshd_auth.log --input-year 2024 \
+  --pseudonymize ip --filter 'e.msg.contains("198.51.100.23".pseudonymize_ips())' -k msg
+```
+
 Add `email` to replace email addresses the same way:
 
 ```bash exec="on" source="above" result="ansi"
@@ -88,6 +96,13 @@ and `10.0.5.24` stay in one /24):
 ```bash exec="on" source="above" result="ansi"
 KELORA_SECRET=change-me kelora examples/user-data.jsonl \
   --pseudonymize ip-prefix -k user_id,ip
+```
+
+Pseudonymize a network the same way to filter by it:
+
+```bash exec="on" source="above" result="ansi"
+KELORA_SECRET=change-me kelora examples/user-data.jsonl --pseudonymize ip-prefix \
+  --filter 'e.ip.is_in_cidr("10.0.0.0/8".pseudonymize_ips("prefix"))' -k user_id,ip
 ```
 
 Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer `--pseudonymize ip` ([trade-offs](../reference/functions.md#textpseudonymize_ipsmode-mappseudonymize_ipsmode)). For one field only, use `pseudonymize_ips()` in `--exec`.

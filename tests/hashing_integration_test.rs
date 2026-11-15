@@ -715,3 +715,88 @@ fn test_pseudonymize_flag_emails() {
     ));
     assert!(!both.contains("10.0.0.1"), "{both}");
 }
+
+#[test]
+fn test_pseudonymize_flag_hints_at_real_address_in_filter() {
+    let input = b"{\"ip\":\"10.0.0.1\",\"to\":\"a@example.com\"}\n";
+    let stderr_of = |kinds: &str, filter: &str| {
+        let output = run_kelora_with_secret(
+            &["-f", "json", "--pseudonymize", kinds, "--filter", filter],
+            input,
+        );
+        assert!(output.status.success());
+        assert!(output.stdout.is_empty());
+        String::from_utf8_lossy(&output.stderr).into_owned()
+    };
+    let ip = stderr_of("ip", r#"e.ip == "10.0.0.1""#);
+    assert!(ip.contains(r#""10.0.0.1".pseudonymize_ips()"#), "{ip}");
+    let prefix = stderr_of("ip-prefix", r#"e.ip.is_in_cidr("10.0.0.0/8") && false"#);
+    assert!(
+        prefix.contains(r#""10.0.0.0/8".pseudonymize_ips("prefix")"#),
+        "{prefix}"
+    );
+    let email = stderr_of("ip,email", r#"e.to == "a@example.com""#);
+    assert!(
+        email.contains(r#""a@example.com".pseudonymize_emails()"#),
+        "{email}"
+    );
+    // Already pseudonymized the same way: an empty result needs no hint
+    let converted = stderr_of("ip", r#"e.ip == "10.0.0.2".pseudonymize_ips()"#);
+    assert!(!converted.contains("pseudonymize"), "{converted}");
+}
+
+#[test]
+fn test_is_in_cidr_on_pseudonym_token_names_ip_prefix() {
+    let output = run_kelora_with_secret(
+        &[
+            "-f",
+            "json",
+            "--pseudonymize",
+            "ip",
+            "--filter",
+            r#"e.ip.is_in_cidr("10.0.0.0/8")"#,
+        ],
+        b"{\"ip\":\"10.0.0.1\"}\n",
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("is a pseudonym, not an IP address"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("--pseudonymize ip-prefix"), "{stderr}");
+}
+
+#[test]
+fn test_pseudonymize_ip_prefix_filters_by_network() {
+    let out = stdout_of(&run_kelora_with_secret(
+        &[
+            "-f",
+            "json",
+            "--pseudonymize",
+            "ip-prefix",
+            "--filter",
+            r#"e.ip.is_in_cidr("10.0.0.0/8".pseudonymize_ips("prefix"))"#,
+            "-k",
+            "n",
+        ],
+        b"{\"ip\":\"10.0.0.1\",\"n\":1}\n{\"ip\":\"192.168.0.1\",\"n\":2}\n{\"ip\":\"10.200.3.4\",\"n\":3}\n",
+    ));
+    assert_eq!(out, "n=1\nn=3\n");
+}
+
+#[test]
+fn test_pseudonymize_flag_drain_groups_tokens() {
+    let out = stdout_of(&run_kelora_with_secret(
+        &[
+            "-f",
+            "line",
+            "--pseudonymize",
+            "ip,email",
+            "-k",
+            "line",
+            "--drain",
+        ],
+        b"user a@x.com from 10.0.0.1\nuser b@y.org from 2001:db8::2\n",
+    ));
+    assert!(out.contains("2: user <email> from <ip>"), "{out}");
+}

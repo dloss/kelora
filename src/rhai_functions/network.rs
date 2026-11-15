@@ -43,10 +43,16 @@ pub fn is_ipv6(ip: ImmutableString) -> bool {
 pub fn is_in_cidr(ip: ImmutableString, cidr: ImmutableString) -> Result<bool, Box<EvalAltResult>> {
     // Parse the IP address
     let addr = IpAddr::from_str(ip.as_str()).map_err(|_| {
-        EvalAltResult::ErrorRuntime(
-            format!("Invalid IP address: '{}'", ip).into(),
-            rhai::Position::NONE,
-        )
+        let message = if ip.starts_with("<ip:") {
+            // Left by --pseudonymize ip / pseudonymize_ips(): nothing to test
+            format!(
+                "'{}' is a pseudonym, not an IP address: a token keeps no network. To filter by network, use --pseudonymize ip-prefix and is_in_cidr(\"{}\".pseudonymize_ips(\"prefix\"))",
+                ip, cidr
+            )
+        } else {
+            format!("Invalid IP address: '{}'", ip)
+        };
+        EvalAltResult::ErrorRuntime(message.into(), rhai::Position::NONE)
     })?;
 
     // Parse the CIDR network

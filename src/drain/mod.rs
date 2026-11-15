@@ -584,12 +584,31 @@ static SPACED_DURATION_RE: LazyLock<Regex> = LazyLock::new(|| {
     .expect("failed to compile spaced duration regex")
 });
 
+/// The `<ip:TOKEN>`/`<email:TOKEN>` pseudonyms that `--pseudonymize` and
+/// `pseudonymize_ips()`/`pseudonymize_emails()` leave. Each address gets its
+/// own token, so left literal they would split one message into a template per
+/// address, the way unmasked addresses would. They mask as `<ip>`/`<email>`:
+/// a token no longer says whether it was IPv4 or IPv6.
+static PSEUDONYM_TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<(ip|email):[A-Za-z0-9_-]+>").expect("failed to compile pseudonym token regex")
+});
+
 /// The default-filters pre-pass over the raw line: replace every value that
 /// spans (or fuses) token boundaries — calendar timestamps, spaced sizes,
 /// spaced durations — with a single placeholder token, so the per-token
 /// masking that follows sees one value where the log wrote several words.
+/// Pseudonym tokens are collapsed here too: their `:`, `-` and digits would
+/// otherwise be masked piecemeal.
 fn collapse_multi_token_values(line: &str) -> Cow<'_, str> {
-    let line = CALENDAR_TS_RE.replace_all(line, "<timestamp>");
+    let line = if line.contains("<ip:") || line.contains("<email:") {
+        PSEUDONYM_TOKEN_RE.replace_all(line, "<$1>")
+    } else {
+        Cow::Borrowed(line)
+    };
+    let line = match CALENDAR_TS_RE.replace_all(&line, "<timestamp>") {
+        Cow::Borrowed(_) => line,
+        Cow::Owned(replaced) => Cow::Owned(replaced),
+    };
     let size_placeholder = |caps: &regex::Captures| -> String {
         let unit = caps
             .get(1)
@@ -1403,6 +1422,19 @@ mod tests {
         // A date with no time of day is not a calendar timestamp: only the day
         // number masks, as before.
         assert_eq!(masker.mask_line("expires Jun 13"), "expires Jun <num>");
+    }
+
+    #[test]
+    fn masks_pseudonym_tokens_by_kind() {
+        // One token per address would otherwise split one message into a
+        // template per address
+        let masker = Masker::new(&[]);
+        assert_eq!(
+            masker.mask_line(
+                "from <ip:c0bqFNyX-j1aVFbrtjNtkyVb>:22 to <email:9i_HpgXTZraVgSP-eHqdB3Ut>"
+            ),
+            "from <ip>:<num> to <email>"
+        );
     }
 
     #[test]
