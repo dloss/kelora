@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
     
     
       
@@ -1095,6 +1095,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pseudonymize-ip-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IP addresses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-the-address-behind-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the address behind a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1779,6 +1801,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pseudonymize-ip-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IP addresses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-the-address-behind-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the address behind a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1884,12 +1928,52 @@ same, so you can still count, join, and follow a user across files:</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user</span>='Tq9oFjjc-1WvdC9mCHqAC5YQ' <span class=" -Color -Color-Green">action</span>='logout' <span class=" -Color -Color-Green">ip</span>='192.168.1.0'
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user</span>='4q0StVl3bHi6gqkOSXZzOA8f' <span class=" -Color -Color-Green">action</span>='login' <span class=" -Color -Color-Green">ip</span>='10.0.5.0'
 </code></pre></div>
+<h2 id="pseudonymize-ip-addresses">Pseudonymize IP addresses<a class="headerlink" href="#pseudonymize-ip-addresses" title="Permanent link">&para;</a></h2>
+<p><code>--pseudonymize ip</code> replaces every address in every field, inside messages
+too, with a keyed token. It runs right after parsing, so filters, <code>--freq</code> and
+<code>--discover</code> see only tokens; the same address keeps the same token while
+<code>KELORA_SECRET</code> stays the same:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='Accepted publickey for deploy from &lt;ip:j7lEFbSZvlI4erFlvAwUxbzf&gt; port 52114 ssh2: ED25519 SHA256:q2Xw'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user admin from &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt; port 40122 ssh2'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user admin from &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt; port 40122 ssh2'
+</code></pre></div>
+<p><code>extract_ip()</code> returns the tokens, so you can still count failed logins per
+source address without seeing one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.msg.starts_with("Failed password")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.src = e.msg.extract_ip()'</span><span class="w"> </span>--freq<span class="w"> </span>src
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>src          (3 values):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  value                          count
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;      4
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;      2
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  &lt;ip:BqgbtaN-gmRl5rBJAHQokX0m&gt;      1
+</code></pre></div>
+<p>Add <code>email</code> to replace email addresses the same way:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user001' <span class=" -Color -Color-Green">email</span>='&lt;email:RIf3Lw9s5T04dtVK1ZehhKBA&gt;' <span class=" -Color -Color-Green">action</span>='login'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">ip</span>='&lt;ip:P6s5Q_jZIOqzKacDDQuPy99b&gt;'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">email</span>='&lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;' <span class=" -Color -Color-Green">action</span>='purchase'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">ip</span>='&lt;ip:aTbTuZZ7EhVWFLLSrG3Ry5tE&gt;'
+</code></pre></div>
+<h2 id="find-the-address-behind-a-token">Find the address behind a token<a class="headerlink" href="#find-the-address-behind-a-token" title="Permanent link">&para;</a></h2>
+<p>Tokens can't be reversed, but whoever holds the secret and the original log can
+look one up, say after a recipient reports <code>&lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.msg.pseudonymize_ips().contains("&lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;")'</span><span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user admin from 203.0.113.77 port 40122 ssh2'
+</code></pre></div>
 <h2 id="pseudonymize-ips-but-keep-subnets">Pseudonymize IPs but keep subnets<a class="headerlink" href="#pseudonymize-ips-but-keep-subnets" title="Permanent link">&para;</a></h2>
-<p><code>pseudonym_ip()</code> replaces each address with another of the same family;
-addresses that share a prefix still share one afterwards (<code>10.0.5.23</code> and
-<code>10.0.5.24</code> stay in one /24):</p>
+<p><code>--pseudonymize ip-prefix</code> replaces each address with another of the same
+family; addresses that share a prefix still share one afterwards (<code>10.0.5.23</code>
+and <code>10.0.5.24</code> stay in one /24):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.ip = e.ip.pseudonym_ip()'</span><span class="w"> </span>-k<span class="w"> </span>user_id,ip
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip-prefix<span class="w"> </span>-k<span class="w"> </span>user_id,ip
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user001' <span class=" -Color -Color-Green">ip</span>='64.168.98.21'
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">ip</span>='245.126.84.248'
@@ -1897,7 +1981,7 @@ addresses that share a prefix still share one afterwards (<code>10.0.5.23</code>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user_id</span>='user004' <span class=" -Color -Color-Green">ip</span>='64.168.98.20'
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
 </code></pre></div>
-<p>Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer <code>pseudonym()</code> (<a href="../../reference/functions/#textpseudonym_ip">trade-offs</a>).</p>
+<p>Prefixes are exactly what an attacker can use against it; for data that leaves your control, prefer <code>--pseudonymize ip</code> (<a href="../../reference/functions/#textpseudonymize_ipsmode-mappseudonymize_ipsmode">trade-offs</a>). For one field only, use <code>pseudonymize_ips()</code> in <code>--exec</code>.</p>
 <h2 id="drop-sensitive-fields">Drop sensitive fields<a class="headerlink" href="#drop-sensitive-fields" title="Permanent link">&para;</a></h2>
 <p><code>-K token,password</code> hides fields from the output; <code>e.token = ()</code> in <code>--exec</code>
 removes them before later stages and summaries see them.</p>
@@ -2009,7 +2093,7 @@ removes them before later stages and summaries see them.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
         <script src="../../assets/_markdown_exec_pyodide.js"></script>
       
