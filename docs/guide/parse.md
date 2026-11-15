@@ -312,6 +312,13 @@ kelora examples/kubectl_timestamps.log --extract-prefix kube_ts --prefix-sep ' '
   -l error -k kube_ts,msg,err
 ```
 
+The prefix is removed after `--multiline` has joined lines, so `-M` doesn't
+work when every line, stack-trace lines included, carries the prefix: it
+can't see their indentation, and joined events keep the later prefixes in
+their text. Kelora warns when it sees such lines. Read these logs without the
+prefix (`docker compose logs --no-log-prefix`, `kubectl logs` without
+`--timestamps`) when you need multiline events.
+
 ## Logs inside test output (TAP)
 
 Perl tests that log through `note()` or `diag()` leave the log lines in the

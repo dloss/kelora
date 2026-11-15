@@ -1412,6 +1412,7 @@ fn run_pipeline_sequential_internal<W: Write>(
 
     multiline_state.note_no_boundary(&pipeline, config);
     multiline_state.note_excessive_joining(&pipeline, config);
+    multiline_state.note_prefixed_continuations(&pipeline, config);
 
     // Release trailing context lines (-A/-C) still parked in a script stage.
     // Runs after the chunker flush so the last input line has become an event,
@@ -1606,6 +1607,21 @@ impl MultilineSeqState {
             return;
         };
         let _ = SafeStderr::new().writeln(&config.format_warning_message(&text));
+    }
+
+    /// Called once after the final flush. Warns when lines carried the
+    /// `--extract-prefix` prefix in front of indented text: the chunker joins
+    /// raw lines before the parser removes the prefix, so such continuation
+    /// lines are never recognized and joined events keep their prefixes.
+    fn note_prefixed_continuations(&self, pipeline: &pipeline::Pipeline, config: &KeloraConfig) {
+        let lines = pipeline.multiline_prefixed_continuations();
+        if lines == 0 || !config.warnings_allowed() {
+            return;
+        }
+        let _ = SafeStderr::new().writeln(
+            &config
+                .format_warning_message(&crate::config::prefixed_continuation_warning_text(lines)),
+        );
     }
 }
 

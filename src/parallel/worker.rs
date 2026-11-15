@@ -793,6 +793,10 @@ pub(crate) struct ChunkerRuntime {
     /// Builds the end-of-run excessive-joining warning from the chunker's
     /// counts (#361); None when warnings are suppressed.
     pub excessive_join_warning: Option<ExcessiveJoinWarning>,
+    /// The warning prefix for the `--extract-prefix` continuation warning,
+    /// whose count is known only at end of input; None when warnings are
+    /// suppressed or no prefix is extracted.
+    pub prefixed_continuation_prefix: Option<String>,
 }
 
 /// Formats the excessive-joining warning once its counts are known.
@@ -982,6 +986,13 @@ pub(crate) fn chunker_thread(
         if let Some(warning) = build(stats) {
             let _ = crate::platform::SafeStderr::new().writeln(&warning);
         }
+    }
+    let prefixed = chunker.prefixed_continuations();
+    if let (true, Some(prefix)) = (prefixed > 0, runtime.prefixed_continuation_prefix.as_ref()) {
+        let _ = crate::platform::SafeStderr::new().writeln(&format!(
+            "{prefix}{}",
+            crate::config::prefixed_continuation_warning_text(prefixed)
+        ));
     }
 
     Ok(())

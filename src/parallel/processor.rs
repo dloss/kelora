@@ -71,6 +71,9 @@ fn build_chunker_runtime(
     } else {
         None
     };
+    let prefixed_continuation_prefix = (config.warnings_allowed()
+        && multiline_config.prefix_sep.is_some())
+    .then(|| config.format_warning_message(""));
     ChunkerRuntime {
         idle_timeout: multiline_config.idle_timeout,
         idle_hint,
@@ -78,6 +81,7 @@ fn build_chunker_runtime(
         preset_ts_hint,
         no_boundary_hint,
         excessive_join_warning,
+        prefixed_continuation_prefix,
     }
 }
 

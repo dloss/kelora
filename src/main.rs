@@ -537,6 +537,11 @@ fn main() -> Result<()> {
                     multiline_config.max_lines = max_lines;
                 }
                 multiline_config.idle_timeout_explicit = cli.multiline_timeout.is_some();
+                multiline_config.prefix_sep = config
+                    .input
+                    .extract_prefix
+                    .as_ref()
+                    .map(|_| config.input.prefix_sep.clone());
                 multiline_config.idle_timeout = match resolve_multiline_idle_timeout(
                     cli.multiline_timeout.as_deref(),
                     &config.input.files,

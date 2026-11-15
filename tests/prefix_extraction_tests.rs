@@ -265,3 +265,118 @@ fn test_prefix_extraction_auto_detects_after_prefix_stdin() {
         "{stdout}\n{stderr}"
     );
 }
+
+/// `docker compose logs` output: every line, trace lines included, carries
+/// the service prefix.
+const COMPOSE_TRACEBACK: &str = "web-1  | INFO started
+web-1  | Traceback (most recent call last):
+web-1  |   File \"/app/x.py\", line 3, in <module>
+web-1  |     boom()
+web-1  | ZeroDivisionError: division by zero
+db-1   | LOG:  checkpoint";
+
+#[test]
+fn multiline_warns_when_continuation_lines_carry_the_prefix() {
+    // --multiline joins raw lines before the parser removes the prefix, so it
+    // never sees the traceback's indentation and leaves every line its own
+    // event. Silent wrong output before; now a warning.
+    for args in [
+        vec![
+            "--extract-prefix",
+            "svc",
+            "-f",
+            "line",
+            "-M",
+            "python",
+            "-q",
+        ],
+        vec![
+            "--extract-prefix",
+            "svc",
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "-q",
+            "--parallel",
+        ],
+    ] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(&args, COMPOSE_TRACEBACK);
+        assert_eq!(exit_code, 0, "{args:?}: {stderr}");
+        assert_eq!(
+            stderr
+                .matches("2 lines carry the --extract-prefix prefix in front of indented text")
+                .count(),
+            1,
+            "{args:?}: {stderr}"
+        );
+        assert!(stderr.contains("--no-log-prefix"), "{args:?}: {stderr}");
+    }
+
+    // kubectl logs --timestamps, prefix separated by a space.
+    let kubectl = "2026-11-14T09:00:00.1Z ERROR Request failed
+2026-11-14T09:00:00.1Z java.lang.NullPointerException: boom
+2026-11-14T09:00:00.1Z \tat com.acme.Foo.bar(Foo.java:10)
+2026-11-14T09:00:01.2Z INFO next request";
+    let (_stdout, stderr, _exit_code) = run_kelora_with_input(
+        &[
+            "--extract-prefix",
+            "kts",
+            "--prefix-sep",
+            " ",
+            "-f",
+            "line",
+            "-M",
+            "java",
+            "-q",
+        ],
+        kubectl,
+    );
+    assert!(
+        stderr.contains("1 line carries the --extract-prefix prefix"),
+        "{stderr}"
+    );
+}
+
+#[test]
+fn no_prefix_multiline_warning_without_evidence_or_with_warnings_off() {
+    // Without --multiline there is nothing to warn about.
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &["--extract-prefix", "svc", "-f", "line", "-q"],
+        COMPOSE_TRACEBACK,
+    );
+    assert!(!stderr.contains("--extract-prefix prefix"), "{stderr}");
+
+    // Prefix only on record starts: continuation lines are plain, so the
+    // combination works and must stay quiet.
+    let (stdout, stderr, _) = run_kelora_with_input(
+        &[
+            "--extract-prefix",
+            "svc",
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "-F",
+            "json",
+        ],
+        "web|ERROR x\n    at a\nweb|INFO y",
+    );
+    assert!(!stderr.contains("--extract-prefix prefix"), "{stderr}");
+    assert_eq!(stdout.lines().count(), 2, "{stdout}");
+
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &[
+            "--extract-prefix",
+            "svc",
+            "-f",
+            "line",
+            "-M",
+            "python",
+            "-q",
+            "--no-warnings",
+        ],
+        COMPOSE_TRACEBACK,
+    );
+    assert!(!stderr.contains("--extract-prefix prefix"), "{stderr}");
+}

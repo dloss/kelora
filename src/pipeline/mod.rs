@@ -369,6 +369,12 @@ pub trait Chunker: Send {
     fn excessive_joining(&self) -> Option<multiline::JoinStats> {
         None
     }
+    /// At end of input: how many lines carried the `--extract-prefix` prefix
+    /// in front of indented text (continuation lines the strategy can't
+    /// recognize, because the prefix is removed only after joining).
+    fn prefixed_continuations(&self) -> u64 {
+        0
+    }
     /// True when every fed line is exactly one record (no buffering ever).
     /// Lets the pipeline skip the chunk-buffer machinery on the hot path.
     fn is_passthrough(&self) -> bool {
@@ -1203,5 +1209,11 @@ impl Pipeline {
     /// final flush; see [`Chunker::excessive_joining`].
     pub fn multiline_excessive_joining(&self) -> Option<multiline::JoinStats> {
         self.chunker.excessive_joining()
+    }
+
+    /// Lines with the `--extract-prefix` prefix in front of indented text. Ask
+    /// after the final flush; see [`Chunker::prefixed_continuations`].
+    pub fn multiline_prefixed_continuations(&self) -> u64 {
+        self.chunker.prefixed_continuations()
     }
 }

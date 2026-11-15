@@ -68,6 +68,9 @@ pub struct MultilineChunker {
     events_emitted: u64,
     event_lines: u64,
     unindented_continuations: u64,
+    /// Lines that carry the `--extract-prefix` prefix in front of indented
+    /// text. Feeds `prefixed_continuations`.
+    prefixed_indented: u64,
 }
 
 /// Runtime state for a language preset strategy: the trace rule machine plus
@@ -140,6 +143,7 @@ impl MultilineChunker {
             events_emitted: 0,
             event_lines: 0,
             unindented_continuations: 0,
+            prefixed_indented: 0,
         })
     }
 
@@ -445,6 +449,11 @@ fn push_candidate(candidates: &mut Vec<String>, candidate: String) {
 impl Chunker for MultilineChunker {
     fn feed_line(&mut self, line: ChunkLine, out: &mut Vec<Chunk>) {
         self.lines_fed += 1;
+        if let Some(sep) = self.config.prefix_sep.as_deref() {
+            if is_prefixed_indented(&line.text, sep) {
+                self.prefixed_indented += 1;
+            }
+        }
         match &self.config.strategy {
             MultilineStrategy::All => {
                 self.push_line(line);
@@ -562,6 +571,10 @@ impl Chunker for MultilineChunker {
         self.boundaries == 0 && self.lines_fed >= MIN_LINES_FOR_NO_BOUNDARY_HINT
     }
 
+    fn prefixed_continuations(&self) -> u64 {
+        self.prefixed_indented
+    }
+
     fn excessive_joining(&self) -> Option<JoinStats> {
         // Only the header-detecting strategies can misfire this way. `all`,
         // `blank` (paragraphs) and the presets (whole traces) are asked to build
@@ -590,6 +603,23 @@ impl Chunker for MultilineChunker {
     }
 }
 
+/// True when `line` has a non-empty `--extract-prefix` prefix and the text
+/// after the separator is indented (beyond the one space that usually follows
+/// it): a continuation line that carries the prefix, as in `web-1  |   File …`
+/// or `2024-…Z     at com.acme…`. The chunker sees it with the prefix still in
+/// front, so it can't tell it's a continuation.
+fn is_prefixed_indented(line: &str, sep: &str) -> bool {
+    let Some(pos) = line.find(sep) else {
+        return false;
+    };
+    if line[..pos].trim().is_empty() {
+        return false;
+    }
+    let rest = &line[pos + sep.len()..];
+    let rest = rest.strip_prefix(' ').unwrap_or(rest);
+    rest.starts_with([' ', '\t']) && !rest.trim().is_empty()
+}
+
 /// Create a chunker based on multiline configuration
 pub fn create_multiline_chunker(config: &MultilineConfig) -> Result<Box<dyn Chunker>, String> {
     let chunker = MultilineChunker::new(config.clone())?;
@@ -607,6 +637,7 @@ mod tests {
             max_lines: 0,
             idle_timeout: None,
             idle_timeout_explicit: false,
+            prefix_sep: None,
         }
     }
 
@@ -1597,6 +1628,7 @@ mod proptests {
                     max_lines: cap,
                     idle_timeout: None,
                     idle_timeout_explicit: false,
+                    prefix_sep: None,
                 };
                 let got: Vec<String> = chunk_lines(cfg, &lines)
                     .iter()
@@ -1626,6 +1658,7 @@ mod proptests {
                 max_lines: cap,
                 idle_timeout: None,
                 idle_timeout_explicit: false,
+                prefix_sep: None,
             };
             let chunks = chunk_lines(cfg, &lines);
             prop_assert_eq!(chunks.len(), 1);
@@ -1648,6 +1681,7 @@ mod proptests {
                     max_lines: 0,
                     idle_timeout: None,
                     idle_timeout_explicit: false,
+                    prefix_sep: None,
                 };
                 let chunks = chunk_lines(cfg, &lines);
                 let mut prev_first = 0usize;
@@ -1666,5 +1700,19 @@ mod proptests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn prefixed_indented_lines_are_continuations_behind_a_prefix() {
+        assert!(is_prefixed_indented("web-1  |   File \"x.py\"", "|"));
+        assert!(is_prefixed_indented("web-1  | \tat a.B(B.java:1)", "|"));
+        assert!(is_prefixed_indented("2026-01-01T00:00:00Z     at a.B", " "));
+        assert!(!is_prefixed_indented("web-1  | INFO started", "|"));
+        assert!(!is_prefixed_indented("2026-01-01T00:00:00Z INFO x", " "));
+        // No prefix in front: an ordinary indented continuation line.
+        assert!(!is_prefixed_indented("    at a.B", " "));
+        assert!(!is_prefixed_indented("  | x", "|"));
+        // Whitespace only after the separator is not indented text.
+        assert!(!is_prefixed_indented("web-1  |   ", "|"));
     }
 }

@@ -569,6 +569,11 @@ pub struct MultilineConfig {
     /// user may not know events can split); an explicit one is a choice and
     /// stays quiet.
     pub idle_timeout_explicit: bool,
+    /// The `--extract-prefix` separator, when one is set. The prefix is
+    /// removed by the parser, after the chunker has joined raw lines, so the
+    /// chunker counts prefixed lines whose text is indented — continuation
+    /// lines it can't recognize — for a warning at end of input.
+    pub prefix_sep: Option<String>,
 }
 
 /// Multi-line event detection strategies
@@ -800,6 +805,7 @@ impl MultilineConfig {
             max_lines: crate::pipeline::DEFAULT_MULTILINE_MAX_LINES,
             idle_timeout: None,
             idle_timeout_explicit: false,
+            prefix_sep: None,
         })
     }
 
@@ -897,6 +903,25 @@ pub fn excessive_join_warning_text(
     ))
 }
 
+/// Warning for `--extract-prefix` with `--multiline` when continuation lines
+/// carry the prefix too (`docker compose logs`, `kubectl logs --timestamps`).
+/// `lines` counts prefixed lines whose text is indented — see
+/// [`MultilineConfig::prefix_sep`].
+pub fn prefixed_continuation_warning_text(lines: u64) -> String {
+    let (count, verb) = if lines == 1 {
+        ("1 line".to_string(), "carries")
+    } else {
+        (format!("{lines} lines"), "carry")
+    };
+    format!(
+        "multiline: {count} {verb} the --extract-prefix prefix in front of indented text. \
+         --multiline joins lines before the prefix is removed, so it can't recognize \
+         continuation lines that carry it, and joined events keep those prefixes in their \
+         text. Read the log without the prefix (docker compose logs --no-log-prefix, kubectl \
+         logs without --timestamps) or remove it before kelora."
+    )
+}
+
 fn unknown_option_error(strategy: &str, segment: &str) -> String {
     let supported = match strategy {
         "timestamp" => "format=..., loose",
@@ -920,6 +945,7 @@ impl Default for MultilineConfig {
             max_lines: crate::pipeline::DEFAULT_MULTILINE_MAX_LINES,
             idle_timeout: None,
             idle_timeout_explicit: false,
+            prefix_sep: None,
         }
     }
 }
