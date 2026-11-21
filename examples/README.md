@@ -292,6 +292,7 @@ Production-like log files for testing realistic use cases:
 - `shop.log` - Java/log4j application log with a payment-provider outage (home page demo)
 - `berlin_local.log` - naive local timestamps in `dd.mm.yyyy` (`--ts-format`, `--input-tz`)
 - `ufw_firewall.log` - Ubuntu UFW firewall log (syslog with `KEY=VALUE` pairs)
+- `checkout_pii.jsonl` - shop service log full of personal data and secrets: emails, IPs, card and phone numbers, SSN, tokens in URLs and headers (sanitization cookbook)
 - And many more...
 
 ### Power-User Technique Examples

@@ -206,7 +206,7 @@ stable and private — without it, Kelora uses a random key and the aliases chan
 on every run. `hash()` gives a
 plain SHA-256 digest, and `normalized()` replaces IPs, emails, UUIDs and the
 like inside free text. For IP addresses alone, `--pseudonymize ip` replaces
-them everywhere without a script. The [cookbook](../cookbook/security-privacy.md) has complete recipes.
+them everywhere without a script. The [cookbook](../cookbook/privacy.md) has complete recipes.
 
 ## Reuse scripts
 

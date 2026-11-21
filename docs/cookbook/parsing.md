@@ -55,6 +55,17 @@ kelora examples/json_array.json -f line -M all -e 'emit_each(e.line.parse_json()
 kelora examples/mixed_format.log -f json,line --filter 'e._format == "line"' -k line
 ```
 
+## Read JWT claims
+
+`parse_jwt()` decodes a token without verifying the signature — for
+debugging, not for trusting:
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/auth-logs.jsonl \
+  -e 'let t = e.token.parse_jwt(); e.sub = t.claims.sub; e.role = t.claims.role; e.expires = t.expires_at' \
+  -k timestamp,sub,role,expires
+```
+
 ## A custom format
 
 Work through [Get Logs into Shape](../guide/parse.md): named format, cascade, `cols:`,

@@ -51,3 +51,9 @@ kelora examples/web_access_large.log.gz \
 kelora examples/web_access.log -m \
   -e 'track_freq("origin", if e.ip.is_private_ip() { "internal" } else { "external" })'
 ```
+
+## Requests from one network
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/web_access.log --filter 'e.ip.is_in_cidr("198.51.100.0/24")' -k ip,path,status
+```

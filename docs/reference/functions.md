@@ -77,7 +77,7 @@ emit_each(e.log.extract_regexes(#"(ERR-\d+): ([^\n]+)"#).map(|g| #{code: g[0], m
 To turn named groups into fields of the *current* event, use [`absorb_regex()`](#eabsorb_regexfield-pattern-options).
 
 #### `text.extract_ip([nth])` / `text.extract_ips()`
-IPv4 and IPv6 address(es) found in text, in the order they appear (`nth`: 1=first, -1=last). Brackets, ports and zone IDs are left off (`[fe80::1%eth0]:22` gives `fe80::1`); an IPv4-mapped address stays whole (`::ffff:10.0.0.1`). An IPv6 address must stand alone, so `Class::method`, times and MAC addresses don't match; neither does the bare `::`. To keep one family, filter with `is_ipv4()`/`is_ipv6()`. The `<ip:…>` tokens that [`--pseudonymize ip`](../cookbook/security-privacy.md#pseudonymize-ip-addresses) and `pseudonymize_ips()` leave are returned too, so you can still count and group by address.
+IPv4 and IPv6 address(es) found in text, in the order they appear (`nth`: 1=first, -1=last). Brackets, ports and zone IDs are left off (`[fe80::1%eth0]:22` gives `fe80::1`); an IPv4-mapped address stays whole (`::ffff:10.0.0.1`). An IPv6 address must stand alone, so `Class::method`, times and MAC addresses don't match; neither does the bare `::`. To keep one family, filter with `is_ipv4()`/`is_ipv6()`. The `<ip:…>` tokens that [`--pseudonymize ip`](../cookbook/privacy.md#pseudonymize-every-ip-and-email-address) and `pseudonymize_ips()` leave are returned too, so you can still count and group by address.
 
 ```rhai
 e.client_ip = e.headers.extract_ip();            // first
@@ -1261,7 +1261,7 @@ e.user_alias = pseudonym(e.username, "users");   // e.g. "0809mKUnbCRvoshgu3NZZC
 e.ip_alias = pseudonym(e.client_ip, "ips");
 ```
 
-Related: `hash()` (one-way digest), `pseudonymize_ips()`, `mask_ip()`, `normalized()`. Recipes: [Cookbook → Security and Privacy](../cookbook/security-privacy.md).
+Related: `hash()` (one-way digest), `pseudonymize_ips()`, `mask_ip()`, `normalized()`. Recipes: [Cookbook → Privacy and Sanitization](../cookbook/privacy.md).
 
 #### `read_file(path)` / `read_lines(path)`
 File contents as one string, or as an array of lines. **Only allowed in `--begin`**; keep the result in `state` for later stages.

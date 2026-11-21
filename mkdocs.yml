@@ -68,8 +68,9 @@ plugins:
         how-to/monitor-application-health.md: cookbook/monitoring.md
         how-to/parse-syslog-files.md: cookbook/parsing.md
         how-to/handle-multiline-stacktraces.md: reference/multiline.md
-        how-to/extract-and-mask-sensitive-data.md: cookbook/security-privacy.md
-        how-to/pseudonymize-identifiers-for-analytics.md: cookbook/security-privacy.md
+        how-to/extract-and-mask-sensitive-data.md: cookbook/privacy.md
+        how-to/pseudonymize-identifiers-for-analytics.md: cookbook/privacy.md
+        cookbook/security-privacy.md: cookbook/privacy.md
         how-to/process-csv-data.md: cookbook/exports.md
         how-to/fan-out-nested-structures.md: guide/scripting.md
         how-to/build-streaming-alerts.md: cookbook/monitoring.md
@@ -142,9 +143,9 @@ nav:
       - Overview: cookbook/index.md
       - Errors and Incidents: cookbook/errors.md
       - Web and API Traffic: cookbook/web.md
-      - Security and Privacy: cookbook/security-privacy.md
       - Parsing: cookbook/parsing.md
       - Exports and Samples: cookbook/exports.md
+      - Privacy and Sanitization: cookbook/privacy.md
       - Monitoring and Time: cookbook/monitoring.md
   - How It Works: how-it-works.md
   - Reference:

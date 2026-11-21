@@ -103,3 +103,12 @@ kelora --merge-sorted examples/merge_api.jsonl examples/merge_worker.jsonl -l er
 ```
 
 Each file must be in time order. [Big Files, Many Files](../guide/files.md#merge-files-by-time)
+
+## Failed SSH logins by IP and user
+
+```bash exec="on" source="above" result="ansi"
+kelora examples/sshd_auth.log --input-year 2024 \
+  --filter 'e.msg.starts_with("Failed password")' \
+  -e 'e.ip = e.msg.extract_ip(); e.user = e.msg.extract_regex("for (?:invalid user )?(\\S+)", 1)' \
+  --freq ip --freq user
+```

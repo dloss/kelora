@@ -12,9 +12,9 @@ import pathlib, re
 pages = [
     ("errors.md", "Errors and incidents"),
     ("web.md", "Web and API traffic"),
-    ("security-privacy.md", "Security and privacy"),
     ("parsing.md", "Parsing"),
     ("exports.md", "Exports and samples"),
+    ("privacy.md", "Privacy and sanitization"),
     ("monitoring.md", "Monitoring and time"),
 ]
 for name, title in pages:

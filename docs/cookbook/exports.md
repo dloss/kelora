@@ -22,6 +22,8 @@ KELORA_SECRET=change-me kelora examples/web_access.log \
   -k ts,path,status,user,ip -F csv
 ```
 
+More techniques, and how to check the result: [Privacy and Sanitization](privacy.md).
+
 ## A reproducible 10 % sample
 
 Hash a stable field, so the same requests are chosen every time:
