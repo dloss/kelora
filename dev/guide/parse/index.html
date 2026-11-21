@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
@@ -1176,34 +1176,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cookbook/security-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security and Privacy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cookbook/parsing/" class="md-nav__link">
         
   
@@ -1240,6 +1212,34 @@
     
   
     Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
   
 
     
@@ -2434,6 +2434,12 @@ time and a space before each line:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">kube_ts</span>='2024-07-17T12:12:10.871554120Z' <span class=" -Color -Color-Green">msg</span>='request failed'
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">err</span>='upstream timed out'
 </code></pre></div>
+<p>The prefix is removed after <code>--multiline</code> has joined lines, so <code>-M</code> doesn't
+work when every line, stack-trace lines included, carries the prefix: it
+can't see their indentation, and joined events keep the later prefixes in
+their text. Kelora warns when it sees such lines. Read these logs without the
+prefix (<code>docker compose logs --no-log-prefix</code>, <code>kubectl logs</code> without
+<code>--timestamps</code>) when you need multiline events.</p>
 <h2 id="logs-inside-test-output-tap">Logs inside test output (TAP)<a class="headerlink" href="#logs-inside-test-output-tap" title="Permanent link">&para;</a></h2>
 <p>Perl tests that log through <code>note()</code> or <code>diag()</code> leave the log lines in the
 <code>#</code> comments of their TAP output; so does anything else that writes TAP, such

@@ -1,0 +1,2397 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/cookbook/privacy/">
+      
+      
+        <link rel="prev" href="../exports/">
+      
+      
+        <link rel="next" href="../monitoring/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>Privacy and Sanitization - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#privacy-and-sanitization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Privacy and Sanitization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/explore/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How It Works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/troubleshooting/" class="md-tabs__link">
+          
+  
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore a Log File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/parse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Logs into Shape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transform with Scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/summarize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summarize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/spans/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Group into Spans
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output and Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Big Files, Many Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Aliases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and Incidents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web and API Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parsing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#find-what-needs-hiding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find what needs hiding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-only-the-fields-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep only the fields you need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-a-nested-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a nested field
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cut-values-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cut values down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fail-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail closed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replace-personal-data-in-free-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replace personal data in free text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-secrets-with-a-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact secrets with a regex
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consistent-pseudonyms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consistent pseudonyms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudonymize-every-ip-and-email-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize every IP and email address
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-the-address-behind-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the address behind a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IPs but keep subnets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-the-secret-out-of-shell-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the secret out of shell history
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sanitize-a-text-log-and-keep-its-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sanitize a text log and keep its format
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-whats-left" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check what's left
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring and Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#find-what-needs-hiding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find what needs hiding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-only-the-fields-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep only the fields you need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-a-nested-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a nested field
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cut-values-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cut values down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fail-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail closed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replace-personal-data-in-free-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replace personal data in free text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-secrets-with-a-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact secrets with a regex
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consistent-pseudonyms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consistent pseudonyms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudonymize-every-ip-and-email-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize every IP and email address
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-the-address-behind-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the address behind a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudonymize-ips-but-keep-subnets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudonymize IPs but keep subnets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-the-secret-out-of-shell-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the secret out of shell history
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sanitize-a-text-log-and-keep-its-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sanitize a text log and keep its format
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-whats-left" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check what's left
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="privacy-and-sanitization">Privacy and Sanitization<a class="headerlink" href="#privacy-and-sanitization" title="Permanent link">&para;</a></h1>
+<p>Strip personal data and secrets from a log before you share it, while keeping
+it useful. The recipes go from blunt to fine: drop fields, cut values down,
+replace patterns with placeholders, swap identifiers for stable pseudonyms,
+then check what's left. Most use <code>checkout_pii.jsonl</code>, a shop log with
+emails, IPs, card and phone numbers, and tokens in URLs and headers.</p>
+<h2 id="find-what-needs-hiding">Find what needs hiding<a class="headerlink" href="#find-what-needs-hiding" title="Permanent link">&para;</a></h2>
+<p><code>--discover</code> lists every field, nested ones included, with examples:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>--discover
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Field                          Type       Seen  Miss  Uniq  Examples
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp                      string        8    0%     8  "2026-10-06T09:14:0…
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>level                          string        8    0%     3  "INFO", "ERROR", "W…
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>service                        string        8    0%     5  "auth", "checkout",…
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>client_ip                      string        8    0%     5  "203.0.113.7", "198…
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>msg                            string        8    0%     8  "login ok", "paymen…
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>request                        map(2)        8    0%     —  
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>request.headers                map(1..2)     8    0%     —  
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>request.headers.user-agent     string        8    0%     3  "Mozilla/5.0", "cur…
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>request.path                   string        8    0%     7  "/login", "/api/ord…
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>user                           string        7   12%     3  "alice@example.com"…
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>session                        string        7   12%     3  "6f1c2a9e-4b7d-4e2a…
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>request.headers.authorization  string        4   50%     3  "Basic YWxpY2U6czNj…
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>8 events scanned · format: json (auto-detected) · timestamp: timestamp → meta.parsed_ts
+</code></pre></div>
+<p>Free text (<code>msg</code> here) needs a look of its own: personal data hides in
+messages, URLs and headers as often as in named fields.</p>
+<h2 id="keep-only-the-fields-you-need">Keep only the fields you need<a class="headerlink" href="#keep-only-the-fields-you-need" title="Permanent link">&para;</a></h2>
+<p>List the fields to keep, not the ones to drop. A field added to the log
+next month then stays out until you add it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>-k<span class="w"> </span>timestamp,level,service,msg<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">timestamp</span>='2026-10-06T09:14:02Z' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">service</span>='auth' <span class=" -Color -Color-Green">msg</span>='login ok'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">timestamp</span>='2026-10-06T09:14:31Z' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightGreen">INFO</span>' <span class=" -Color -Color-Green">service</span>='checkout'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  <span class=" -Color -Color-Green">msg</span>='payment authorized card=4111 1111 1111 1111 amount=42.00'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">timestamp</span>='2026-10-06T09:15:10Z' <span class=" -Color -Color-Green">level</span>='<span class=" -Color -Color-BrightRed">ERROR</span>' <span class=" -Color -Color-Green">service</span>='checkout'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  <span class=" -Color -Color-Green">msg</span>='card 5555555555554444 declined for bob@example.org, retry from 198.51.100.23'
+</code></pre></div>
+<p><code>-K session,user</code> does the opposite. Both only shape the output: filters,
+<code>--freq</code> and metrics still see every field. To remove a field before they
+run, do it in a script: <code>e = e.keep(["timestamp", "level", "service", "msg"])</code>,
+<code>e = e.drop(["session"])</code> or <code>e.session = ()</code>.</p>
+<h2 id="remove-a-nested-field">Remove a nested field<a class="headerlink" href="#remove-a-nested-field" title="Permanent link">&para;</a></h2>
+<p><code>-k</code> and <code>-K</code> act on top-level fields only. Remove a nested key with
+<code>remove_path()</code>; events without it are left alone:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">'e.remove_path("request.headers.authorization")'</span><span class="w"> </span>-k<span class="w"> </span>request<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">request</span>={"headers":{"user-agent":"Mozilla/5.0"},"path":"/login"}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">request</span>={"headers":{"user-agent":"Mozilla/5.0"},"path":"/api/orders?token=f9a8c7e6d5&amp;page=2"}
+</code></pre></div>
+<p><code>e.request.headers.authorization = ()</code> would leave <code>"authorization": null</code>.</p>
+<h2 id="cut-values-down">Cut values down<a class="headerlink" href="#cut-values-down" title="Permanent link">&para;</a></h2>
+<p>Keep the part you need: the network instead of the address, the email
+domain instead of the person, the path without its query string (which often
+carries tokens):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.client_ip = e.client_ip.mask_ip(2);</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">      if e.has("user") { e.user = e.user.parse_email().domain }</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">      e.path = e.request.path.split("?")[0];'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-k<span class="w"> </span>client_ip,user,path
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0' <span class=" -Color -Color-Green">user</span>='example.com' <span class=" -Color -Color-Green">path</span>='/login'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0' <span class=" -Color -Color-Green">user</span>='example.com' <span class=" -Color -Color-Green">path</span>='/api/orders'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0' <span class=" -Color -Color-Green">user</span>='example.org' <span class=" -Color -Color-Green">path</span>='/api/orders'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0' <span class=" -Color -Color-Green">user</span>='example.org' <span class=" -Color -Color-Green">path</span>='/login'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0' <span class=" -Color -Color-Green">user</span>='example.net' <span class=" -Color -Color-Green">path</span>='/support/callback'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0' <span class=" -Color -Color-Green">user</span>='example.net' <span class=" -Color -Color-Green">path</span>='/api/kyc'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">client_ip</span>='10.0.0.0' <span class=" -Color -Color-Green">path</span>='/internal/webhooks'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0' <span class=" -Color -Color-Green">user</span>='example.com' <span class=" -Color -Color-Green">path</span>='/api/orders/1042'
+</code></pre></div>
+<p><code>mask_ip(n)</code> zeroes the last <em>n</em> octets (IPv6: groups). <code>shorten(8, "")</code>
+keeps the first 8 characters of a value.</p>
+<h2 id="fail-closed">Fail closed<a class="headerlink" href="#fail-closed" title="Permanent link">&para;</a></h2>
+<p>If a script fails on an event, kelora outputs the event as it was before the
+script ran, with the data you meant to hide, and warns on stderr. Here the
+webhook event has no <code>user</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.client_ip = e.client_ip.mask_ip(2); e.user = e.user.parse_email().domain'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>client_ip<span class="w"> </span>-n<span class="w"> </span><span class="m">7</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">client_ip</span>='10.0.4.12'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>🔸 Exec errors: 1 total
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  examples/checkout_pii.jsonl:7: Missing field during expression evaluation. Check field names, or use e.has(...) / e.get_path(...) when the field is optional.
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  🔸 1 event was output without the changes of the --exec stage that failed on it. A stage calls mask_ip(), so it may still hold data it was meant to hide. Add --strict to stop at the first error instead, and guard optional fields with e.has(...).
+</code></pre></div>
+<p><code>10.0.4.12</code> slipped through. When sanitizing, add <code>--strict</code>: the first error
+stops the run with exit code 1, before the event is written:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>--strict<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.client_ip = e.client_ip.mask_ip(2); e.user = e.user.parse_email().domain'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>client_ip<span class="w"> </span>-n<span class="w"> </span><span class="m">7</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">client_ip</span>='203.0.0.0'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">client_ip</span>='198.51.0.0'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">client_ip</span>='192.0.0.0'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>⚠️ Pipeline error: exec error
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  At 1:55 in exec script
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  1 | e.client_ip = e.client_ip.mask_ip(2); e.user = e.user.parse_email().domain
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    |                                                       ^
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  Rhai: Function not found: parse_email (()) (line 1, position 55)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  💡 Field is missing. Use e.has("field") to check, or e.get_path("field", default) to provide a default
+</code></pre></div>
+<p>Then guard optional fields with <code>e.has(...)</code>, as in the recipe above.</p>
+<h2 id="replace-personal-data-in-free-text">Replace personal data in free text<a class="headerlink" href="#replace-personal-data-in-free-text" title="Permanent link">&para;</a></h2>
+<p><code>normalized()</code> replaces addresses, IDs and the like inside text with
+placeholders. Card, phone and US social security numbers are off by default;
+name them:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.msg = e.msg.normalized(["email", "ipv4", "ipv6", "credit_card", "phone", "ssn"])'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>service,msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">service</span>='auth' <span class=" -Color -Color-Green">msg</span>='login ok'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">service</span>='checkout' <span class=" -Color -Color-Green">msg</span>='payment authorized card=&lt;credit_card&gt; amount=42.00'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">service</span>='checkout'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">msg</span>='card &lt;credit_card&gt; declined for &lt;email&gt;, retry from &lt;ipv4&gt;'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">service</span>='auth' <span class=" -Color -Color-Green">msg</span>='login failed for &lt;email&gt;: password=hunter2 rejected'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">service</span>='support' <span class=" -Color -Color-Green">msg</span>='callback requested at &lt;phone&gt; by &lt;email&gt;'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">service</span>='kyc' <span class=" -Color -Color-Green">msg</span>='identity check passed ssn=&lt;ssn&gt;'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class=" -Color -Color-Green">service</span>='webhooks'
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  <span class=" -Color -Color-Green">msg</span>='retrying delivery to https://hooks.example.com/orders?api_key=sk_live_8f3K2mQ9xLp4 after timeout'
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class=" -Color -Color-Green">service</span>='checkout' <span class=" -Color -Color-Green">msg</span>='order 1042 shipped to &lt;email&gt;'
+</code></pre></div>
+<p>Card numbers must pass the Luhn check, so other long numbers stay. Called on the
+event, <code>e = e.normalized([...])</code> rewrites every string field, nested ones
+included. The <a href="../../reference/functions/#textnormalizedpatterns-mapnormalizedpatterns">full pattern list</a>
+also has <code>uuid</code>, <code>url</code>, <code>mac</code>, <code>path</code> and hashes.</p>
+<h2 id="redact-secrets-with-a-regex">Redact secrets with a regex<a class="headerlink" href="#redact-secrets-with-a-regex" title="Permanent link">&para;</a></h2>
+<p>Passwords and API keys have no fixed shape, but they usually follow a
+known name:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.msg = e.msg.replace_regex("(password|api_key|token)=[^&amp;\\s]+", "${1}=***")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>msg<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.msg.contains("***")'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='login failed for bob@example.org: password=*** rejected'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">msg</span>='retrying delivery to https://hooks.example.com/orders?api_key=*** after timeout'
+</code></pre></div>
+<h2 id="consistent-pseudonyms">Consistent pseudonyms<a class="headerlink" href="#consistent-pseudonyms" title="Permanent link">&para;</a></h2>
+<p><code>pseudonym()</code> replaces a value with a keyed alias. The same input gives the
+same alias as long as <code>KELORA_SECRET</code> stays the same, so you can still count,
+join, and follow a user across files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.user = pseudonym(e.email, "user"); e.email = (); e.ip = e.ip.mask_ip(1)'</span><span class="w"> </span>-k<span class="w"> </span>user,action,ip
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user</span>='g8tM8VSw0JPXBMVPhDpsj0Zf' <span class=" -Color -Color-Green">action</span>='login' <span class=" -Color -Color-Green">ip</span>='192.168.1.0'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user</span>='VBFT1D7bynhXWHogMn2-JsRh' <span class=" -Color -Color-Green">action</span>='purchase' <span class=" -Color -Color-Green">ip</span>='10.0.5.0'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user</span>='MaUceTZy9kaE5V2HOavznCDY' <span class=" -Color -Color-Green">action</span>='view' <span class=" -Color -Color-Green">ip</span>='172.16.88.0'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user</span>='Tq9oFjjc-1WvdC9mCHqAC5YQ' <span class=" -Color -Color-Green">action</span>='logout' <span class=" -Color -Color-Green">ip</span>='192.168.1.0'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user</span>='4q0StVl3bHi6gqkOSXZzOA8f' <span class=" -Color -Color-Green">action</span>='login' <span class=" -Color -Color-Green">ip</span>='10.0.5.0'
+</code></pre></div>
+<p>The second argument is a domain: the same value in two domains gets unrelated
+aliases. Don't use <code>hash()</code> for this: it's unkeyed, so anyone can hash a
+list of candidate emails and match them.</p>
+<h2 id="pseudonymize-every-ip-and-email-address">Pseudonymize every IP and email address<a class="headerlink" href="#pseudonymize-every-ip-and-email-address" title="Permanent link">&para;</a></h2>
+<p><code>--pseudonymize ip,email</code> replaces every address in every field, nested values
+and messages included, with a keyed token. Card numbers are untouched:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span>-k<span class="w"> </span>user,client_ip,msg<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user</span>='&lt;email:RIf3Lw9s5T04dtVK1ZehhKBA&gt;'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">client_ip</span>='&lt;ip:K12uPb8OQcdvdsigV03GIDbf&gt;' <span class=" -Color -Color-Green">msg</span>='login ok'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user</span>='&lt;email:RIf3Lw9s5T04dtVK1ZehhKBA&gt;'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">client_ip</span>='&lt;ip:K12uPb8OQcdvdsigV03GIDbf&gt;'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  <span class=" -Color -Color-Green">msg</span>='payment authorized card=4111 1111 1111 1111 amount=42.00'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class=" -Color -Color-Green">user</span>='&lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  <span class=" -Color -Color-Green">client_ip</span>='&lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  <span class=" -Color -Color-Green">msg</span>='card 5555555555554444 declined for &lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;, retry from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;'
+</code></pre></div>
+<p>It runs right after parsing, so filters, <code>--freq</code> and <code>--discover</code> see only
+tokens. <code>--stats</code> counts the replacements (<code>Addresses pseudonymized: 9 IP, 11 email</code>).
+<code>extract_ip()</code> returns the tokens, so you can still count failed logins per
+source address without seeing one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.msg.starts_with("Failed password")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.src = e.msg.extract_ip()'</span><span class="w"> </span>--freq<span class="w"> </span>src
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>src          (3 values):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  value                          count
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;      4
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;      2
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  &lt;ip:BqgbtaN-gmRl5rBJAHQokX0m&gt;      1
+</code></pre></div>
+<p>A filter never sees a real address either. To look for a known one,
+pseudonymize the literal the same way:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.msg.contains("198.51.100.23".pseudonymize_ips())'</span><span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user oracle from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt; port 51002 ssh2'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user test from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt; port 51188 ssh2'
+</code></pre></div>
+<p>For one field only, use <code>pseudonymize_ips()</code> or <code>pseudonymize_emails()</code> in
+<code>--exec</code>.</p>
+<h2 id="find-the-address-behind-a-token">Find the address behind a token<a class="headerlink" href="#find-the-address-behind-a-token" title="Permanent link">&para;</a></h2>
+<p>Tokens can't be reversed, but whoever holds the secret and the original log can
+look one up, say after a recipient reports <code>&lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>--input-year<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.msg.pseudonymize_ips().contains("&lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt;")'</span><span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">msg</span>='Failed password for invalid user admin from 203.0.113.77 port 40122 ssh2'
+</code></pre></div>
+<h2 id="pseudonymize-ips-but-keep-subnets">Pseudonymize IPs but keep subnets<a class="headerlink" href="#pseudonymize-ips-but-keep-subnets" title="Permanent link">&para;</a></h2>
+<p><code>--pseudonymize ip-prefix</code> replaces each address with another of the same
+family; addresses that share a prefix still share one afterwards (<code>10.0.5.23</code>
+and <code>10.0.5.24</code> stay in one /24):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip-prefix<span class="w"> </span>-k<span class="w"> </span>user_id,ip
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user001' <span class=" -Color -Color-Green">ip</span>='64.168.98.21'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">ip</span>='245.126.84.248'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">user_id</span>='user003' <span class=" -Color -Color-Green">ip</span>='50.206.38.29'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">user_id</span>='user004' <span class=" -Color -Color-Green">ip</span>='64.168.98.20'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
+</code></pre></div>
+<p>Pseudonymize a network the same way to filter by it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip-prefix<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.ip.is_in_cidr("10.0.0.0/8".pseudonymize_ips("prefix"))'</span><span class="w"> </span>-k<span class="w"> </span>user_id,ip
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">user_id</span>='user002' <span class=" -Color -Color-Green">ip</span>='245.126.84.248'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">user_id</span>='user005' <span class=" -Color -Color-Green">ip</span>='245.126.84.246'
+</code></pre></div>
+<p>Prefixes are exactly what an attacker can use against it; for data that leaves
+your control, prefer <code>--pseudonymize ip</code>
+(<a href="../../reference/functions/#textpseudonymize_ipsmode-mappseudonymize_ipsmode">trade-offs</a>).</p>
+<h2 id="keep-the-secret-out-of-shell-history">Keep the secret out of shell history<a class="headerlink" href="#keep-the-secret-out-of-shell-history" title="Permanent link">&para;</a></h2>
+<p>Use one long random secret per recipient, so two recipients can't link their
+copies, and pass it as a file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-base64<span class="w"> </span><span class="m">24</span><span class="w"> </span>&gt;<span class="w"> </span>vendor-a.key
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nv">KELORA_SECRET_FILE</span><span class="o">=</span>vendor-a.key<span class="w"> </span>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>for-vendor-a.jsonl
+</code></pre></div>
+<p>Without a secret, kelora uses a random one and the pseudonyms change on every
+run.</p>
+<h2 id="sanitize-a-text-log-and-keep-its-format">Sanitize a text log and keep its format<a class="headerlink" href="#sanitize-a-text-log-and-keep-its-format" title="Permanent link">&para;</a></h2>
+<p>Read the file as plain lines and print them back unchanged, apart from
+the replacements:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/sshd_auth.log<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>--pseudonymize<span class="w"> </span>ip<span class="w"> </span>-k<span class="w"> </span>line<span class="w"> </span>-b<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Mar  3 06:12:01 bastion sshd[4121]: Accepted publickey for deploy from &lt;ip:j7lEFbSZvlI4erFlvAwUxbzf&gt; port 52114 ssh2: ED25519 SHA256:q2Xw
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Mar  3 06:14:22 bastion sshd[4188]: Failed password for invalid user admin from &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt; port 40122 ssh2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Mar  3 06:14:25 bastion sshd[4188]: Failed password for invalid user admin from &lt;ip:wuukJmb_X0e9Dmt1FaY0h3SU&gt; port 40122 ssh2
+</code></pre></div>
+<p>Add <code>-e 'e.line = e.line.normalized([...])'</code> or <code>replace_regex()</code> for other
+data.</p>
+<h2 id="check-whats-left">Check what's left<a class="headerlink" href="#check-whats-left" title="Permanent link">&para;</a></h2>
+<p>Run the sanitized output through kelora again and count which kinds of
+personal data remain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-m<span class="w"> </span>-e<span class="w"> </span><span class="s1">'let t = e.to_json();</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">      for p in ["email", "ipv4", "ipv6", "credit_card", "phone", "ssn"] {</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">        if t.normalized(p) != t { track_freq("left", p) }</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">      }'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>left         (3 values):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  value        count
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  credit_card      2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  phone            1
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  ssn              1
+</code></pre></div>
+<p>The pseudonymized addresses are gone; card, phone and SSN numbers are not.
+Patterns find what has a shape. Names, street addresses and free-form
+secrets don't, so read a sample as well.</p>
+<h2 id="all-together">All together<a class="headerlink" href="#all-together" title="Permanent link">&para;</a></h2>
+<p>Fields chosen, secrets and numbers redacted, addresses pseudonymized, query
+strings cut, stopping on any error. Add <code>-o shared.jsonl</code> to write a file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span>change-me<span class="w"> </span>kelora<span class="w"> </span>examples/checkout_pii.jsonl<span class="w"> </span>--strict<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--pseudonymize<span class="w"> </span>ip,email<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.path = e.request.path.split("?")[0];</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">      e.msg = e.msg</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">        .replace_regex("(password|api_key|token)=[^&amp;\\s]+", "${1}=***")</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">        .normalized(["credit_card", "phone", "ssn"]);'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,service,user,client_ip,path,msg<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"timestamp":"2026-10-06T09:14:02Z","level":"INFO","service":"auth","user":"&lt;email:RIf3Lw9s5T04dtVK1ZehhKBA&gt;","client_ip":"&lt;ip:K12uPb8OQcdvdsigV03GIDbf&gt;","path":"/login","msg":"login ok"}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{"timestamp":"2026-10-06T09:14:31Z","level":"INFO","service":"checkout","user":"&lt;email:RIf3Lw9s5T04dtVK1ZehhKBA&gt;","client_ip":"&lt;ip:K12uPb8OQcdvdsigV03GIDbf&gt;","path":"/api/orders","msg":"payment authorized card=&lt;credit_card&gt; amount=42.00"}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{"timestamp":"2026-10-06T09:15:10Z","level":"ERROR","service":"checkout","user":"&lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;","client_ip":"&lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;","path":"/api/orders","msg":"card &lt;credit_card&gt; declined for &lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;, retry from &lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;"}
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{"timestamp":"2026-10-06T09:15:44Z","level":"ERROR","service":"auth","user":"&lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;","client_ip":"&lt;ip:75CgnUwejaQQUW_irMcQGSxb&gt;","path":"/login","msg":"login failed for &lt;email:yQV5MLU96Qw3tOs6V3mLXqkO&gt;: password=*** rejected"}
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../exports/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Exports and Samples">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Exports and Samples
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../monitoring/" class="md-footer__link md-footer__link--next" aria-label="Next: Monitoring and Time">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Monitoring and Time
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>

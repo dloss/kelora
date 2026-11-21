@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://dloss.github.io/kelora/dev/cookbook/parsing/">
       
       
-        <link rel="prev" href="../security-privacy/">
+        <link rel="prev" href="../web/">
       
       
         <link rel="next" href="../exports/">
@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
@@ -977,34 +977,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../security-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security and Privacy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1134,6 +1106,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#read-jwt-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read JWT claims
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-custom-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1168,6 +1151,34 @@
     
   
     Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
   
 
     
@@ -1790,6 +1801,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#read-jwt-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read JWT claims
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-custom-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1879,6 +1901,22 @@ whole file as one event, parse it, and emit each element as its own event:</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class=" -Color -Color-Green">line</span>='Traceback (most recent call last):'
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">line</span>='  File "worker.py", line 42, in process_order'
 </code></pre></div>
+<h2 id="read-jwt-claims">Read JWT claims<a class="headerlink" href="#read-jwt-claims" title="Permanent link">&para;</a></h2>
+<p><code>parse_jwt()</code> decodes a token without verifying the signature — for
+debugging, not for trusting:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'let t = e.token.parse_jwt(); e.sub = t.claims.sub; e.role = t.claims.role; e.expires = t.expires_at'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,sub,role,expires
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:00:00Z' <span class=" -Color -Color-Green">sub</span>='user123' <span class=" -Color -Color-Green">role</span>='admin'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class=" -Color -Color-Green">expires</span>='2024-11-21T01:46:40+00:00'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:05:00Z' <span class=" -Color -Color-Green">sub</span>='user456' <span class=" -Color -Color-Green">role</span>='user'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class=" -Color -Color-Green">expires</span>='2024-11-21T02:46:40+00:00'
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:10:00Z' <span class=" -Color -Color-Green">sub</span>='user789' <span class=" -Color -Color-Green">role</span>='guest'
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class=" -Color -Color-Green">expires</span>='2023-11-14T22:13:20+00:00'
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class=" -Color -Color-Green">timestamp</span>='2024-01-15T10:15:00Z' <span class=" -Color -Color-Green">sub</span>='user111' <span class=" -Color -Color-Green">role</span>='moderator'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  <span class=" -Color -Color-Green">expires</span>='2024-11-21T03:46:40+00:00'
+</code></pre></div>
 <h2 id="a-custom-format">A custom format<a class="headerlink" href="#a-custom-format" title="Permanent link">&para;</a></h2>
 <p>Work through <a href="../../guide/parse/">Get Logs into Shape</a>: named format, cascade, <code>cols:</code>,
 <code>regex:</code>, then extraction in a script.</p>
@@ -1911,7 +1949,7 @@ whole file as one event, parse it, and emit each element as its own event:</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../security-privacy/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Security and Privacy">
+          <a href="../web/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Web and API Traffic">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1921,7 +1959,7 @@ whole file as one event, parse it, and emit each element as its own event:</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Security and Privacy
+                Web and API Traffic
               </div>
             </div>
           </a>

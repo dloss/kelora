@@ -16,14 +16,14 @@
         <link rel="prev" href="../errors/">
       
       
-        <link rel="next" href="../security-privacy/">
+        <link rel="next" href="../parsing/">
       
       
         
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
@@ -1077,38 +1077,21 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#requests-from-one-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests from one network
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../security-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security and Privacy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1157,6 +1140,34 @@
     
   
     Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
   
 
     
@@ -1778,6 +1789,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#requests-from-one-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests from one network
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1867,6 +1889,13 @@ the fields <code>path</code>, <code>status</code>, <code>bytes</code>, and (ngin
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  internal     14
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  external      6
 </code></pre></div>
+<h2 id="requests-from-one-network">Requests from one network<a class="headerlink" href="#requests-from-one-network" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.ip.is_in_cidr("198.51.100.0/24")'</span><span class="w"> </span>-k<span class="w"> </span>ip,path,status
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class=" -Color -Color-Green">ip</span>='198.51.100.77' <span class=" -Color -Color-Green">path</span>='/api/reports' <span class=" -Color -Color-Green">status</span>=500
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class=" -Color -Color-Green">ip</span>='198.51.100.88' <span class=" -Color -Color-Green">path</span>='/api/upload' <span class=" -Color -Color-Green">status</span>=413
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class=" -Color -Color-Green">ip</span>='198.51.100.99' <span class=" -Color -Color-Green">path</span>='/api/analytics?date=2025-01-15&amp;metric=views' <span class=" -Color -Color-Green">status</span>=200
+</code></pre></div>
 
 
 
@@ -1913,13 +1942,13 @@ the fields <code>path</code>, <code>status</code>, <code>bytes</code>, and (ngin
         
         
           
-          <a href="../security-privacy/" class="md-footer__link md-footer__link--next" aria-label="Next: Security and Privacy">
+          <a href="../parsing/" class="md-footer__link md-footer__link--next" aria-label="Next: Parsing">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Security and Privacy
+                Parsing
               </div>
             </div>
             <div class="md-footer__button md-icon">

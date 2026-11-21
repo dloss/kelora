@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
@@ -978,17 +978,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-and-privacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security and privacy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parsing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1004,6 +993,17 @@
     <span class="md-ellipsis">
       
         Exports and samples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-and-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy and sanitization
       
     </span>
   </a>
@@ -1093,34 +1093,6 @@
   
   
     <li class="md-nav__item">
-      <a href="security-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security and Privacy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="parsing/" class="md-nav__link">
         
   
@@ -1157,6 +1129,34 @@
     
   
     Exports and Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
   
 
     
@@ -1735,17 +1735,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-and-privacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security and privacy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parsing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1761,6 +1750,17 @@
     <span class="md-ellipsis">
       
         Exports and samples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-and-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy and sanitization
       
     </span>
   </a>
@@ -1815,6 +1815,7 @@ them). Each recipe links to the guide page that explains the options.</p>
 <li><a href="errors/#when-did-each-exception-first-appear">When did each exception first appear?</a></li>
 <li><a href="errors/#show-the-events-around-each-error">Show the events around each error</a></li>
 <li><a href="errors/#one-timeline-from-several-services">One timeline from several services</a></li>
+<li><a href="errors/#failed-ssh-logins-by-ip-and-user">Failed SSH logins by IP and user</a></li>
 </ul>
 <h3 id="web-and-api-traffic"><a href="web/">Web and API traffic</a><a class="headerlink" href="#web-and-api-traffic" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1824,18 +1825,7 @@ them). Each recipe links to the guide page that explains the options.</p>
 <li><a href="web/#latency-percentiles-per-endpoint">Latency percentiles per endpoint</a></li>
 <li><a href="web/#browsers-and-operating-systems">Browsers and operating systems</a></li>
 <li><a href="web/#internal-versus-external-clients">Internal versus external clients</a></li>
-</ul>
-<h3 id="security-and-privacy"><a href="security-privacy/">Security and privacy</a><a class="headerlink" href="#security-and-privacy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><a href="security-privacy/#failed-ssh-logins-by-ip-and-user">Failed SSH logins by IP and user</a></li>
-<li><a href="security-privacy/#read-jwt-claims">Read JWT claims</a></li>
-<li><a href="security-privacy/#requests-from-one-network">Requests from one network</a></li>
-<li><a href="security-privacy/#mask-addresses-inside-free-text">Mask addresses inside free text</a></li>
-<li><a href="security-privacy/#consistent-pseudonyms">Consistent pseudonyms</a></li>
-<li><a href="security-privacy/#pseudonymize-ip-addresses">Pseudonymize IP addresses</a></li>
-<li><a href="security-privacy/#find-the-address-behind-a-token">Find the address behind a token</a></li>
-<li><a href="security-privacy/#pseudonymize-ips-but-keep-subnets">Pseudonymize IPs but keep subnets</a></li>
-<li><a href="security-privacy/#drop-sensitive-fields">Drop sensitive fields</a></li>
+<li><a href="web/#requests-from-one-network">Requests from one network</a></li>
 </ul>
 <h3 id="parsing"><a href="parsing/">Parsing</a><a class="headerlink" href="#parsing" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1845,6 +1835,7 @@ them). Each recipe links to the guide page that explains the options.</p>
 <li><a href="parsing/#the-systemd-journal">The systemd journal</a></li>
 <li><a href="parsing/#a-file-that-is-one-json-array">A file that is one JSON array</a></li>
 <li><a href="parsing/#keep-only-the-json-lines-or-only-the-rest">Keep only the JSON lines (or only the rest)</a></li>
+<li><a href="parsing/#read-jwt-claims">Read JWT claims</a></li>
 <li><a href="parsing/#a-custom-format">A custom format</a></li>
 </ul>
 <h3 id="exports-and-samples"><a href="exports/">Exports and samples</a><a class="headerlink" href="#exports-and-samples" title="Permanent link">&para;</a></h3>
@@ -1853,6 +1844,24 @@ them). Each recipe links to the guide page that explains the options.</p>
 <li><a href="exports/#share-failed-requests-with-a-vendor">Share failed requests with a vendor</a></li>
 <li><a href="exports/#a-reproducible-10-sample">A reproducible 10 % sample</a></li>
 <li><a href="exports/#one-row-per-array-element">One row per array element</a></li>
+</ul>
+<h3 id="privacy-and-sanitization"><a href="privacy/">Privacy and sanitization</a><a class="headerlink" href="#privacy-and-sanitization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="privacy/#find-what-needs-hiding">Find what needs hiding</a></li>
+<li><a href="privacy/#keep-only-the-fields-you-need">Keep only the fields you need</a></li>
+<li><a href="privacy/#remove-a-nested-field">Remove a nested field</a></li>
+<li><a href="privacy/#cut-values-down">Cut values down</a></li>
+<li><a href="privacy/#fail-closed">Fail closed</a></li>
+<li><a href="privacy/#replace-personal-data-in-free-text">Replace personal data in free text</a></li>
+<li><a href="privacy/#redact-secrets-with-a-regex">Redact secrets with a regex</a></li>
+<li><a href="privacy/#consistent-pseudonyms">Consistent pseudonyms</a></li>
+<li><a href="privacy/#pseudonymize-every-ip-and-email-address">Pseudonymize every IP and email address</a></li>
+<li><a href="privacy/#find-the-address-behind-a-token">Find the address behind a token</a></li>
+<li><a href="privacy/#pseudonymize-ips-but-keep-subnets">Pseudonymize IPs but keep subnets</a></li>
+<li><a href="privacy/#keep-the-secret-out-of-shell-history">Keep the secret out of shell history</a></li>
+<li><a href="privacy/#sanitize-a-text-log-and-keep-its-format">Sanitize a text log and keep its format</a></li>
+<li><a href="privacy/#check-whats-left">Check what's left</a></li>
+<li><a href="privacy/#all-together">All together</a></li>
 </ul>
 <h3 id="monitoring-and-time"><a href="monitoring/">Monitoring and time</a><a class="headerlink" href="#monitoring-and-time" title="Permanent link">&para;</a></h3>
 <ul>

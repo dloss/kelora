@@ -16,14 +16,14 @@
         <link rel="prev" href="../parsing/">
       
       
-        <link rel="next" href="../monitoring/">
+        <link rel="next" href="../privacy/">
       
       
         
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
@@ -980,34 +980,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../security-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security and Privacy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../parsing/" class="md-nav__link">
         
   
@@ -1143,6 +1115,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy and Sanitization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1786,6 +1786,7 @@ query strings (which can carry IDs) removed:</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>15/Jan/2025:10:28:29 +0000,/static/app.js,304,AWWJtPLWBSlB8cgNM7mSh2JA,192.168.0.0
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>15/Jan/2025:10:28:50 +0000,/wp-admin,404,,172.16.0.0
 </code></pre></div>
+<p>More techniques, and how to check the result: <a href="../privacy/">Privacy and Sanitization</a>.</p>
 <h2 id="a-reproducible-10-sample">A reproducible 10 % sample<a class="headerlink" href="#a-reproducible-10-sample" title="Permanent link">&para;</a></h2>
 <p>Hash a stable field, so the same requests are chosen every time:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.ip.bucket() % 10 == 0'</span><span class="w"> </span>-J<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
@@ -1843,13 +1844,13 @@ table. <a href="../../guide/scripting/#one-event-per-array-element">Transform wi
         
         
           
-          <a href="../monitoring/" class="md-footer__link md-footer__link--next" aria-label="Next: Monitoring and Time">
+          <a href="../privacy/" class="md-footer__link md-footer__link--next" aria-label="Next: Privacy and Sanitization">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Monitoring and Time
+                Privacy and Sanitization
               </div>
             </div>
             <div class="md-footer__button md-icon">
