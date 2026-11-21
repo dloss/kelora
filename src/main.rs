@@ -1555,7 +1555,12 @@ fn maybe_print_key_typo_hint(
     config: &KeloraConfig,
     stats: &stats::ProcessingStats,
     stderr: &mut SafeStderr,
+    show_hints: bool,
+    show_warnings: bool,
 ) {
+    if !show_hints && !show_warnings {
+        return;
+    }
     // We can only tell a typo from a legitimately-absent field once we know what
     // fields the input actually carries; an empty run is "no data", not a typo.
     if stats.events_created == 0 {
@@ -1609,31 +1614,66 @@ fn maybe_print_key_typo_hint(
         .cloned()
         .collect();
 
-    let messages = [
-        key_typo_message(
-            "-k/--keys",
-            "field",
-            ("", ""),
-            &config.output.keys,
-            &known_keys,
-            &absent_where,
-        ),
-        key_typo_message(
-            "--exclude-keys",
-            "field",
-            (", so it was not removed", ", so they were not removed"),
-            &config.output.exclude_keys,
-            &known_for_exclude,
-            &absent_where,
-        ),
-    ];
+    let (keys_nested, keys_absent) = key_typo_message(
+        "-k/--keys",
+        "field",
+        ("", ""),
+        &config.output.keys,
+        &known_keys,
+        &absent_where,
+    );
+    // With -k, a nested -K name under a parent that -k leaves out never
+    // reaches the output anyway; nothing to warn about.
+    let excluded: Vec<String> = config
+        .output
+        .exclude_keys
+        .iter()
+        .filter(|key| {
+            config.output.keys.is_empty()
+                || known_for_exclude.contains(*key)
+                || match nested_parent(key, &known_for_exclude) {
+                    Some(parent) => config.output.keys.iter().any(|k| k == parent),
+                    None => true,
+                }
+        })
+        .cloned()
+        .collect();
+    let (exclude_nested, exclude_absent) = key_typo_message(
+        "--exclude-keys",
+        "field",
+        (", so it was not removed", ", so they were not removed"),
+        &excluded,
+        &known_for_exclude,
+        &absent_where,
+    );
 
-    for message in messages.into_iter().flatten() {
+    // A nested -K name whose parent is present is a removal the user clearly
+    // asked for and didn't get: the value is still in the output. That is a
+    // warning (shown in data-only modes and under --no-hints). An unseen name
+    // stays a hint — it may just be absent from this input (a -K in an alias).
+    let hints = [join_texts(keys_nested, keys_absent), exclude_absent];
+    if show_hints {
+        for message in hints.into_iter().flatten() {
+            let formatted = config
+                .format_hint_message(&message)
+                .trim_start_matches('\n')
+                .to_string();
+            stderr.writeln(&formatted).unwrap_or(());
+        }
+    }
+    if let (true, Some(message)) = (show_warnings, exclude_nested) {
         let formatted = config
-            .format_hint_message(&message)
+            .format_warning_message(&message)
             .trim_start_matches('\n')
             .to_string();
         stderr.writeln(&formatted).unwrap_or(());
+    }
+}
+
+fn join_texts(first: Option<String>, second: Option<String>) -> Option<String> {
+    match (first, second) {
+        (Some(a), Some(b)) => Some(format!("{a} {b}")),
+        (a, b) => a.or(b),
     }
 }
 
@@ -1689,9 +1729,9 @@ fn key_typo_message(
     requested: &[String],
     discovered: &BTreeSet<String>,
     absent_where: &str,
-) -> Option<String> {
+) -> (Option<String>, Option<String>) {
     if requested.is_empty() {
-        return None;
+        return (None, None);
     }
 
     let (nested, absent): (Vec<&String>, Vec<&String>) = requested
@@ -1778,11 +1818,7 @@ fn key_typo_message(
         }
     };
 
-    match (nested_text, absent_text) {
-        (None, None) => None,
-        (Some(text), None) | (None, Some(text)) => Some(text),
-        (Some(nested), Some(absent)) => Some(format!("{nested} {absent}")),
-    }
+    (nested_text, absent_text)
 }
 
 /// The present top-level parent of a nested path such as `http.status` or
@@ -3050,6 +3086,19 @@ fn handle_pipeline_success(
                 }
             }
 
+            // Fires independently of the zero-results hint: an exclude-key typo
+            // leaves output intact but silently fails to drop the field. A nested
+            // -K name is a warning, so it also reaches data-only modes.
+            if terminal_allowed {
+                maybe_print_key_typo_hint(
+                    config,
+                    s,
+                    stderr,
+                    hints_allowed_runtime,
+                    config.warnings_allowed(),
+                );
+            }
+
             if hints_allowed_runtime && terminal_allowed {
                 // Fires before the zero-results hint, which returns early when
                 // nothing was created — the empty-input case it can't explain.
@@ -3065,9 +3114,6 @@ fn handle_pipeline_success(
                 // Surfaces the silent UTC assumption for naive timestamps when a
                 // time filter, span, or --normalize-ts relies on it (#287).
                 maybe_print_naive_tz_hint(config, s, stderr);
-                // Fires independently of the zero-results hint: an exclude-key
-                // typo leaves output intact but silently fails to drop the field.
-                maybe_print_key_typo_hint(config, s, stderr);
                 // With --stats the ragged-row count is already in the stats block.
                 if config.output.stats.is_none() {
                     maybe_print_csv_shape_hint(config, s, stderr);

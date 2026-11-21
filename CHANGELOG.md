@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **`remove_path()` removes a nested field** - `-K` acts on top-level fields only, `e.a.b = ()` left `"b": null`, and `e.a.headers.remove("authorization")` failed on events without `a`. `e.remove_path("request.headers.authorization")` removes the value and returns it; on events without the path it does nothing. A `-K` naming a nested field now suggests it.
+- **`remove_path()` removes a nested field** - `-K` acts on top-level fields only, `e.a.b = ()` left `"b": null`, and `e.a.headers.remove("authorization")` failed on events without `a`. `e.remove_path("request.headers.authorization")` removes the value and returns it; on events without the path it does nothing. A `-K` naming a nested field, which leaves the value in the output, is now a warning that suggests it, so `--no-hints` and `-m` no longer hide it.
 
 ### Changed
 

@@ -515,6 +515,38 @@ fn test_exclude_keys_nested_path_suggests_remove_path() {
             && !stderr.contains("then -k val"),
         "{stderr}"
     );
+
+    // The value is still in the output: a warning, so --no-hints and the
+    // data-only modes don't hide it; --no-warnings does.
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-K",
+            "req.headers.authorization",
+            "--no-hints",
+        ],
+        input,
+    );
+    assert!(stderr.contains("so it was not removed"), "{stderr}");
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-K",
+            "req.headers.authorization",
+            "--no-warnings",
+        ],
+        input,
+    );
+    assert!(!stderr.contains("not removed"), "{stderr}");
+
+    // -k leaves the parent out, so nothing leaked and nothing is said.
+    let (_stdout, stderr, _) = run_kelora_with_input(
+        &["-f", "json", "-k", "svc", "-K", "req.headers.authorization"],
+        input,
+    );
+    assert!(!stderr.contains("not removed"), "{stderr}");
 }
 
 #[test]
