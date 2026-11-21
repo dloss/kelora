@@ -1601,6 +1601,14 @@ fn maybe_print_key_typo_hint(
         "never present in the input".to_string()
     };
 
+    // An excluded field never reaches the output, so a script-created field that
+    // -K removed is in neither set above; count the ones -K actually removed.
+    let known_for_exclude: BTreeSet<String> = known_keys
+        .iter()
+        .chain(stats.excluded_keys_removed.iter())
+        .cloned()
+        .collect();
+
     let messages = [
         key_typo_message(
             "-k/--keys",
@@ -1615,7 +1623,7 @@ fn maybe_print_key_typo_hint(
             "field",
             (", so it was not removed", ", so they were not removed"),
             &config.output.exclude_keys,
-            &known_keys,
+            &known_for_exclude,
             &absent_where,
         ),
     ];
@@ -1709,8 +1717,32 @@ fn key_typo_message(
         }
     };
 
+    // Excluding: removing the nested value in a script keeps the event's shape
+    // (and, unlike -K, hides it from --freq and metrics too). `[]` isn't a path
+    // remove_path() can follow, so those keep the generic advice.
+    let is_exclude = flag == "--exclude-keys";
+    let removable: Vec<&str> = nested
+        .iter()
+        .map(|k| k.as_str())
+        .filter(|k| !k.contains("[]"))
+        .collect();
     let nested_text = match nested.as_slice() {
         [] => None,
+        keys if is_exclude && removable.len() == keys.len() => {
+            let calls: Vec<String> = removable
+                .iter()
+                .map(|k| format!("e.remove_path(\"{k}\")"))
+                .collect();
+            let (noun, names) = match keys {
+                [key] => (format!("nested {label}"), format!("'{key}'")),
+                _ => (format!("nested {label}s"), removable.join(", ")),
+            };
+            Some(format!(
+                "{flag} names {noun} {names}{}; it acts on whole top-level fields. Remove nested values in a script instead: --exec '{}'.",
+                if keys.len() == 1 { consequence.0 } else { consequence.1 },
+                calls.join("; "),
+            ))
+        }
         // One nested key: the single-field get_path idiom is the smallest fix.
         [key] => Some(format!(
             "{flag} names nested {label} '{key}'{}. {}",

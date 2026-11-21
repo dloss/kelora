@@ -305,6 +305,64 @@ pub fn has_path(event: Map, path: ImmutableString) -> bool {
     extract_path_value(&Dynamic::from(event), path.as_str()).is_some()
 }
 
+/// Remove a nested field in place and return its value (`()` if the path does
+/// not resolve). Usage: e.remove_path("request.headers.authorization")
+///
+/// Intermediate steps may index arrays (`"items[0].secret"`), as in
+/// `get_path`; the last step must name a map key. A missing step, or one that
+/// lands on something other than a map/array, leaves the map unchanged — unlike
+/// `e.a.b.remove("c")`, which errors when `a` is missing and removes a
+/// substring when `b` is a string. Parents emptied by the removal are kept.
+pub fn remove_path(map: &mut Map, path: ImmutableString) -> Dynamic {
+    let tokens = parse_path_tokens(path.as_str());
+    let Some((PathToken::Field(last), parents)) = tokens.split_last() else {
+        return Dynamic::UNIT;
+    };
+    let Some((PathToken::Field(first), rest)) = parents.split_first() else {
+        // Single-step path: a top-level key
+        return if parents.is_empty() {
+            map.remove(last.as_str()).unwrap_or(Dynamic::UNIT)
+        } else {
+            Dynamic::UNIT
+        };
+    };
+    match map.get_mut(first.as_str()) {
+        Some(child) => remove_in(child, rest, last),
+        None => Dynamic::UNIT,
+    }
+}
+
+fn remove_in(value: &mut Dynamic, tokens: &[PathToken], last: &str) -> Dynamic {
+    let Some((token, rest)) = tokens.split_first() else {
+        return match value.write_lock::<Map>() {
+            Some(mut map) => map.remove(last).unwrap_or(Dynamic::UNIT),
+            None => Dynamic::UNIT,
+        };
+    };
+    match token {
+        PathToken::Field(name) => {
+            let Some(mut map) = value.write_lock::<Map>() else {
+                return Dynamic::UNIT;
+            };
+            match map.get_mut(name.as_str()) {
+                Some(child) => remove_in(child, rest, last),
+                None => Dynamic::UNIT,
+            }
+        }
+        PathToken::Index(index) => {
+            let Some(mut array) = value.write_lock::<Array>() else {
+                return Dynamic::UNIT;
+            };
+            let len = array.len() as i64;
+            let actual = if *index < 0 { len + index } else { *index };
+            if actual < 0 || actual >= len {
+                return Dynamic::UNIT;
+            }
+            remove_in(&mut array[actual as usize], rest, last)
+        }
+    }
+}
+
 /// Internal function to extract value from a path string
 /// Supports dot notation (user.name) and bracket notation (scores[0], scores[-1])
 fn extract_path_value(value: &Dynamic, path: &str) -> Option<Dynamic> {
@@ -473,6 +531,7 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("get_path", get_path_json);
     engine.register_fn("get_path", get_path_json_with_default);
     engine.register_fn("has_path", has_path);
+    engine.register_fn("remove_path", remove_path);
 
     // Other safety functions
     engine.register_fn("path_equals", path_equals);
@@ -778,6 +837,49 @@ mod tests {
             Dynamic::from("unknown"),
         );
         assert_eq!(missing_item.cast::<String>(), "unknown");
+    }
+
+    #[test]
+    fn test_remove_path() {
+        let mut event = create_test_event();
+
+        // Nested key: removed and returned; the parent map stays
+        assert_eq!(
+            remove_path(&mut event, "user.role".into()).cast::<String>(),
+            "admin"
+        );
+        assert!(!has_path(event.clone(), "user.role".into()));
+        assert!(has_path(event.clone(), "user.active".into()));
+
+        // Through an array index
+        assert_eq!(
+            remove_path(&mut event, "user.details.items[-1].value".into()).cast::<i32>(),
+            33
+        );
+        assert!(!has_path(
+            event.clone(),
+            "user.details.items[1].value".into()
+        ));
+        assert!(has_path(event.clone(), "user.details.items[1].name".into()));
+
+        // Top-level key
+        assert!(!remove_path(&mut event, "score".into()).is_unit());
+        assert!(!event.contains_key("score"));
+
+        // No-ops: missing steps, non-map intermediates, index as last step
+        let before = format!("{:?}", event);
+        for path in [
+            "missing.x",
+            "user.missing.x",
+            "name.x",
+            "scores.x",
+            "scores[0]",
+            "user.details.items[9].name",
+            "",
+        ] {
+            assert!(remove_path(&mut event, path.into()).is_unit(), "{path}");
+        }
+        assert_eq!(format!("{:?}", event), before);
     }
 
     #[test]

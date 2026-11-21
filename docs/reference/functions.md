@@ -815,6 +815,16 @@ Whether a nested path exists.
 if e.has_path("error.details.code") { e.detailed_error = true }
 ```
 
+#### `map.remove_path("field.path")`
+Remove a nested field in place and return its value, or `()` when the path doesn't resolve. Intermediate steps may index arrays (`"items[0].secret"`); the last step names a map key. A missing step, or one that is not a map or array, changes nothing, so it is safe on events that lack the field. Parents left empty stay (`{"headers": {}}`).
+
+```rhai
+e.remove_path("request.headers.authorization");
+let token = e.remove_path("auth.token");         // removed, and kept in a variable
+```
+
+Prefer it to `e.request.headers.remove("authorization")`, which fails when `request` is missing and, if `headers` is a string, removes a substring instead.
+
 #### `map.path_equals("path", value)`
 Nested comparison that is false (not an error) when the path is missing.
 
@@ -1601,10 +1611,11 @@ if e.should_drop { e = () }
 ```
 
 #### `e.field = ()`
-Remove one field.
+Remove one top-level field. On a nested field, `e.a.b = ()` sets it to `()`, which is output as `null`; use [`remove_path()`](#mapremove_pathfieldpath) to remove it.
 
 ```rhai
 e.password = ();
+e.remove_path("request.headers.authorization");  // nested
 ```
 
 ### Absorbing fields

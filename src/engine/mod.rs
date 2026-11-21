@@ -357,6 +357,7 @@ const MUTATING_CALL_NAMES: &[&str] = &[
     "merge",
     "enrich",
     "rename_field",
+    "remove_path",
     // Rhai in-place array/map mutators
     "push",
     "pop",
@@ -1410,6 +1411,7 @@ impl RhaiEngine {
             "read_lines",
             "red",
             "remove",
+            "remove_path",
             "rename_field",
             "replace",
             "replace_regex",
@@ -2694,6 +2696,26 @@ mod tests {
     }
 
     #[test]
+    fn remove_path_persists_to_event() {
+        let mut event = build_event_with_line("x");
+        let mut headers = Map::new();
+        headers.insert(
+            "authorization".into(),
+            Dynamic::from("Bearer t".to_string()),
+        );
+        headers.insert("accept".into(), Dynamic::from("*/*".to_string()));
+        let mut request = Map::new();
+        request.insert("headers".into(), Dynamic::from(headers));
+        event.set_field("request".to_string(), Dynamic::from(request));
+        // A lone call, no assignment: must still count as a mutation
+        let event = run_exec(r#"e.remove_path("request.headers.authorization")"#, event);
+        let request = event.fields.get("request").unwrap().clone().cast::<Map>();
+        let headers = request.get("headers").unwrap().clone().cast::<Map>();
+        assert!(!headers.contains_key("authorization"));
+        assert!(headers.contains_key("accept"));
+    }
+
+    #[test]
     fn nested_array_mutation_persists_to_event() {
         let mut event = build_event_with_line("x");
         event.set_field(
@@ -3019,6 +3041,25 @@ mod tests {
             msg.contains("Rhai raw strings use #\"...\"#"),
             "raw string hint should mention Rhai syntax; got: {msg}"
         );
+    }
+
+    #[test]
+    fn missing_semicolon_hint_names_the_line_to_end() {
+        let mut engine = RhaiEngine::new();
+        // A newline is not a statement separator; the blank line is skipped
+        let msg = engine
+            .compile_exec("e.a = 1\n\n  e.b = 2")
+            .err()
+            .expect("missing ';' should not compile")
+            .to_string();
+        assert!(msg.contains("put ';' at the end of line 1"), "got: {msg}");
+
+        let msg = engine
+            .compile_exec("e.a = 1 e.b = 2")
+            .err()
+            .expect("missing ';' should not compile")
+            .to_string();
+        assert!(msg.contains("Separate statements with ';'"), "got: {msg}");
     }
 
     #[test]

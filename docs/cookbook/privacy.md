@@ -34,11 +34,13 @@ run, do it in a script: `e = e.keep(["timestamp", "level", "service", "msg"])`,
 ## Remove a nested field
 
 `-k` and `-K` act on top-level fields only. Remove a nested key with
-`remove()`:
+`remove_path()`; events without it are left alone:
 
 ```bash exec="on" source="above" result="ansi"
-kelora examples/checkout_pii.jsonl -e 'e.request.headers.remove("authorization")' -k request -n 2
+kelora examples/checkout_pii.jsonl -e 'e.remove_path("request.headers.authorization")' -k request -n 2
 ```
+
+`e.request.headers.authorization = ()` would leave `"authorization": null`.
 
 ## Cut values down
 
@@ -59,9 +61,9 @@ keeps the first 8 characters of a value.
 
 ## Fail closed
 
-If a script fails on an event, kelora reports the error and outputs the
-event as it was before the script ran, with the data you meant to hide.
-Here the webhook event has no `user`:
+If a script fails on an event, kelora outputs the event as it was before the
+script ran, with the data you meant to hide, and warns on stderr. Here the
+webhook event has no `user`:
 
 ```bash exec="on" source="above" result="ansi"
 kelora examples/checkout_pii.jsonl \

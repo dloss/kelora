@@ -993,9 +993,23 @@ impl ScriptStage for KeyFilterStage {
         }
     }
 
-    fn apply(&mut self, mut event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
+    fn apply(&mut self, mut event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         if !self.is_active() {
             return ScriptResult::Emit(event);
+        }
+
+        // Remember which excluded names actually matched a field, so the
+        // end-of-run typo hint doesn't call a field that a script created (and
+        // -K removed) "never present".
+        if crate::stats::stats_enabled() {
+            for key in &self.exclude_keys {
+                if event.fields.contains_key(key.as_str())
+                    && !ctx.internal_stats.excluded_keys_removed.contains(key)
+                {
+                    ctx.internal_stats.excluded_keys_removed.insert(key.clone());
+                    crate::stats::stats_add_excluded_key_removed(key.clone());
+                }
+            }
         }
 
         // Calculate effective keys, cloning only the key names we actually keep

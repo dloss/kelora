@@ -75,6 +75,9 @@ pub struct ProcessingStats {
     pub discovered_keys: BTreeSet<String>,
     pub discovered_levels_output: BTreeSet<String>,
     pub discovered_keys_output: BTreeSet<String>,
+    /// `--exclude-keys` names that were present on some event and removed. A
+    /// field an `--exec` creates and `-K` then drops is in neither key set above.
+    pub excluded_keys_removed: BTreeSet<String>,
     pub first_timestamp: Option<DateTime<Utc>>,
     pub last_timestamp: Option<DateTime<Utc>>,
     pub first_result_timestamp: Option<DateTime<Utc>>,
@@ -866,6 +869,15 @@ pub fn stats_add_output_key(key: String) {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().discovered_keys_output.insert(key);
+    });
+}
+
+pub fn stats_add_excluded_key_removed(key: String) {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().excluded_keys_removed.insert(key);
     });
 }
 

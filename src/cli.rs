@@ -567,7 +567,7 @@ pub struct Cli {
         value_delimiter = ',',
         help_heading = "Filtering Options",
         help = "Exclude these fields from output (comma-separated list).",
-        long_help = "Exclude these fields from output (comma-separated list).\n\nActs on whole top-level fields; nested values (the dotted/bracketed paths shown by --discover) cannot be dropped here — remove them in an --exec stage instead."
+        long_help = "Exclude these fields from output (comma-separated list).\n\nActs on whole top-level fields; nested values (the dotted/bracketed paths shown by --discover) cannot be dropped here — remove them in an --exec stage instead, e.g. --exec 'e.remove_path(\"request.headers.authorization\")'. Like -k, it only shapes the output: filters, --freq and metrics still see the field; removing it with --exec hides it from them too."
     )]
     pub exclude_keys: Vec<String>,
 

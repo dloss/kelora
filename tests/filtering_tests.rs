@@ -498,6 +498,51 @@ fn test_keys_several_nested_paths_keep_the_explanation() {
 }
 
 #[test]
+fn test_exclude_keys_nested_path_suggests_remove_path() {
+    let input = r#"{"svc":"auth","req":{"headers":{"authorization":"Bearer t"}}}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-K", "req.headers.authorization"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.contains("Bearer t"),
+        "-K must not reach nested values"
+    );
+    assert!(
+        stderr.contains("so it was not removed")
+            && stderr.contains(r#"--exec 'e.remove_path("req.headers.authorization")'"#)
+            && !stderr.contains("then -k val"),
+        "{stderr}"
+    );
+}
+
+#[test]
+fn test_exclude_keys_removing_a_script_created_field_is_not_a_typo() {
+    // A field an --exec creates and -K removes is neither an input nor an
+    // output key; the hint used to claim it "was not removed".
+    let input = r#"{"svc":"auth","req":{"token":"secret"}}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "e = e.flattened()",
+            "-K",
+            "req.token",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(!stdout.contains("secret"), "{stdout}");
+    assert!(!stderr.contains("not removed"), "{stderr}");
+}
+
+#[test]
 fn test_keys_nested_path_and_typo_are_reported_separately() {
     let input = r#"{"svc":"auth","http":{"status":200}}"#;
 

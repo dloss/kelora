@@ -232,6 +232,9 @@ impl GlobalTracker {
         stats
             .discovered_keys_output
             .extend(internal_stats.discovered_keys_output.iter().cloned());
+        stats
+            .excluded_keys_removed
+            .extend(internal_stats.excluded_keys_removed.iter().cloned());
 
         Ok(())
     }

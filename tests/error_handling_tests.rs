@@ -810,3 +810,30 @@ fn test_repeated_filter_error_is_printed_once() {
         "the stage name should not repeat: {stderr}"
     );
 }
+
+#[test]
+fn test_failed_sanitizing_exec_warns_that_events_may_leak() {
+    // A failed --exec stage outputs the event unchanged. When the stage hides
+    // data, that event leaks: the run stays exit 0, but the warning says so.
+    let input = "{\"ip\":\"10.1.2.3\",\"user\":\"a@x.org\"}\n{\"ip\":\"10.9.9.9\"}\n";
+    let script = "e.ip = e.ip.mask_ip(2); e.user = e.user.parse_email().domain";
+    let (stdout, stderr, code) = run_kelora_with_input(&["-j", "-e", script, "-k", "ip"], input);
+    assert_eq!(code, 0);
+    assert!(stdout.contains("10.9.9.9"), "{stdout}");
+    assert!(
+        stderr.contains("1 event was output without the changes")
+            && stderr.contains("calls mask_ip()")
+            && stderr.contains("--strict"),
+        "{stderr}"
+    );
+
+    // An exec stage that hides nothing keeps the plain error summary.
+    let (_stdout, stderr, _code) =
+        run_kelora_with_input(&["-j", "-e", "e.d = e.user.parse_email().domain"], input);
+    assert!(!stderr.contains("meant to hide"), "{stderr}");
+
+    // --no-warnings hides it like the summary it belongs to.
+    let (_stdout, stderr, _code) =
+        run_kelora_with_input(&["-j", "-e", script, "--no-warnings"], input);
+    assert!(!stderr.contains("meant to hide"), "{stderr}");
+}

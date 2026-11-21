@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`remove_path()` removes a nested field** - `-K` acts on top-level fields only, `e.a.b = ()` left `"b": null`, and `e.a.headers.remove("authorization")` failed on events without `a`. `e.remove_path("request.headers.authorization")` removes the value and returns it; on events without the path it does nothing. A `-K` naming a nested field now suggests it.
+
 ### Changed
+
+- **Warning when a failed `--exec` may have leaked data** - A failed `--exec` stage outputs the event unchanged, so a stage meant to hide data (`mask_ip()`, `pseudonym()`, `normalized()`, `e.field = ()`, …) let through every event it failed on, with only an `Exec errors: N total` line. kelora now warns that those events may still hold the data and suggests `--strict`, which stops the run before they are written. Exit codes are unchanged.
+- **Hint for a missing `;` between script lines** - A line break doesn't end a statement in Rhai, so a multi-line `--exec` without `;` failed with only Rhai's `Expecting ';'`. The error now names the line that needs one.
+- **`-K` hint after a script flattens the event** - With `-e 'e = e.flattened()' -K request.headers.authorization` the field was removed, but a hint said it "was not removed". It no longer does.
 
 - **`--span FIELD` hint for a field that `--exec` creates** - Spans are assigned before your stages run, so `--span step` with `-e 'e.step = …'` put every event in one `(unset)` span, and the hint said `step` "was not present on any event", although `-k step` showed it. The hint now says `--span` reads fields as parsed and names the two-pass fix (`… -F json | kelora -j --span step`); the spans guide shows it.
 - **Warning for `--extract-prefix` with `--multiline`** - The prefix is removed after lines are joined, so on `docker compose logs` or `kubectl logs --timestamps` output, where trace lines carry the prefix too, `-M python`/`java`/`indent` left every trace line its own event, and a start-regex `-M` kept the later prefixes inside the joined text, with no message. kelora now warns when prefixed lines have indented text, and suggests reading the log without the prefix (`docker compose logs --no-log-prefix`).

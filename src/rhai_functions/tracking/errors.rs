@@ -897,6 +897,36 @@ pub fn extract_error_summary_from_tracking(
         }
     }
 
+    // A failed --exec stage passes the event on as it was before the stage. When
+    // that stage was hiding data, the "best-effort transform" is a leak: say so
+    // in its own words, as a warning, rather than leaving it to the generic count.
+    if let Some(cfg) = config {
+        let exec_errors = error_types
+            .iter()
+            .find(|(kind, _)| kind == "exec")
+            .map(|(_, count)| *count)
+            .unwrap_or(0);
+        if exec_errors > 0 && !cfg.processing.strict && cfg.warnings_allowed() {
+            if let Some(call) = cfg.processing.stages.iter().find_map(|stage| match stage {
+                crate::config::ScriptStageType::Exec(script) => sanitizing_call(script),
+                _ => None,
+            }) {
+                let warning = format!(
+                    "{} without the changes of the --exec stage that failed on {}. A stage calls {call}, so {} may still hold data it was meant to hide. Add --strict to stop at the first error instead, and guard optional fields with e.has(...).",
+                    if exec_errors == 1 {
+                        "1 event was output".to_string()
+                    } else {
+                        format!("{exec_errors} events were output")
+                    },
+                    if exec_errors == 1 { "it" } else { "them" },
+                    if exec_errors == 1 { "it" } else { "they" },
+                );
+                summary.push_str("\n  ");
+                summary.push_str(&cfg.format_warning_message(&warning).replace('\n', "\n  "));
+            }
+        }
+    }
+
     if let Some(stats) = stats {
         if stats.yearless_timestamps > 0 {
             let warning_msg = format!(
@@ -916,6 +946,57 @@ pub fn extract_error_summary_from_tracking(
     }
 
     Some(summary)
+}
+
+/// The first call in `script` to a function that hides data (`"mask_ip()"`),
+/// or a field removal (`"e.field = ()"`), or `None`. Used to tell a failed
+/// sanitizing --exec stage, whose rolled-back event leaks, from an ordinary one.
+fn sanitizing_call(script: &str) -> Option<String> {
+    static CALL: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    static REMOVAL: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let call = CALL.get_or_init(|| {
+        regex::Regex::new(
+            r"\b(pseudonym|pseudonymize_ips|pseudonymize_emails|mask_ip|normalized|hash|replace_regex|remove_path|drop|keep)\s*\(",
+        )
+        .expect("valid sanitizing-call regex")
+    });
+    let removal = REMOVAL
+        .get_or_init(|| regex::Regex::new(r"[\w\]]\s*=\s*\(\s*\)").expect("valid removal regex"));
+    let found_call = call
+        .captures(script)
+        .map(|c| (c.get(0).unwrap().start(), format!("{}()", &c[1])));
+    let found_removal = removal
+        .find(script)
+        .map(|m| (m.start(), "e.field = ()".to_string()));
+    match (found_call, found_removal) {
+        (Some(a), Some(b)) => Some(if a.0 <= b.0 { a.1 } else { b.1 }),
+        (a, b) => a.or(b).map(|(_, name)| name),
+    }
+}
+
+#[cfg(test)]
+mod sanitizing_call_tests {
+    use super::sanitizing_call;
+
+    #[test]
+    fn finds_hiding_calls_and_removals() {
+        assert_eq!(
+            sanitizing_call("e.ip = e.ip.mask_ip(2); e.u = e.u.lower()").as_deref(),
+            Some("mask_ip()")
+        );
+        assert_eq!(
+            sanitizing_call(r#"e.u = pseudonym(e.u, "u")"#).as_deref(),
+            Some("pseudonym()")
+        );
+        assert_eq!(
+            sanitizing_call("e.token = (); e.x = e.x.normalized()").as_deref(),
+            Some("e.field = ()")
+        );
+        assert_eq!(sanitizing_call("e.total = e.a + e.b"), None);
+        // `==` comparisons with () and names that merely contain a keyword
+        assert_eq!(sanitizing_call("if e.x == () { e.y = 1 }"), None);
+        assert_eq!(sanitizing_call("e.k = e.keeper(1); e.h = e.hashed"), None);
+    }
 }
 
 #[cfg(test)]

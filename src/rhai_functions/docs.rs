@@ -154,6 +154,7 @@ map.normalized([patterns])           Return new map with all string fields norma
 map.pseudonymize_emails()            Return new map with every email in values and keys replaced (nested too)
 map.pseudonymize_ips([mode])         Return new map with every IP in values and keys replaced (nested too)
 map.path_equals("path", value)       Safe nested field comparison
+map.remove_path("field.path")        Remove a nested field in place, returns its value (no-op if missing)
 map.rename_field("old", "new")       Rename a field, returns true if successful
 map.to_cef()                         Convert map to Common Event Format (CEF) string
 map.to_combined()                    Convert map to Apache/Nginx combined log format
@@ -395,6 +396,7 @@ e.absorb_jwt(field [,options])       Parse JWT (no verification), merge claims f
 e.absorb_regex(field, pattern [,opts]) Extract named captures from field using regex, return status map
 e = ()                               Clear entire event (remove all fields)
 e.field = ()                         Remove individual field from event
+e.remove_path("a.b.c")               Remove a nested field (e.a.b.c = () leaves a null)
 e.has("key")                         Check if key exists and value is not ()
 e.rename_field("old", "new")         Rename field, returns true if successful
 

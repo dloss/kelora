@@ -319,6 +319,36 @@ impl ErrorEnhancer {
                 "It looks like a Rust raw string (r\"...\"). Rhai raw strings use #\"...\"# (or ##\"...\"## for embedded quotes)."
                     .to_string(),
             ),
+            // A newline doesn't end a statement in Rhai, so a multi-line --exec
+            // without `;` fails at the start of its second statement.
+            EvalAltResult::ErrorParsing(rhai::ParseErrorType::MissingToken(token, _), pos)
+                if token == ";" =>
+            {
+                let line = pos.line()?;
+                let column = pos.position()?;
+                let starts_line = line > 1
+                    && script
+                        .lines()
+                        .nth(line - 1)?
+                        .chars()
+                        .take(column.saturating_sub(1))
+                        .all(char::is_whitespace);
+                // The statement that lacks ';' ends on the last non-blank line before
+                let previous = script
+                    .lines()
+                    .take(line - 1)
+                    .enumerate()
+                    .filter(|(_, text)| !text.trim().is_empty())
+                    .last()
+                    .map(|(index, _)| index + 1);
+                Some(if let (true, Some(previous)) = (starts_line, previous) {
+                    format!(
+                        "A line break doesn't end a statement: put ';' at the end of line {previous}."
+                    )
+                } else {
+                    "Separate statements with ';': e.a = 1; e.b = 2".to_string()
+                })
+            }
             EvalAltResult::ErrorParsing(_, pos) => {
                 let rest = Self::text_at(script, pos.line()?, pos.position()?)?;
                 if rest.starts_with("=~") {

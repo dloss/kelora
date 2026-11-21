@@ -71,6 +71,8 @@ pub struct InternalStats {
     pub discovered_keys: HashSet<String>,
     pub discovered_levels_output: HashSet<String>,
     pub discovered_keys_output: HashSet<String>,
+    /// `--exclude-keys` names that were present on some event and removed.
+    pub excluded_keys_removed: HashSet<String>,
 }
 
 /// Helper function to collect discovered levels and keys from an event for stats
